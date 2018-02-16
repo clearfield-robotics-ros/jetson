@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<launch>
+
+<node name="mine_sim" pkg="md_serial" type="mine_sim.py">
+  </node>
+
+<node name="gantry_sim" pkg="md_serial" type="gantry_sim.py">
+  </node>
+
+<node name="gantry_drive" pkg="md_serial" type="gantry_drive.py">
+  </node>
+
+<node name="md_acquisition" pkg="md_serial" type="md_acquisition.py">
+  </node>
+
+<node name="md_gradientascent" pkg="md_serial" type="md_gradientascent.py" output="screen">
+  </node>
+
+</launch>
