@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no" ?>
 <launch>
 
-<node name="mine_sim" pkg="md_serial" type="mine_sim.py">
+<node name="mine_sim" pkg="md" type="mine_sim.py">
   </node>
 
 <node name="gantry_sim" pkg="gantry" type="gantry_sim.py">
@@ -10,10 +10,10 @@
 <node name="gantry_drive" pkg="gantry" type="gantry_drive.py">
   </node>
 
-<node name="md_acquisition" pkg="md_serial" type="md_acquisition.py">
+<node name="md_acquisition" pkg="md" type="md_acquisition.py">
   </node>
 
-<node name="md_gradientascent" pkg="md_serial" type="md_gradientascent.py" output="screen">
+<node name="md_gradientascent" pkg="md" type="md_gradientascent.py" output="screen">
   </node>
 
 

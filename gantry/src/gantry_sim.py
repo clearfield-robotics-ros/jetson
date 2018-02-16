@@ -11,7 +11,6 @@ import tf
 
 # todo: second thread for restart
 
-
 def update_cmd(data):
     global cmd
     cmd = [data.x, data.y, data.z]

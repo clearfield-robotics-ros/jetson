@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package>
-  <name>md_serial</name>
+  <name>md</name>
   <version>0.0.0</version>
-  <description>The md_serial package</description>
+  <description>The md package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
   <!-- Example:  -->
