@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<launch>
+
+  <node name="md_vision" pkg="md_vision" type="md_vision.py">
+  </node>
+
+  <param name="port" type="string" value="/dev/ttyACM0" />
+  <node name="gantry_teensy" pkg="rosserial_python" type="serial_node.py" >
+  </node>
+
+  <node name="md_hits" pkg="md_vision" type="md_analysis3.py">
+  </node>
+
+  <node name="state_teller" pkg="md_vision" type="state_teller.py">
+  </node>
+
+</launch>
