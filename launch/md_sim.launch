@@ -4,10 +4,10 @@
 <node name="mine_sim" pkg="md_serial" type="mine_sim.py">
   </node>
 
-<node name="gantry_sim" pkg="md_serial" type="gantry_sim.py">
+<node name="gantry_sim" pkg="gantry" type="gantry_sim.py">
   </node>
 
-<node name="gantry_drive" pkg="md_serial" type="gantry_drive.py">
+<node name="gantry_drive" pkg="gantry" type="gantry_drive.py">
   </node>
 
 <node name="md_acquisition" pkg="md_serial" type="md_acquisition.py">
@@ -15,5 +15,9 @@
 
 <node name="md_gradientascent" pkg="md_serial" type="md_gradientascent.py" output="screen">
   </node>
+
+
+<node name="rviz" pkg="rviz" type="rviz" args="-d $(find gantry)/../launch/md_sim.rviz"/>/>
+
 
 </launch>
