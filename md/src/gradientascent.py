@@ -50,7 +50,9 @@ def update_pos(data):
 
 rospy.init_node('md_planner')
 pub = rospy.Publisher('/cmd_from_md', Point, queue_size=10)
+sendToProbe = rospy.Publisher('/MDToProbe', Point, queue_size=10)
 sub = rospy.Subscriber('md_strong_signal', PointStamped, update_pos)
+
 
 
 def set_and_wait_for_goal(my_goal):
@@ -85,7 +87,7 @@ def main():
     r = rospy.Rate(100)  # 100 Hz
     while not rospy.is_shutdown():
         if not found_something:
-            print "sweeping"
+            # print "sweeping"
             pub.publish(sweep_msg)
         else:
             print "pinpointing!"
@@ -139,6 +141,13 @@ def main():
                     if p_new[2] == cur_sig_pow:
                         done = True
             else:
+
+                # pass the batton to the probe
+                msg = Point(cur_sig[0], 
+                            cur_sig[1], 
+                            cur_sig[2])
+                sendToProbe.publish(msg)
+
                 print "cur_sig", cur_sig
                 return
         r.sleep()
