@@ -7,6 +7,7 @@ import rospy
 from std_msgs.msg import Int16
 from geometry_msgs.msg import Point, PointStamped, Pose
 from visualization_msgs.msg import Marker
+import tf
 
 
 prev_pos = (0, 0)
@@ -42,12 +43,11 @@ def update_detection(data):
         msg2.id = seq
         msg2.type = 1  # cube
         msg2.action = 0  # add
-        msg2.pose.position = msg.point
-        msg2.pose.position.z = float(data.data) / 15
+        msg2.pose.position = Point(prev_world_pos[0], prev_world_pos[1], float(data.data)*10)
         msg2.pose.orientation.w = 1
-        msg2.scale.x = 0.01
-        msg2.scale.y = 0.01
-        msg2.scale.z = 0.01
+        msg2.scale.x = 10
+        msg2.scale.y = 10
+        msg2.scale.z = 10
         msg2.color.a = 1.0
         msg2.color.r = 0.42
         msg2.color.g = 0.35
@@ -58,9 +58,13 @@ def update_detection(data):
         print a, b, float(data.data)
 
 
-def update_pos(data):
+def update_local_pos(x,y):
     global prev_pos
-    prev_pos = (data.x, data.y)
+    prev_pos = (x,y)
+
+def update_world_pos(x,y):
+    global prev_world_pos
+    prev_world_pos = (x,y)
 
 
 def main():
@@ -69,11 +73,28 @@ def main():
     rospy.init_node('md_analysis')
 
     sub = rospy.Subscriber('md_signal', Int16, update_detection)
-    sub2 = rospy.Subscriber('gantry_pos', Point, update_pos)
     pub = rospy.Publisher('md_strong_signal', PointStamped, queue_size=10)
     pub2 = rospy.Publisher('md_viz', Marker, queue_size=10)
 
-    rospy.spin()
+    listener = tf.TransformListener()
+
+    r = rospy.Rate(100) # 100 Hz
+    while not rospy.is_shutdown():
+        
+        try:
+            (trans,rot) = listener.lookupTransform('/scorpion', '/sensor_head', rospy.Time(0))
+            update_local_pos(trans[0],trans[1])
+        except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
+            continue
+
+        try:
+            (trans,rot) = listener.lookupTransform('/world', '/sensor_head', rospy.Time(0))
+            update_world_pos(trans[0],trans[1])
+        except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
+            continue
+
+        # do things
+        r.sleep()  # indent less when going back to regular gantry_lib
 
 if __name__ == "__main__":
     main()

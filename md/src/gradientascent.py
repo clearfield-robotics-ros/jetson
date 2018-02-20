@@ -2,6 +2,7 @@
 
 import rospy
 from geometry_msgs.msg import PointStamped, Point
+from std_msgs.msg import String
 import numpy as np
 import math
 from copy import deepcopy
@@ -35,7 +36,7 @@ def update_pos(data):
     # print data.point
 
     if data.point.z > 6:
-        # print "found something!"
+        pub_found_mine.publish("found_mine")
         found_something = True
 
     cur_sig[0] = data.point.x
@@ -49,8 +50,11 @@ def update_pos(data):
 
 
 rospy.init_node('md_planner')
+pub_found_mine = rospy.Publisher('/found_mine', String, queue_size=10)
 pub = rospy.Publisher('/cmd_from_md', Point, queue_size=10)
+sendToProbe = rospy.Publisher('/MDToProbe', Point, queue_size=10)
 sub = rospy.Subscriber('md_strong_signal', PointStamped, update_pos)
+
 
 
 def set_and_wait_for_goal(my_goal):
@@ -85,13 +89,13 @@ def main():
     r = rospy.Rate(100)  # 100 Hz
     while not rospy.is_shutdown():
         if not found_something:
-            print "sweeping"
+            # print "sweeping"
             pub.publish(sweep_msg)
         else:
             print "pinpointing!"
-            #pub.publish(Point(cur_sig[0], cur_sig[1], 0))
+            
             done = False
-            step_size = 0.04
+            step_size = 30
             shift = np.array([step_size, 0])
             shift_2 = rotate(shift, 2 * math.pi / 3)
             shift_3 = rotate(shift, 4 * math.pi / 3)
@@ -139,7 +143,14 @@ def main():
                     if p_new[2] == cur_sig_pow:
                         done = True
             else:
-                print "cur_sig", cur_sig
+
+                # pass the batton to the probe
+                msg = Point(cur_sig[0], 
+                            cur_sig[1], 
+                            cur_sig[2])
+                sendToProbe.publish(msg)
+
+                print "TIME TO PROBE AT:", cur_sig
                 return
         r.sleep()
 
