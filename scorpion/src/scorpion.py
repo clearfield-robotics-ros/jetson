@@ -8,9 +8,6 @@ from visualization_msgs.msg import Marker
 import tf
 import math
 
-model_offset_rot = [math.pi/2, 0, math.pi]
-model_offset_loc = [4.25,-4.25,0]
-
 def updateLocation(loc, rot):
 
 	# send transform
@@ -18,7 +15,7 @@ def updateLocation(loc, rot):
     br.sendTransform(loc,
          q_rot,
          rospy.Time.now(),
-         "scorpion_tf",
+         "scorpion",
          "world")
 
     # send model to rviz
@@ -32,14 +29,14 @@ def updateLocation(loc, rot):
     m.mesh_resource = "package://scorpion/mesh/scorpion_master.STL";
     m.action = 0  # add/modify
 
-    scopion_rot = [rot[0] + model_offset_rot[0],
-    	rot[1] + model_offset_rot[1],
-    	rot[2] + model_offset_rot[2]]
+    scopion_rot = [rot[0] + model_scorpion_offset_rot[0],
+    	rot[1] + model_scorpion_offset_rot[1],
+    	rot[2] + model_scorpion_offset_rot[2]]
 
     scopion_q_rot = tf.transformations.quaternion_from_euler(scopion_rot[0],scopion_rot[1],scopion_rot[2])
-    m.pose.position.x = loc[0] + model_offset_loc[0]
-    m.pose.position.y = loc[1] + model_offset_loc[1]
-    m.pose.position.z = loc[2] + model_offset_loc[2]
+    m.pose.position.x = loc[0] + model_scorpion_offset_loc[0]
+    m.pose.position.y = loc[1] + model_scorpion_offset_loc[1]
+    m.pose.position.z = loc[2] + model_scorpion_offset_loc[2]
     m.pose.orientation.x = scopion_q_rot[0]
     m.pose.orientation.y = scopion_q_rot[1]
     m.pose.orientation.z = scopion_q_rot[2]
@@ -60,22 +57,25 @@ def main():
     global pub
     global br
     br = tf.TransformBroadcaster()
+    
+    global model_scorpion_offset_loc
+    global model_scorpion_offset_rot
+    model_scorpion_offset_loc = rospy.get_param('model_scorpion_offset_loc')
+    model_scorpion_offset_rot = rospy.get_param('model_scorpion_offset_rot')
 
     rospy.init_node('scorpion')
     pub = rospy.Publisher('scorpion', Marker, queue_size=10)
-    rospy.sleep(1)
+    # rospy.sleep(1)
 
     r = rospy.Rate(10)  # 10 Hz
 
     # generate manually, but eventually get from localization!
-
     loc = [0,0,0]
     rot = [0,0,0]
 
-
     while not rospy.is_shutdown():
 
-    	loc[1] += 0.05 # advance!
+    	loc[0] += 0.05 # advance!
     	updateLocation(loc, rot)
 
         r.sleep()  # indent less when going back to regular gantry_lib

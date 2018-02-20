@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no" ?>
 <launch>
 
+<rosparam command="load" file="$(find scorpion)/../transforms.yaml" />
+
 <node name="scorpion" pkg="scorpion" type="scorpion.py" output="screen">
   </node>
 

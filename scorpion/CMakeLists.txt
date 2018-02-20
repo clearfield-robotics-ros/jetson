@@ -5,7 +5,10 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   std_msgs
   message_generation
+  dynamic_reconfigure
 )
+
+
 
 # add_service_files(
 #   FILES
@@ -25,6 +28,3 @@ include_directories(
 # include
   ${catkin_INCLUDE_DIRS}
 )
-
-# add_dependencies(md_vision ${catkin_EXPORTED_TARGETS})
-# target_link_libraries(md_vision ${catkin_LIBRARIES} )

@@ -9,8 +9,6 @@ import tf
 # in: command of sweeping / position
 # out: position of gantry (geometry_msgs/Point)
 
-# todo: second thread for restart
-
 def update_cmd(data):
     global cmd
     cmd = [data.x, data.y, data.z]
@@ -25,6 +23,12 @@ def main():
     global mode
     global cmd
     br = tf.TransformBroadcaster()
+
+    global scorpion_gantry_offset_loc
+    global scorpion_gantry_offset_rot
+    scorpion_gantry_offset_loc = rospy.get_param('scorpion_gantry_offset_loc')
+    scorpion_gantry_offset_rot = rospy.get_param('scorpion_gantry_offset_rot')
+
     mode = 0
     cmd = [0, 0, 0]
 
@@ -42,18 +46,21 @@ def main():
     high_lim = 1.0
     tolerance = 0.005
     long_vel = 0.3
-    lat_vel = 2.0
+    lat_vel = 5.0
     rate = 100
     r = rospy.Rate(rate/10)  # 100 Hz
     while not rospy.is_shutdown():
+
         if mode == 0:  # idle
             pass
+
         elif mode == 2:  # sweeping
             print "I know I'm sweeping"
             cur_pos[0] += vel_dir * lat_vel / rate
-            cur_pos[1] += long_vel / rate
+            # cur_pos[1] += long_vel / rate
             if cur_pos[0] < low_lim + tolerance or cur_pos[0] > high_lim - tolerance:
                 vel_dir *= -1
+
         elif mode == 3:  # positioning
             diff = [cmd[i] - cur_pos[i] for i in range(3)]
             for i in range(3):
@@ -65,16 +72,20 @@ def main():
                     else:
                         cur_pos[i] -= (lat_vel / rate)
 
-        pos_msg.x = cur_pos[0]
-        pos_msg.y = cur_pos[1]
-        pos_msg.z = cur_pos[2]
+
+
+        pos_msg.x = cur_pos[0] + scorpion_gantry_offset_loc[0]
+        pos_msg.y = cur_pos[1] + scorpion_gantry_offset_loc[1]
+        pos_msg.z = cur_pos[2] + scorpion_gantry_offset_loc[2]
         pub.publish(pos_msg)
 
-        br.sendTransform((cur_pos[0], cur_pos[1], 0),
-                         tf.transformations.quaternion_from_euler(0, 0, cur_pos[2]),
-                         rospy.Time.now(),
-                         "sensor_head",
-                         "world")
+        br.sendTransform((cur_pos[0] + scorpion_gantry_offset_loc[0], 
+                        cur_pos[1] + scorpion_gantry_offset_loc[1], 
+                        0 + scorpion_gantry_offset_loc[2]),
+                        tf.transformations.quaternion_from_euler(0, 0, cur_pos[2]),
+                        rospy.Time.now(),
+                        "sensor_head",
+                        "scorpion")
 
         print "Cur: ", [round(val, 2) for val in cur_pos]
         print "Cmd: ", cmd
