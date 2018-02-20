@@ -45,9 +45,9 @@ def update_detection(data):
         msg2.pose.position = msg.point
         msg2.pose.position.z = float(data.data) / 15
         msg2.pose.orientation.w = 1
-        msg2.scale.x = 0.01
-        msg2.scale.y = 0.01
-        msg2.scale.z = 0.01
+        msg2.scale.x = 10
+        msg2.scale.y = 10
+        msg2.scale.z = 10
         msg2.color.a = 1.0
         msg2.color.r = 0.42
         msg2.color.g = 0.35

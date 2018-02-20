@@ -2,6 +2,8 @@
 
 import rospy
 import numpy
+import math
+import tf
 from std_msgs.msg import Int16
 from geometry_msgs.msg import Point
 from visualization_msgs.msg import Marker
@@ -66,8 +68,8 @@ class CylinderMineExp:
         return ret
 
 
-def query_mine(data):
-    ret = mine.query(data.x, data.y)
+def query_mine(x,y):
+    ret = mine.query(x,y)
     pub.publish(Int16(ret))
 
 
@@ -80,12 +82,19 @@ def main():
     landmine_diameter = rospy.get_param('landmine_diameter')
     mine = CylinderMineExp(landmine_pos[0], landmine_pos[1], landmine_diameter, 0.1)
 
-    sub = rospy.Subscriber("gantry_pos", Point, query_mine)
+    listener = tf.TransformListener()
     pub = rospy.Publisher("md_signal", Int16, queue_size=10)
 
     r = rospy.Rate(100) # 100 Hz
 
     while not rospy.is_shutdown():
+        
+        try:
+            (trans,rot) = listener.lookupTransform('/world', '/sensor_head', rospy.Time(0))
+            query_mine(trans[0],trans[1])
+        except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
+            continue
+
         # do things
         r.sleep()  # indent less when going back to regular gantry_lib
 
