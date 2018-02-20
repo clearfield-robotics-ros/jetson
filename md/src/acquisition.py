@@ -7,6 +7,7 @@ import rospy
 from std_msgs.msg import Int16
 from geometry_msgs.msg import Point, PointStamped, Pose
 from visualization_msgs.msg import Marker
+import tf
 
 
 prev_pos = (0, 0)
@@ -58,9 +59,9 @@ def update_detection(data):
         print a, b, float(data.data)
 
 
-def update_pos(data):
+def update_pos(x,y):
     global prev_pos
-    prev_pos = (data.x, data.y)
+    prev_pos = (x,y)
 
 
 def main():
@@ -69,11 +70,22 @@ def main():
     rospy.init_node('md_analysis')
 
     sub = rospy.Subscriber('md_signal', Int16, update_detection)
-    sub2 = rospy.Subscriber('gantry_pos', Point, update_pos)
     pub = rospy.Publisher('md_strong_signal', PointStamped, queue_size=10)
     pub2 = rospy.Publisher('md_viz', Marker, queue_size=10)
 
-    rospy.spin()
+    listener = tf.TransformListener()
+
+    r = rospy.Rate(100) # 100 Hz
+    while not rospy.is_shutdown():
+        
+        try:
+            (trans,rot) = listener.lookupTransform('/scorpion', '/sensor_head', rospy.Time(0))
+            update_pos(trans[0],trans[1])
+        except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
+            continue
+
+        # do things
+        r.sleep()  # indent less when going back to regular gantry_lib
 
 if __name__ == "__main__":
     main()

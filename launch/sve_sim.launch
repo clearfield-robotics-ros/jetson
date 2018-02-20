@@ -10,7 +10,7 @@
   </node>
 
 
-<node name="gantry_sim" pkg="gantry" type="gantry_sim.py">
+<node name="gantry_sim" pkg="gantry" type="gantry_sim.py" output="screen">
   </node>
 <node name="gantry_drive" pkg="gantry" type="gantry_drive.py">
   </node>

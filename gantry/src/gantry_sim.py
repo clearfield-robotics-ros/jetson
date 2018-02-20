@@ -31,8 +31,8 @@ def main():
 
     mode = 0
     cmd = [0, 0, 0]
-
     cur_pos = [0, 0, 0]
+    abs_curr_pos = cur_pos
     vel_dir = 1
 
     rospy.init_node('gantry_sim')
@@ -52,16 +52,25 @@ def main():
 
     while not rospy.is_shutdown():
 
+
+
+
+
+
+
+        
+
         if mode == 0:  # idle
             pass
 
         elif mode == 2:  # sweeping
-            print "I know I'm sweeping"
+            print "sweeping"
             cur_pos[1] += vel_dir * lat_vel / rate
             if cur_pos[1] < low_lim + tolerance or cur_pos[1] > high_lim - tolerance:
                 vel_dir *= -1
 
         elif mode == 3:  # positioning
+            print "pinpointing"
             diff = [cmd[i] - cur_pos[i] for i in range(3)]
             for i in range(3):
                 if abs(diff[i]) < (lat_vel / rate):

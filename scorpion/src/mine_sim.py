@@ -86,7 +86,6 @@ def main():
     pub = rospy.Publisher("md_signal", Int16, queue_size=10)
 
     r = rospy.Rate(100) # 100 Hz
-
     while not rospy.is_shutdown():
         
         try:

@@ -4,6 +4,7 @@ import rospy
 import numpy
 from geometry_msgs.msg import Point
 from std_msgs.msg import Int16
+from std_msgs.msg import String
 from visualization_msgs.msg import Marker
 import tf
 import math
@@ -51,9 +52,12 @@ def updateLocation(loc, rot):
     m.color.b = 0.5
     pub.publish(m)
 
+advance = 1
+def found_mine(data):
+    global advance
+    advance = 0
 
 def main():
-
     global pub
     global br
     br = tf.TransformBroadcaster()
@@ -65,17 +69,17 @@ def main():
 
     rospy.init_node('scorpion')
     pub = rospy.Publisher('scorpion', Marker, queue_size=10)
-    # rospy.sleep(1)
-
-    r = rospy.Rate(10)  # 10 Hz
+    sub = rospy.Subscriber('found_mine', String, found_mine)
 
     # generate manually, but eventually get from localization!
     loc = [0,0,0]
     rot = [0,0,0]
 
+    r = rospy.Rate(10)  # 10 Hz
     while not rospy.is_shutdown():
 
-    	loc[0] += 5 # advance!
+        if advance == 1:
+    	   loc[0] += 5 # advance!
     	updateLocation(loc, rot)
 
         r.sleep()  # indent less when going back to regular gantry_lib

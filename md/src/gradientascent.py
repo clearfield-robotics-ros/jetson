@@ -2,6 +2,7 @@
 
 import rospy
 from geometry_msgs.msg import PointStamped, Point
+from std_msgs.msg import String
 import numpy as np
 import math
 from copy import deepcopy
@@ -35,7 +36,7 @@ def update_pos(data):
     # print data.point
 
     if data.point.z > 6:
-        # print "found something!"
+        pub_found_mine.publish("found_mine")
         found_something = True
 
     cur_sig[0] = data.point.x
@@ -49,6 +50,7 @@ def update_pos(data):
 
 
 rospy.init_node('md_planner')
+pub_found_mine = rospy.Publisher('/found_mine', String, queue_size=10)
 pub = rospy.Publisher('/cmd_from_md', Point, queue_size=10)
 sendToProbe = rospy.Publisher('/MDToProbe', Point, queue_size=10)
 sub = rospy.Subscriber('md_strong_signal', PointStamped, update_pos)
@@ -91,7 +93,7 @@ def main():
             pub.publish(sweep_msg)
         else:
             print "pinpointing!"
-            #pub.publish(Point(cur_sig[0], cur_sig[1], 0))
+            
             done = False
             step_size = 0.04
             shift = np.array([step_size, 0])
