@@ -42,9 +42,9 @@ def updateLocation(loc, rot):
     m.pose.orientation.z = scopion_q_rot[2]
     m.pose.orientation.w = scopion_q_rot[3]
 
-    m.scale.x = 0.01
-    m.scale.y = 0.01
-    m.scale.z = 0.01
+    m.scale.x = 1
+    m.scale.y = 1
+    m.scale.z = 1
     m.color.a = 1.0
     m.color.r = 0.5
     m.color.g = 0.5
@@ -75,7 +75,7 @@ def main():
 
     while not rospy.is_shutdown():
 
-    	loc[0] += 0.05 # advance!
+    	loc[0] += 5 # advance!
     	updateLocation(loc, rot)
 
         r.sleep()  # indent less when going back to regular gantry_lib

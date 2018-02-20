@@ -24,10 +24,9 @@ def main():
     global cmd
     br = tf.TransformBroadcaster()
 
-    global scorpion_gantry_offset_loc
-    global scorpion_gantry_offset_rot
     scorpion_gantry_offset_loc = rospy.get_param('scorpion_gantry_offset_loc')
     scorpion_gantry_offset_rot = rospy.get_param('scorpion_gantry_offset_rot')
+    gantry_width = rospy.get_param('gantry_width')
 
     mode = 0
     cmd = [0, 0, 0]
@@ -42,13 +41,12 @@ def main():
     pub = rospy.Publisher("gantry_pos", Point, queue_size=10)
     pos_msg = Point()
 
-    low_lim = 0.0
-    high_lim = 1.0
+    low_lim = -gantry_width/2
+    high_lim = gantry_width/2
     tolerance = 0.005
-    long_vel = 0.3
-    lat_vel = 5.0
+    lat_vel = 500
     rate = 100
-    r = rospy.Rate(rate/10)  # 100 Hz
+    r = rospy.Rate(rate)  # 100 Hz
     while not rospy.is_shutdown():
 
         if mode == 0:  # idle
@@ -56,9 +54,8 @@ def main():
 
         elif mode == 2:  # sweeping
             print "I know I'm sweeping"
-            cur_pos[0] += vel_dir * lat_vel / rate
-            # cur_pos[1] += long_vel / rate
-            if cur_pos[0] < low_lim + tolerance or cur_pos[0] > high_lim - tolerance:
+            cur_pos[1] += vel_dir * lat_vel / rate
+            if cur_pos[1] < low_lim + tolerance or cur_pos[1] > high_lim - tolerance:
                 vel_dir *= -1
 
         elif mode == 3:  # positioning

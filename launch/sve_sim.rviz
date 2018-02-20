@@ -4,6 +4,9 @@ Panels:
     Name: Displays
     Property Tree Widget:
       Expanded:
+        - /Grid1
+        - /MD1
+        - /World1
         - /Scorpion_tf1
       Splitter Ratio: 0.5
     Tree Height: 553
@@ -30,7 +33,7 @@ Visualization Manager:
   Class: ""
   Displays:
     - Alpha: 0.5
-      Cell Size: 1
+      Cell Size: 100
       Class: rviz/Grid
       Color: 160; 160; 164
       Enabled: true
@@ -49,9 +52,9 @@ Visualization Manager:
       Value: true
     - Class: rviz/Axes
       Enabled: true
-      Length: 1
+      Length: 300
       Name: MD
-      Radius: 0.10000000149011612
+      Radius: 30
       Reference Frame: sensor_head
       Value: true
     - Class: rviz/Marker
@@ -64,9 +67,9 @@ Visualization Manager:
       Value: true
     - Class: rviz/Axes
       Enabled: true
-      Length: 1
+      Length: 300
       Name: World
-      Radius: 0.10000000149011612
+      Radius: 30
       Reference Frame: world
       Value: true
     - Class: rviz/Marker
@@ -79,9 +82,9 @@ Visualization Manager:
       Value: true
     - Class: rviz/Axes
       Enabled: true
-      Length: 1
+      Length: 300
       Name: Scorpion_tf
-      Radius: 0.10000000149011612
+      Radius: 30
       Reference Frame: scorpion
       Value: true
   Enabled: true
@@ -108,25 +111,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 20.794631958007812
+      Distance: 7834.15185546875
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 4.339402675628662
-        Y: 2.0781426429748535
-        Z: -1.188690423965454
+        X: 2895.394287109375
+        Y: -683.7708129882812
+        Z: -1257.6474609375
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.9147969484329224
+      Pitch: 0.7097969651222229
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 2.555398464202881
+      Yaw: 2.670388698577881
     Saved: ~
 Window Geometry:
   Displays:
