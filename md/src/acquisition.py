@@ -43,8 +43,7 @@ def update_detection(data):
         msg2.id = seq
         msg2.type = 1  # cube
         msg2.action = 0  # add
-        msg2.pose.position = msg.point
-        msg2.pose.position.z = float(data.data) / 15
+        msg2.pose.position = Point(prev_world_pos[0], prev_world_pos[1], float(data.data)*10)
         msg2.pose.orientation.w = 1
         msg2.scale.x = 10
         msg2.scale.y = 10
@@ -59,9 +58,13 @@ def update_detection(data):
         print a, b, float(data.data)
 
 
-def update_pos(x,y):
+def update_local_pos(x,y):
     global prev_pos
     prev_pos = (x,y)
+
+def update_world_pos(x,y):
+    global prev_world_pos
+    prev_world_pos = (x,y)
 
 
 def main():
@@ -80,7 +83,13 @@ def main():
         
         try:
             (trans,rot) = listener.lookupTransform('/scorpion', '/sensor_head', rospy.Time(0))
-            update_pos(trans[0],trans[1])
+            update_local_pos(trans[0],trans[1])
+        except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
+            continue
+
+        try:
+            (trans,rot) = listener.lookupTransform('/world', '/sensor_head', rospy.Time(0))
+            update_world_pos(trans[0],trans[1])
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
             continue
 

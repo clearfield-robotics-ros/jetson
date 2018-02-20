@@ -95,7 +95,7 @@ def main():
             print "pinpointing!"
             
             done = False
-            step_size = 0.04
+            step_size = 50
             shift = np.array([step_size, 0])
             shift_2 = rotate(shift, 2 * math.pi / 3)
             shift_3 = rotate(shift, 4 * math.pi / 3)

@@ -80,7 +80,7 @@ def main():
 
     landmine_pos = rospy.get_param('landmine_pos')
     landmine_diameter = rospy.get_param('landmine_diameter')
-    mine = CylinderMineExp(landmine_pos[0], landmine_pos[1], landmine_diameter, 0.1)
+    mine = CylinderMineExp(landmine_pos[0], landmine_pos[1], landmine_diameter, 30) # 0.1
 
     listener = tf.TransformListener()
     pub = rospy.Publisher("md_signal", Int16, queue_size=10)
