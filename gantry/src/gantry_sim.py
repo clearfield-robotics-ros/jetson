@@ -27,6 +27,7 @@ def main():
     scorpion_gantry_offset_loc = rospy.get_param('scorpion_gantry_offset_loc')
     scorpion_gantry_offset_rot = rospy.get_param('scorpion_gantry_offset_rot')
     gantry_width = rospy.get_param('gantry_width')
+    gantry_sweep_speed = rospy.get_param('gantry_sweep_speed')
 
     mode = 0
     cmd = [0, 0, 0]
@@ -43,10 +44,12 @@ def main():
 
     low_lim = -gantry_width/2
     high_lim = gantry_width/2
+    lat_vel = gantry_sweep_speed
     tolerance = 0.005
-    lat_vel = 500
+
     rate = 100
     r = rospy.Rate(rate)  # 100 Hz
+
     while not rospy.is_shutdown():
 
         if mode == 0:  # idle

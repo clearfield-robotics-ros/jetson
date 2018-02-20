@@ -1,7 +1,17 @@
+##############################
+### PARAMETERS FOR MINEBOT ###
+##############################
+
+### Landmine ###
+landmine_pos: [1600, 100]
+landmine_diameter: 100
+
+### Scorpion Model ###
 model_scorpion_offset_loc: [-450,-425,0]
 model_scorpion_offset_rot: [1.57079632679, 0, 1.57079632679]
 
+### Gantry ###
 scorpion_gantry_offset_loc: [1200,0,0]
 scorpion_gantry_offset_rot: [0,0,0]
-
-gantry_width: 1000
+gantry_width: 1000 #mm
+gantry_sweep_speed: 500 #mm/s

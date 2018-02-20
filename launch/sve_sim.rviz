@@ -3,11 +3,7 @@ Panels:
     Help Height: 85
     Name: Displays
     Property Tree Widget:
-      Expanded:
-        - /Grid1
-        - /MD1
-        - /World1
-        - /Scorpion_tf1
+      Expanded: ~
       Splitter Ratio: 0.5
     Tree Height: 553
   - Class: rviz/Selection
@@ -87,6 +83,14 @@ Visualization Manager:
       Radius: 30
       Reference Frame: scorpion
       Value: true
+    - Class: rviz/Marker
+      Enabled: true
+      Marker Topic: /mine_marker
+      Name: Mine
+      Namespaces:
+        mine: true
+      Queue Size: 100
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -111,25 +115,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 7834.15185546875
+      Distance: 3356.310791015625
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 2895.394287109375
-        Y: -683.7708129882812
-        Z: -1257.6474609375
+        X: 1263.0906982421875
+        Y: 263.7289123535156
+        Z: -601.2418212890625
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.7097969651222229
+      Pitch: 0.414797306060791
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 2.670388698577881
+      Yaw: 2.120389223098755
     Saved: ~
 Window Geometry:
   Displays:
@@ -147,5 +151,5 @@ Window Geometry:
   Views:
     collapsed: true
   Width: 1140
-  X: 191
-  Y: 172
+  X: 250
+  Y: 206
