@@ -25,7 +25,7 @@ class CylinderMine:
 
 class CylinderMineExp:
 
-    def __init__(self, x, y, diameter, decay):
+    def __init__(self, x, y, z, diameter, decay):
         self.x = x
         self.y = y
         self.radius = diameter / 2.0  # in meters
@@ -44,7 +44,7 @@ class CylinderMineExp:
         m.action = 0  # add/modify
         m.pose.position.x = x
         m.pose.position.y = y
-        m.pose.position.z = -150
+        m.pose.position.z = z # depth
         m.pose.orientation.x = 0.0
         m.pose.orientation.y = 0.0
         m.pose.orientation.z = 0.0
@@ -67,7 +67,6 @@ class CylinderMineExp:
         # print 15*numpy.exp(-(dist - self.radius) / self.decay)
         return ret
 
-
 def query_mine(x,y):
     ret = mine.query(x,y)
     pub.publish(Int16(ret))
@@ -80,7 +79,8 @@ def main():
 
     landmine_pos = rospy.get_param('landmine_pos')
     landmine_diameter = rospy.get_param('landmine_diameter')
-    mine = CylinderMineExp(landmine_pos[0], landmine_pos[1], landmine_diameter, 30) # 0.1
+    metal_detector_decay = rospy.get_param('metal_detector_decay')
+    mine = CylinderMineExp(landmine_pos[0], landmine_pos[1], landmine_pos[2], landmine_diameter, metal_detector_decay)
 
     listener = tf.TransformListener()
     pub = rospy.Publisher("md_signal", Int16, queue_size=10)

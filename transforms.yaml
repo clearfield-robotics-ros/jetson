@@ -3,8 +3,9 @@
 ##############################
 
 ### Landmine ###
-landmine_pos: [1500, 100]
+landmine_pos: [1500, 100, -150]
 landmine_diameter: 100
+metal_detector_decay: 30
 
 ### Scorpion Model ###
 model_scorpion_offset_loc: [-450,-425,0]
