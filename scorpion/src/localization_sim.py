@@ -10,6 +10,7 @@ import tf
 import math
 
 ### monitor current state ###
+current_state = 0 # if we don't get msgs
 def update_state(data):
     global current_state
     current_state = data.data
@@ -19,7 +20,8 @@ jetson_current_state = rospy.Subscriber('current_state', Int16, update_state)
 
 def updateLocation(loc, rot):
 
-    loc[0] += 5 # advance!
+    if current_state == 2:
+        loc[0] += 3 # advance!
     
 	# send transform
     q_rot = tf.transformations.quaternion_from_euler(rot[0],rot[1],rot[2])
@@ -44,8 +46,7 @@ def main():
     r = rospy.Rate(30)  # 30
     while not rospy.is_shutdown():
 
-        if jetson_current_state == 2:
-            updateLocation(loc, rot)
+        updateLocation(loc, rot)
 
         r.sleep()  # indent less when going back to regular gantry_lib
 

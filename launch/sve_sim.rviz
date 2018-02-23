@@ -60,7 +60,7 @@ Visualization Manager:
       Marker Topic: /md_viz
       Name: MD_signal
       Namespaces:
-        {}
+        md_viz: true
       Queue Size: 100
       Value: true
     - Class: rviz/Axes
@@ -75,7 +75,7 @@ Visualization Manager:
       Marker Topic: /scorpion
       Name: Scorpion_mesh
       Namespaces:
-        {}
+        scorpion: true
       Queue Size: 100
       Value: true
     - Class: rviz/Axes
@@ -124,25 +124,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 1112.8558349609375
+      Distance: 1679.3416748046875
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 1386.74755859375
-        Y: -19.772968292236328
-        Z: 24.024658203125
+        X: 1056.9273681640625
+        Y: -134.02362060546875
+        Z: 42.26372146606445
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.5797958374023438
+      Pitch: 0.4197971522808075
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 2.294041633605957
+      Yaw: 0.6808480620384216
     Saved: ~
 Window Geometry:
   Displays:
@@ -161,4 +161,4 @@ Window Geometry:
     collapsed: true
   Width: 947
   X: 2559
-  Y: 193
+  Y: 186

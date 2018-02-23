@@ -53,6 +53,7 @@ def updateLocation(loc, rot):
     m.color.b = 0.5
     pub.publish(m)
 
+### States ###
 # 0 - Idle
 # 1 - Calibrating
 # 2 - General Surveying
@@ -65,27 +66,12 @@ def update_state(data):
     global current_state
     desired_state = data.data
 
-    if current_state == 0:
-        current_state = desired_state
-
-    elif current_state == 1:
-        current_state = desired_state
-
-    elif current_state == 2:
-        current_state = desired_state
-
-    elif current_state == 3:
-        current_state = desired_state
- 
-    elif current_state == 4:
-        if not desired_state == 3: # ie ignore new md signals onece probing
+    if desired_state == 3: # safety against awry metal detector signals
+        if current_state == 2:
             current_state = desired_state
-
-    elif current_state == 5:
+    else:
         current_state = desired_state
 
-    else:
-        print ("invalid state")
 
 def state_machine():
 
@@ -100,8 +86,6 @@ def state_machine():
 
     elif current_state == 2:
         braking_desired_state.publish(0) # brakes off while surveying 
-        # loc[0] += 5 # advance!
-        # updateLocation(loc, rot)
 
     elif current_state == 3:
         braking_desired_state.publish(1) # brakes on while pinpointing 
@@ -113,7 +97,7 @@ def state_machine():
         braking_desired_state.publish(1) # brakes on while marking for sure
 
     else:
-        print ("invalid state")
+        print ("jetson is in an invalid state: see scorpion.py")
 
 ### pub / sub ###
 pub = rospy.Publisher('scorpion', Marker, queue_size=10)
@@ -123,7 +107,6 @@ gui_jetson_desired_state = rospy.Subscriber('/minebot_gui/minebot_gui/desired_st
 braking_desired_state = rospy.Publisher('braking_desired_state', Int16, queue_size=10)
 
 def main():
-    
     rospy.init_node('scorpion')
 
     global br
@@ -135,23 +118,18 @@ def main():
     model_scorpion_offset_loc = rospy.get_param('model_scorpion_offset_loc')
     model_scorpion_offset_rot = rospy.get_param('model_scorpion_offset_rot')
 
-    # generate manually, but eventually get from localization!
-    # global loc, rot
-    # loc = [0,0,0]
-    # rot = [0,0,0]
-    # updateLocation(loc, rot)
-
     r = rospy.Rate(10)  # 10 Hz
     while not rospy.is_shutdown():
-
-        try:
-            updateLocation(listener.lookupTransform('/odom', '/base_link', rospy.Time(0)))     
-        except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
-            continue
 
         state_machine() # perform functions in the state
 
         jetson_current_state.publish(current_state) # broadcast our state
+
+        try:
+            (loc,rot) = listener.lookupTransform('/odom', '/base_link', rospy.Time(0))
+            updateLocation(loc,rot)     
+        except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
+            continue
 
         r.sleep()  # indent less when going back to regular gantry_lib
 
