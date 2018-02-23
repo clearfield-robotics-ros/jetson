@@ -14,7 +14,6 @@ at_goal = False
 cur_sig = np.array([0.0, 0.0, 0.0])
 goal = np.array([0.0, 0.0])
 
-
 def rotate(vec, angle):
     """Rotate a vector `v` by the given angle, relative to the anchor point."""
     x, y = vec
@@ -28,7 +27,7 @@ def rotate(vec, angle):
     return np.array([nx, ny])
 
 
-def update_pos(data):
+def incoming_signal(data):
     global found_something
     global cur_sig
     global at_goal
@@ -36,7 +35,7 @@ def update_pos(data):
     # print "updating pos"
     # print data.point
 
-    if data.point.z > 6:
+    if data.point.z > 5:
         jetson_desired_state.publish(3) # start pinpointing
         found_something = True
 
@@ -50,11 +49,12 @@ def update_pos(data):
         at_goal = False
 
 
+### pub / sub ###
 rospy.init_node('md_planner')
 jetson_desired_state = rospy.Publisher('/desired_state', Int16, queue_size=10)
 pub = rospy.Publisher('/cmd_from_md', Point, queue_size=10)
 sendToProbe = rospy.Publisher('/MDToProbe', Point, queue_size=10)
-sub = rospy.Subscriber('md_strong_signal', PointStamped, update_pos)
+sub = rospy.Subscriber('md_strong_signal', PointStamped, incoming_signal)
 
 
 def set_and_wait_for_goal(my_goal):
@@ -88,12 +88,12 @@ def main():
 
     r = rospy.Rate(100)  # 100 Hz
     while not rospy.is_shutdown():
+
         if not found_something:
-            # print "sweeping"
+
             pub.publish(sweep_msg)
         else:
-            print "pinpointing!"
-            
+
             done = False
             step_size = 30
             shift = np.array([step_size, 0])
@@ -151,6 +151,8 @@ def main():
                 sendToProbe.publish(msg)
 
                 print "TIME TO PROBE AT:", cur_sig
+                jetson_desired_state.publish(4)
+
                 return
         r.sleep()
 

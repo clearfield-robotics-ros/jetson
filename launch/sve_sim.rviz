@@ -60,7 +60,7 @@ Visualization Manager:
       Marker Topic: /md_viz
       Name: MD_signal
       Namespaces:
-        md_viz: true
+        {}
       Queue Size: 100
       Value: true
     - Class: rviz/Axes
@@ -75,7 +75,7 @@ Visualization Manager:
       Marker Topic: /scorpion
       Name: Scorpion_mesh
       Namespaces:
-        scorpion: true
+        {}
       Queue Size: 100
       Value: true
     - Class: rviz/Axes
@@ -160,5 +160,5 @@ Window Geometry:
   Views:
     collapsed: true
   Width: 947
-  X: 2965
-  Y: 207
+  X: 2559
+  Y: 193
