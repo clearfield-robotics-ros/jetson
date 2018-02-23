@@ -2,6 +2,7 @@
 
 import rospy
 from geometry_msgs.msg import PointStamped, Point
+from std_msgs.msg import Int16
 from std_msgs.msg import String
 import numpy as np
 import math
@@ -36,7 +37,7 @@ def update_pos(data):
     # print data.point
 
     if data.point.z > 6:
-        pub_found_mine.publish("found_mine")
+        jetson_desired_state.publish(3) # start pinpointing
         found_something = True
 
     cur_sig[0] = data.point.x
@@ -50,11 +51,10 @@ def update_pos(data):
 
 
 rospy.init_node('md_planner')
-pub_found_mine = rospy.Publisher('/found_mine', String, queue_size=10)
+jetson_desired_state = rospy.Publisher('/desired_state', Int16, queue_size=10)
 pub = rospy.Publisher('/cmd_from_md', Point, queue_size=10)
 sendToProbe = rospy.Publisher('/MDToProbe', Point, queue_size=10)
 sub = rospy.Subscriber('md_strong_signal', PointStamped, update_pos)
-
 
 
 def set_and_wait_for_goal(my_goal):

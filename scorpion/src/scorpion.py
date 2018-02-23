@@ -52,13 +52,53 @@ def updateLocation(loc, rot):
     m.color.b = 0.5
     pub.publish(m)
 
-advance = 1
-def found_mine(data):
-    global advance
-    advance = 0
+current_state = 2 # initial state
+# 0 - Idle
+# 1 - Calibrating
+# 2 - General Surveying
+# 3 - MD Pinpointing
+# 4 - Probing
+
+def update_state(data):
+    global current_state
+    current_state = data.data
+
+def state_machine():
+
+    global loc, rot
+
+    print current_state
+
+    if current_state == 0:
+        braking_desired_state.publish(0) # no brakes while we're chilling
+
+    elif current_state == 1:
+        braking_desired_state.publish(1) # brakes on while calibrating
+
+    elif current_state == 2:
+        braking_desired_state.publish(0) # brakes off while surveying 
+        loc[0] += 5 # advance!
+        updateLocation(loc, rot)
+
+    elif current_state == 3:
+        braking_desired_state.publish(1) # brakes on while pinpointing 
+
+    elif current_state == 4:
+        braking_desired_state.publish(1) # brakes on while probing for sure
+
+    else:
+        print ("invalid state")
+
+### pub / sub ###
+pub = rospy.Publisher('scorpion', Marker, queue_size=10)
+jetson_current_state = rospy.Publisher('current_state', Int16, queue_size=10)
+jetson_desired_state = rospy.Subscriber('desired_state', Int16, update_state)
+braking_desired_state = rospy.Publisher('braking_desired_state', Int16, queue_size=10)
 
 def main():
-    global pub
+    
+    rospy.init_node('scorpion')
+
     global br
     br = tf.TransformBroadcaster()
     
@@ -67,23 +107,19 @@ def main():
     model_scorpion_offset_loc = rospy.get_param('model_scorpion_offset_loc')
     model_scorpion_offset_rot = rospy.get_param('model_scorpion_offset_rot')
 
-    rospy.init_node('scorpion')
-    pub = rospy.Publisher('scorpion', Marker, queue_size=10)
-    sub = rospy.Subscriber('found_mine', String, found_mine)
-
     # generate manually, but eventually get from localization!
+    global loc, rot
     loc = [0,0,0]
     rot = [0,0,0]
 
     r = rospy.Rate(10)  # 10 Hz
     while not rospy.is_shutdown():
 
-        if advance == 1:
-    	   loc[0] += 5 # advance!
-    	updateLocation(loc, rot)
+        state_machine() # perform functions in the state
+
+        jetson_current_state.publish(current_state) # broadcast our state
 
         r.sleep()  # indent less when going back to regular gantry_lib
-
 
 if __name__ == "__main__":
     main()
