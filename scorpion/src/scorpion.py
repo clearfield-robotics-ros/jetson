@@ -42,7 +42,7 @@ def updateLocation(loc, rot):
     m.pose.orientation.y = scopion_q_rot[1]
     m.pose.orientation.z = scopion_q_rot[2]
     m.pose.orientation.w = scopion_q_rot[3]
-    
+
 
     m.scale.x = 1
     m.scale.y = 1
@@ -85,10 +85,10 @@ def state_machine():
         braking_desired_state.publish(1) # brakes on while calibrating
 
     elif current_state == 2:
-        braking_desired_state.publish(0) # brakes off while surveying 
+        braking_desired_state.publish(0) # brakes off while surveying
 
     elif current_state == 3:
-        braking_desired_state.publish(1) # brakes on while pinpointing 
+        braking_desired_state.publish(1) # brakes on while pinpointing
 
     elif current_state == 4:
         braking_desired_state.publish(1) # brakes on while probing for sure
@@ -112,7 +112,7 @@ def main():
     global br
     br = tf.TransformBroadcaster()
     listener = tf.TransformListener()
-    
+
     global model_scorpion_offset_loc
     global model_scorpion_offset_rot
     model_scorpion_offset_loc = rospy.get_param('model_scorpion_offset_loc')
@@ -127,7 +127,7 @@ def main():
 
         try:
             (loc,rot) = listener.lookupTransform('/odom', '/base_link', rospy.Time(0))
-            updateLocation(loc,rot)     
+            updateLocation(loc,rot)
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
             continue
 
