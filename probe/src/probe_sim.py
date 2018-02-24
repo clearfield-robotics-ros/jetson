@@ -25,7 +25,7 @@ def main():
 
     sub = rospy.Subscriber("/MDToProbe", Point, setTarget)
 
-    r = rospy.Rate(0.01)  # 100 Hz
+    r = rospy.Rate(100)  # 100 Hz
 
     while not rospy.is_shutdown():
 

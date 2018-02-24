@@ -21,8 +21,8 @@ jetson_current_state = rospy.Subscriber('current_state', Int16, update_state)
 def updateLocation(loc, rot):
 
     if current_state == 2:
-        loc[0] += 3 # advance!
-    
+        loc[0] += 1.5 # advance!
+
 	# send transform
     q_rot = tf.transformations.quaternion_from_euler(rot[0],rot[1],rot[2])
     br.sendTransform(loc,
@@ -33,12 +33,12 @@ def updateLocation(loc, rot):
 
 
 def main():
-    
+
     rospy.init_node('localization_sim')
 
     global br
     br = tf.TransformBroadcaster()
-    
+
     global loc, rot
     loc = [0,0,0]
     rot = [0,0,0]
