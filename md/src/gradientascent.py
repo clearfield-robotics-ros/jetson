@@ -145,8 +145,8 @@ def main():
             else:
 
                 # pass the batton to the probe
-                msg = Point(cur_sig[0], 
-                            cur_sig[1], 
+                msg = Point(cur_sig[0],
+                            cur_sig[1],
                             cur_sig[2])
                 sendToProbe.publish(msg)
 

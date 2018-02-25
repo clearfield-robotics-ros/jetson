@@ -24,7 +24,7 @@ def update_mode(data):
 #             tf.transformations.quaternion_from_euler(rot[0], rot[1], rot[2]),
 #             rospy.Time.now(),
 #             "sensor_head",
-#             "gantry")   
+#             "gantry")
 
 def main():
     global mode
@@ -37,10 +37,12 @@ def main():
     gantry_width = rospy.get_param('gantry_width')
     gantry_sweep_speed = rospy.get_param('gantry_sweep_speed')
 
+    md_gantry_offset_loc = rospy.get_param('md_gantry_offset_loc')
+
     rospy.init_node('gantry_sim')
 
     global br
-    br = tf.TransformBroadcaster()    
+    br = tf.TransformBroadcaster()
     listener = tf.TransformListener()
 
     mode = 0
@@ -49,9 +51,9 @@ def main():
     trans = [0, 0, 0]
     rot = [0, 0, 0]
     vel_dir = 1
-    
-    low_lim = -gantry_width/2
-    high_lim = gantry_width/2
+
+    low_lim = 0
+    high_lim = gantry_width
     lat_vel = gantry_sweep_speed
     tolerance = 0.005
 
@@ -60,15 +62,25 @@ def main():
 
     while not rospy.is_shutdown():
 
-        br.sendTransform((scorpion_gantry_offset_loc[0], 
-                    scorpion_gantry_offset_loc[1], 
+        ### Publish transform of gantry origin relative to scorpion ###
+        br.sendTransform((scorpion_gantry_offset_loc[0],
+                    scorpion_gantry_offset_loc[1],
                     scorpion_gantry_offset_loc[2]),
-                    tf.transformations.quaternion_from_euler(scorpion_gantry_offset_rot[0], 
-                        scorpion_gantry_offset_rot[1], 
+                    tf.transformations.quaternion_from_euler(scorpion_gantry_offset_rot[0],
+                        scorpion_gantry_offset_rot[1],
                         scorpion_gantry_offset_rot[2]),
                     rospy.Time.now(),
                     "gantry",
                     "scorpion")
+
+        ### Publish transform of md relative to sensor_head ###
+        br.sendTransform((md_gantry_offset_loc[0],
+                    md_gantry_offset_loc[1],
+                    md_gantry_offset_loc[2]),
+                    tf.transformations.quaternion_from_euler(0,0,0),
+                    rospy.Time.now(),
+                    "md",
+                    "sensor_head")
 
         ### idle ###
         if mode == 0:
@@ -90,7 +102,7 @@ def main():
                     tf.transformations.quaternion_from_euler(rot[0], rot[1], rot[2]),
                     rospy.Time.now(),
                     "sensor_head",
-                    "gantry")   
+                    "gantry")
 
             except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
 
@@ -98,7 +110,7 @@ def main():
                     tf.transformations.quaternion_from_euler(0,0,0),
                     rospy.Time.now(),
                     "sensor_head",
-                    "gantry")  
+                    "gantry")
 
                 continue
 
@@ -120,15 +132,15 @@ def main():
                         else:
                             trans[i] -= (lat_vel / rate)
 
-                br.sendTransform((trans[0], 
-                            trans[1], 
+                br.sendTransform((trans[0],
+                            trans[1],
                             trans[2]),
-                            tf.transformations.quaternion_from_euler(rot[0], 
-                                rot[1], 
+                            tf.transformations.quaternion_from_euler(rot[0],
+                                rot[1],
                                 rot[2]),
                             rospy.Time.now(),
                             "sensor_head",
-                            "scorpion")   
+                            "scorpion")
 
             except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
                 continue

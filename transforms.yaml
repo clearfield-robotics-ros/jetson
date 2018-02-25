@@ -3,7 +3,7 @@
 ##############################
 
 ### Landmine ###
-landmine_pos: [1500, 100, -150]
+landmine_pos: [1700, 100, -150]
 landmine_diameter: 100
 metal_detector_decay: 30
 
@@ -12,7 +12,10 @@ model_scorpion_offset_loc: [-450,-425,0]
 model_scorpion_offset_rot: [1.57079632679, 0, 1.57079632679]
 
 ### Gantry ###
-scorpion_gantry_offset_loc: [1200,0,0]
+scorpion_gantry_offset_loc: [1200,-400,300] # y offset is half of width
 scorpion_gantry_offset_rot: [0,0,0]
-gantry_width: 1000 #mm
+gantry_width: 800 #mm
 gantry_sweep_speed: 500 #mm/s
+
+### Metal Detector ###
+md_gantry_offset_loc: [250,0,-300] # y offset is half of width
