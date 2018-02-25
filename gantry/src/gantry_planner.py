@@ -122,7 +122,6 @@ def main():
             try:
                 (trans,rot) = listener.lookupTransform('/gantry', '/sensor_head', rospy.Time(0))
 
-
                 # convert desired md position to desired sensor_head position
                 cmd[0] -= md_gantry_offset_loc[0]
                 cmd[1] -= md_gantry_offset_loc[1]

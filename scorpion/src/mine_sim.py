@@ -87,9 +87,9 @@ def main():
 
     r = rospy.Rate(100) # 100 Hz
     while not rospy.is_shutdown():
-        
+
         try:
-            (trans,rot) = listener.lookupTransform('/world', '/sensor_head', rospy.Time(0))
+            (trans,rot) = listener.lookupTransform('/world', '/md', rospy.Time(0))
             query_mine(trans[0],trans[1])
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
             continue
