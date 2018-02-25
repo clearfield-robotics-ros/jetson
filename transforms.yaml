@@ -18,4 +18,4 @@ gantry_width: 800 #mm
 gantry_sweep_speed: 500 #mm/s
 
 ### Metal Detector ###
-md_gantry_offset_loc: [250,0,-300] # y offset is half of width
+md_gantry_offset_loc: [250,-100,-300] # y offset is half of width
