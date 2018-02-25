@@ -120,7 +120,13 @@ def main():
             print "pinpointing"
 
             try:
-                (trans,rot) = listener.lookupTransform('/scorpion', '/sensor_head', rospy.Time(0))
+                (trans,rot) = listener.lookupTransform('/gantry', '/sensor_head', rospy.Time(0))
+
+
+                # convert desired md position to desired sensor_head position
+                cmd[0] -= md_gantry_offset_loc[0]
+                cmd[1] -= md_gantry_offset_loc[1]
+
 
                 diff = [cmd[i] - trans[i] for i in range(3)]
                 for i in range(3):
@@ -140,7 +146,7 @@ def main():
                                 rot[2]),
                             rospy.Time.now(),
                             "sensor_head",
-                            "scorpion")
+                            "gantry")
 
             except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
                 continue

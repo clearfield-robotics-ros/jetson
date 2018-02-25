@@ -84,7 +84,7 @@ Visualization Manager:
       Marker Topic: /md_viz
       Name: MD_signal
       Namespaces:
-        {}
+        md_viz: true
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -100,7 +100,7 @@ Visualization Manager:
       Marker Topic: /mine_marker
       Name: Mine
       Namespaces:
-        mine: true
+        {}
       Queue Size: 100
       Value: true
   Enabled: true
@@ -128,25 +128,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 2604.4248
+      Distance: 1948.61389
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 706.919067
-        Y: 171.127014
-        Z: 181.832642
+        X: 1460.48621
+        Y: 226.249588
+        Z: 439.710449
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.0500000007
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Pitch: 0.459797084
+      Pitch: 0.469796538
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 0.425848514
+      Yaw: 0.750849009
     Saved: ~
 Window Geometry:
   Displays:

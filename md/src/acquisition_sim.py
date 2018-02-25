@@ -80,15 +80,15 @@ def main():
 
     r = rospy.Rate(100) # 100 Hz
     while not rospy.is_shutdown():
-        
+
         try:
-            (trans,rot) = listener.lookupTransform('/scorpion', '/sensor_head', rospy.Time(0))
+            (trans,rot) = listener.lookupTransform('/gantry', '/md', rospy.Time(0))
             update_local_pos(trans[0],trans[1])
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
             continue
 
         try:
-            (trans,rot) = listener.lookupTransform('/world', '/sensor_head', rospy.Time(0))
+            (trans,rot) = listener.lookupTransform('/world', '/md', rospy.Time(0))
             update_world_pos(trans[0],trans[1])
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
             continue
