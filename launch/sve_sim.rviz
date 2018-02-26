@@ -84,7 +84,7 @@ Visualization Manager:
       Marker Topic: /md_viz
       Name: MD_signal
       Namespaces:
-        md_viz: true
+        {}
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -100,7 +100,7 @@ Visualization Manager:
       Marker Topic: /mine_marker
       Name: Mine
       Namespaces:
-        mine: true
+        {}
       Queue Size: 100
       Value: true
   Enabled: true
@@ -164,5 +164,5 @@ Window Geometry:
   Views:
     collapsed: true
   Width: 947
-  X: 2149
-  Y: 243
+  X: 116
+  Y: 146
