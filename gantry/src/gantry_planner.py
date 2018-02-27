@@ -195,7 +195,7 @@ def main():
             sensor_head[4] = cmd_probe.angular.y
             sensor_head[5] = cmd_probe.angular.z
 
-            if probe_distance > 800:
+            # if probe_distance > 800:
                 # send message for no contact
 
             # wait till we reach max extention or we hit a mine!

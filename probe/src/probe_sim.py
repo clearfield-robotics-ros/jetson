@@ -122,11 +122,11 @@ def main():
             # get first probe Point - find x/y position for desired probe
             if probe_state == 0 and not set_desired_gantry_pose:
 
-                # define desired probe tip position
+                # define desired probe tip position in gantry frame
                 desired_probe_tip = Point()
                 desired_probe_tip.x = target.x - landmine_diameter/2*probe_safety_factor
                 desired_probe_tip.y = target.y
-                desired_probe_tip.z = -300 + landmine_pos[2] # set to depth
+                desired_probe_tip.z = -scorpion_gantry_offset_loc[2] + landmine_pos[2] # set to depth
 
                 # br.sendTransform((desired_probe_tip.x,desired_probe_tip.y,desired_probe_tip.z),
                 #     tf.transformations.quaternion_from_euler(0,0,0),
@@ -150,7 +150,6 @@ def main():
 
                 pub.publish(desired_gantry_pose)
                 set_desired_gantry_pose = True
-
 
             elif probe_state == 1:
                 print "get 2nd point"

@@ -14,6 +14,7 @@ find_package(catkin REQUIRED COMPONENTS
 add_message_files(
   FILES
   control.msg
+  detection_result.msg
 )
 
 generate_messages(

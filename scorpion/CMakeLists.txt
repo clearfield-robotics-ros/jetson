@@ -8,21 +8,25 @@ find_package(catkin REQUIRED COMPONENTS
   dynamic_reconfigure
 )
 
-
-
 # add_service_files(
 #   FILES
 # )
 
-# generate_messages(
-#   DEPENDENCIES
-#   std_msgs
-# )
+add_message_files(
+ FILES
+ detection_result.msg
+)
+
+generate_messages(
+ DEPENDENCIES
+ std_msgs
+)
 
 catkin_package(
   CATKIN_DEPENDS
   message_runtime
 )
+
 
 include_directories(
 # include
