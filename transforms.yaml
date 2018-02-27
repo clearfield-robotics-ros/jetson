@@ -5,6 +5,7 @@
 ### Landmine ###
 landmine_pos: [1700, 100, -150]
 landmine_diameter: 100
+landmine_height: 50
 metal_detector_decay: 30
 
 ### Scorpion Model ###
@@ -24,3 +25,5 @@ md_gantry_offset_loc: [250,-100,-300] # y offset is half of width
 probe_base_offset_loc: [0,100,-50]
 probe_base_offset_rot: [0,0.523599,1.5708] # start out of the way
 probe_speed: 100 #mm/s
+probe_safety_factor: 1.25
+probe_length: 800

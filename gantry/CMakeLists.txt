@@ -11,10 +11,15 @@ find_package(catkin REQUIRED COMPONENTS
 #   FILES
 # )
 
-# generate_messages(
-#   DEPENDENCIES
-#   std_msgs
-# )
+add_message_files(
+  FILES
+  control.msg
+)
+
+generate_messages(
+  DEPENDENCIES
+  std_msgs
+)
 
 catkin_package(
   CATKIN_DEPENDS

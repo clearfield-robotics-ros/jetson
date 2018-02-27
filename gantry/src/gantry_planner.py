@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 
 import rospy
-import numpy
+import numpy as np
 from geometry_msgs.msg import Point
+from geometry_msgs.msg import Twist
 from std_msgs.msg import Int16
 import tf
 
@@ -17,12 +18,6 @@ def update_state(data):
 
 jetson_current_state = rospy.Subscriber('current_state', Int16, update_state)
 
-
-def update_cmd(data):
-    global cmd
-    cmd = [data.x, data.y, data.z]
-
-
 scorpion_gantry_offset_loc = rospy.get_param('scorpion_gantry_offset_loc')
 scorpion_gantry_offset_rot = rospy.get_param('scorpion_gantry_offset_rot')
 md_gantry_offset_loc = rospy.get_param('md_gantry_offset_loc')
@@ -32,36 +27,57 @@ probe_base_offset_rot = rospy.get_param('probe_base_offset_rot')
 def publish_transforms():
     global br
 
-    ### Publish transform of gantry origin relative to scorpion ###
     br.sendTransform((scorpion_gantry_offset_loc[0],
-                scorpion_gantry_offset_loc[1],
-                scorpion_gantry_offset_loc[2]),
-                tf.transformations.quaternion_from_euler(scorpion_gantry_offset_rot[0],
-                    scorpion_gantry_offset_rot[1],
-                    scorpion_gantry_offset_rot[2]),
-                rospy.Time.now(),
-                "gantry",
-                "scorpion")
+        scorpion_gantry_offset_loc[1],
+        scorpion_gantry_offset_loc[2]),
+        tf.transformations.quaternion_from_euler(scorpion_gantry_offset_rot[0],
+            scorpion_gantry_offset_rot[1],
+            scorpion_gantry_offset_rot[2]),
+        rospy.Time.now(),
+        "gantry",
+        "scorpion")
 
-    ### Publish transform of md relative to sensor_head ###
+    br.sendTransform((sensor_head[0],sensor_head[1],sensor_head[2]),
+        tf.transformations.quaternion_from_euler(sensor_head[3],sensor_head[4],sensor_head[5]),
+        rospy.Time.now(),
+        "sensor_head",
+        "gantry")
+
     br.sendTransform((md_gantry_offset_loc[0],
-                md_gantry_offset_loc[1],
-                md_gantry_offset_loc[2]),
-                tf.transformations.quaternion_from_euler(0,0,0),
-                rospy.Time.now(),
-                "md",
-                "sensor_head")
+        md_gantry_offset_loc[1],
+        md_gantry_offset_loc[2]),
+        tf.transformations.quaternion_from_euler(0,0,0),
+        rospy.Time.now(),
+        "md",
+        "sensor_head")
 
-    ### Publish transform of md relative to sensor_head ###
     br.sendTransform((probe_base_offset_loc[0],
-                probe_base_offset_loc[1],
-                probe_base_offset_loc[2]),
-                tf.transformations.quaternion_from_euler(probe_base_offset_rot[0],
-                    probe_base_offset_rot[1],
-                    probe_base_offset_rot[2] + probe_yaw_angle),
-                rospy.Time.now(),
-                "probe_base",
-                "sensor_head")
+        probe_base_offset_loc[1],
+        probe_base_offset_loc[2]),
+        tf.transformations.quaternion_from_euler(probe_base_offset_rot[0],
+            probe_base_offset_rot[1],
+            probe_yaw_angle),
+        rospy.Time.now(),
+        "probe_base",
+        "sensor_head")
+
+    br.sendTransform((probe_distance,
+        0,
+        0),
+        tf.transformations.quaternion_from_euler(0,0,0),
+        rospy.Time.now(),
+        "probe_tip",
+        "probe_base")
+
+
+def update_cmd(data):
+    global cmd
+    cmd = [data.x, data.y, data.z]
+
+
+def update_cmd_probe(data):
+    global cmd_probe
+    cmd_probe = data
 
 
 def main():
@@ -71,12 +87,21 @@ def main():
     br = tf.TransformBroadcaster()
     listener = tf.TransformListener()
 
+    global sensor_head
+    sensor_head = [0]*6
+
     global cmd
-    sub = rospy.Subscriber("gantry_cmd_send", Point, update_cmd)
     cmd = [0, 0, 0]
+    sub = rospy.Subscriber("gantry_cmd_send", Point, update_cmd)
+    global cmd_probe
+    cmd_probe = Twist()
+    sub2 = rospy.Subscriber("gantry_probe_cmd", Twist, update_cmd_probe)
+
 
     global probe_yaw_angle
-    probe_yaw_angle = 0
+    probe_yaw_angle = probe_base_offset_rot[2]
+    global probe_distance
+    probe_distance = 600
 
     trans = [0, 0, 0]
     rot = [0, 0, 0]
@@ -103,8 +128,6 @@ def main():
         ### sweeping ###
         elif current_state == 2:
 
-            # print "sweeping"
-
             try:
                 (trans,rot) = listener.lookupTransform('/gantry', '/sensor_head', rospy.Time(0))
 
@@ -112,20 +135,14 @@ def main():
                 if trans[1] < low_lim + tolerance or trans[1] > high_lim - tolerance:
                     vel_dir *= -1
 
-                br.sendTransform((trans[0], trans[1], trans[2]),
-                    tf.transformations.quaternion_from_euler(rot[0], rot[1], rot[2]),
-                    rospy.Time.now(),
-                    "sensor_head",
-                    "gantry")
+                sensor_head[0] = trans[0]
+                sensor_head[1] = trans[1]
+                sensor_head[2] = trans[2]
+                sensor_head[3] = rot[0]
+                sensor_head[4] = rot[1]
+                sensor_head[5] = rot[2]
 
             except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
-
-                br.sendTransform((0,0,0),
-                    tf.transformations.quaternion_from_euler(0,0,0),
-                    rospy.Time.now(),
-                    "sensor_head",
-                    "gantry")
-
                 continue
 
         ### pinpointing ###
@@ -149,15 +166,12 @@ def main():
                         else:
                             trans[i] -= (lat_vel / rate)
 
-                br.sendTransform((trans[0],
-                            trans[1],
-                            trans[2]),
-                            tf.transformations.quaternion_from_euler(rot[0],
-                                rot[1],
-                                rot[2]),
-                            rospy.Time.now(),
-                            "sensor_head",
-                            "gantry")
+                sensor_head[0] = trans[0]
+                sensor_head[1] = trans[1]
+                sensor_head[2] = trans[2]
+                sensor_head[3] = rot[0]
+                sensor_head[4] = rot[1]
+                sensor_head[5] = rot[2]
 
             except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
                 continue
@@ -166,9 +180,15 @@ def main():
         elif current_state == 4:
             print "probing"
 
-            # take command from probe planner
-            # cmd =
-
+            # probe_yaw_angle = 0
+            # # probe_distance += 0.5
+            #
+            # sensor_head[0] = cmd_probe.linear.x
+            # sensor_head[1] = cmd_probe.linear.y
+            # sensor_head[2] = cmd_probe.linear.z
+            # sensor_head[3] = cmd_probe.angular.x
+            # sensor_head[4] = cmd_probe.angular.y
+            # sensor_head[5] = cmd_probe.angular.z
 
 
         print "Cur: ", [round(val, 2) for val in trans]
