@@ -15,7 +15,7 @@
 <node name="braking_sim" pkg="scorpion" type="braking_sim.py" output="screen"></node>
 
 
-<node name="gantry_planner" pkg="gantry" type="gantry_planner.py"></node>
+<node name="gantry_planner" pkg="gantry" type="gantry_planner.py" output="screen"></node>
 <node name="gantry_drive" pkg="gantry" type="gantry_drive.py"></node>
 <node name="md_acquisition_sim" pkg="md" type="acquisition_sim.py"></node>
 <node name="md_gradientascent" pkg="md" type="gradientascent.py"></node>

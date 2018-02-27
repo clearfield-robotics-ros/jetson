@@ -53,7 +53,7 @@ def incoming_signal(data):
 rospy.init_node('md_planner')
 jetson_desired_state = rospy.Publisher('/desired_state', Int16, queue_size=10)
 pub = rospy.Publisher('/cmd_from_md', Point, queue_size=10)
-sendToProbe = rospy.Publisher('/MDToProbe', Point, queue_size=10)
+sendToProbe = rospy.Publisher('/set_probe_target', Point, queue_size=10)
 sub = rospy.Subscriber('md_strong_signal', PointStamped, incoming_signal)
 
 

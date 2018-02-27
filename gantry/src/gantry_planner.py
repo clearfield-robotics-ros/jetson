@@ -76,9 +76,13 @@ def update_cmd(data):
 
 
 def update_cmd_probe(data):
+    print "we made it!"
     global cmd_probe
     cmd_probe = data
-
+    global finished_probing
+    finished_probing = False
+    global probe_distance
+    probe_distance = 0 # reset
 
 def main():
     rospy.init_node('gantry_sim')
@@ -97,11 +101,13 @@ def main():
     cmd_probe = Twist()
     sub2 = rospy.Subscriber("gantry_probe_cmd", Twist, update_cmd_probe)
 
+    global finished_probing
+    finished_probing = True
 
     global probe_yaw_angle
     probe_yaw_angle = probe_base_offset_rot[2]
     global probe_distance
-    probe_distance = 600
+    probe_distance = 0
 
     trans = [0, 0, 0]
     rot = [0, 0, 0]
@@ -177,24 +183,28 @@ def main():
                 continue
 
         ### probe ###
-        elif current_state == 4:
-            print "probing"
+        elif current_state == 4 and not finished_probing:
 
-            # probe_yaw_angle = 0
-            # # probe_distance += 0.5
-            #
-            # sensor_head[0] = cmd_probe.linear.x
-            # sensor_head[1] = cmd_probe.linear.y
-            # sensor_head[2] = cmd_probe.linear.z
-            # sensor_head[3] = cmd_probe.angular.x
-            # sensor_head[4] = cmd_probe.angular.y
-            # sensor_head[5] = cmd_probe.angular.z
+            probe_yaw_angle = 0
+            probe_distance += 1
+
+            sensor_head[0] = cmd_probe.linear.x # add smoothing for viz for SDR
+            sensor_head[1] = cmd_probe.linear.y
+            sensor_head[2] = cmd_probe.linear.z
+            sensor_head[3] = cmd_probe.angular.x
+            sensor_head[4] = cmd_probe.angular.y
+            sensor_head[5] = cmd_probe.angular.z
+
+            if probe_distance > 800:
+                # send message for no contact
+
+            # wait till we reach max extention or we hit a mine!
 
 
-        print "Cur: ", [round(val, 2) for val in trans]
-        print "Cmd: ", cmd
-        print "current_state: ", current_state
-        print "-------------------"
+        # print "Cur: ", [round(val, 2) for val in trans]
+        # print "Cmd: ", cmd
+        # print "current_state: ", current_state
+        # print "-------------------"
         r.sleep()  # indent less when going back to regular gantry_lib
 
 

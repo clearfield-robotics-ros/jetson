@@ -23,6 +23,57 @@ def setTarget(data):
     target = data
     print "target", target
 
+def probe_to_gantry_transform(loc,rot):
+
+    Hprobe = np.array([[1,0,0,loc.x],
+                       [0,1,0,loc.y],
+                       [0,0,1,loc.z],
+                       [0,0,0,1]])
+
+    Hyaw = np.array([[math.cos(rot.z),-math.sin(rot.z),0,0],
+                     [math.sin(rot.z),math.cos(rot.z),0,0],
+                     [0,0,1,0],
+                     [0,0,0,1]])
+
+    Hyrot = np.array([[math.cos(-probe_angle),0,math.cos(-probe_angle),0],
+                      [0,1,0,0],
+                      [math.sin(-probe_angle),0,math.cos(-probe_angle),0],
+                      [0,0,0,1]])
+
+    Hd = np.array([[1,0,0,-probe_length],
+                   [0,1,0,0],
+                   [0,0,1,0],
+                   [0,0,0,1]])
+
+    H = np.matmul(np.matmul(np.matmul(Hprobe,Hyaw),Hyrot),Hd)
+    test = np.matmul(H,np.array([[0],[0],[0],[1]]))
+
+    # br.sendTransform((test[0],test[1],test[2]),
+    #     tf.transformations.quaternion_from_euler(0,0,0),
+    #     rospy.Time.now(),
+    #     "desired_gantry_pose",
+    #     "gantry")
+
+    (trans,rot) = listener.lookupTransform('/probe_base', '/sensor_head', rospy.Time(0))
+
+    Hoffset = np.array([[1,0,0,-probe_base_offset_loc[0]],
+                       [0,1,0,-probe_base_offset_loc[1]],
+                       [0,0,1,-probe_base_offset_loc[2]],
+                       [0,0,0,1]])
+
+    H = np.matmul(np.matmul(np.matmul(np.matmul(Hoffset,Hprobe),Hyaw),Hyrot),Hd)
+    trans = np.matmul(H,np.array([[0],[0],[0],[1]]))
+
+    # br.sendTransform((trans[0],trans[1],trans[2]),
+    #     tf.transformations.quaternion_from_euler(0,0,0),
+    #     rospy.Time.now(),
+    #     "desired_gantry_pose_offset",
+    #     "gantry")
+
+    return trans
+
+
+
 ### States ###
 # 0 - Initial Search
 # 1 - 45deg Search
@@ -34,19 +85,20 @@ def main():
 
     global br
     br = tf.TransformBroadcaster()
+    global listener
     listener = tf.TransformListener()
 
     landmine_pos = rospy.get_param('landmine_pos')
     landmine_diameter = rospy.get_param('landmine_diameter')
     landmine_height = rospy.get_param('landmine_height')
+    global probe_base_offset_loc
     probe_base_offset_loc = rospy.get_param('probe_base_offset_loc')
     probe_safety_factor = rospy.get_param('probe_safety_factor')
+    global probe_angle
     probe_angle = rospy.get_param('probe_base_offset_rot')[1]
-
     scorpion_gantry_offset_loc = rospy.get_param('scorpion_gantry_offset_loc')
-
+    global probe_length
     probe_length = (scorpion_gantry_offset_loc[2] + probe_base_offset_loc[2] + abs(landmine_pos[2])) / math.sin(probe_angle)
-    print "probe_length", probe_length
 
     maxForwardSearch = math.cos(probe_angle)*landmine_height*(1/probe_safety_factor);
 
@@ -58,7 +110,7 @@ def main():
 
 
     pub = rospy.Publisher("/gantry_probe_cmd", Twist, queue_size=10)
-    sub = rospy.Subscriber("/MDToProbe", Point, setTarget)
+    sub = rospy.Subscriber("/set_probe_target", Point, setTarget)
 
     r = rospy.Rate(100)  # 100 Hz
 
@@ -76,13 +128,11 @@ def main():
                 desired_probe_tip.y = target.y
                 desired_probe_tip.z = -300 + landmine_pos[2] # set to depth
 
-                # visualize
-                br.sendTransform((desired_probe_tip.x,desired_probe_tip.y,desired_probe_tip.z),
-                    tf.transformations.quaternion_from_euler(0,0,0),
-                    rospy.Time.now(),
-                    "desired_probe_tip",
-                    "gantry")
-
+                # br.sendTransform((desired_probe_tip.x,desired_probe_tip.y,desired_probe_tip.z),
+                #     tf.transformations.quaternion_from_euler(0,0,0),
+                #     rospy.Time.now(),
+                #     "desired_probe_tip",
+                #     "gantry")
 
                 # we know our desired yaw angle
                 desired_gantry_pose = Twist()
@@ -90,56 +140,7 @@ def main():
                 desired_gantry_pose.angular.y = 0
                 desired_gantry_pose.angular.z = 0
 
-
-
-                Hprobe = np.array([[1,0,0,desired_probe_tip.x],
-                                   [0,1,0,desired_probe_tip.y],
-                                   [0,0,1,desired_probe_tip.z],
-                                   [0,0,0,1]])
-
-                Hyaw = np.array([[math.cos(desired_gantry_pose.angular.z),-math.sin(desired_gantry_pose.angular.z),0,0],
-                                 [math.sin(desired_gantry_pose.angular.z),math.cos(desired_gantry_pose.angular.z),0,0],
-                                 [0,0,1,0],
-                                 [0,0,0,1]])
-
-                Hyrot = np.array([[math.cos(-probe_angle),0,math.cos(-probe_angle),0],
-                                  [0,1,0,0],
-                                  [math.sin(-probe_angle),0,math.cos(-probe_angle),0],
-                                  [0,0,0,1]])
-
-                Hd = np.array([[1,0,0,-probe_length],
-                               [0,1,0,0],
-                               [0,0,1,0],
-                               [0,0,0,1]])
-
-
-                # H = np.matmul(np.matmul(np.matmul(Hprobe,Hyaw),Hyrot),Hd)
-                H = np.matmul(np.matmul(np.matmul(Hprobe,Hyaw),Hyrot),Hd)
-                test = np.matmul(H,np.array([[0],[0],[0],[1]]))
-
-                br.sendTransform((test[0],test[1],test[2]),
-                    tf.transformations.quaternion_from_euler(0,0,0),
-                    rospy.Time.now(),
-                    "desired_gantry_pose",
-                    "gantry")
-
-                (trans,rot) = listener.lookupTransform('/probe_base', '/sensor_head', rospy.Time(0))
-
-                # probe_base_offset_loc: [0,100,-50]
-
-                Hoffset = np.array([[1,0,0,-probe_base_offset_loc[0]],
-                                   [0,1,0,-probe_base_offset_loc[1]],
-                                   [0,0,1,-probe_base_offset_loc[2]],
-                                   [0,0,0,1]])
-
-                H = np.matmul(np.matmul(np.matmul(np.matmul(Hoffset,Hprobe),Hyaw),Hyrot),Hd)
-                trans = np.matmul(H,np.array([[0],[0],[0],[1]]))
-
-                br.sendTransform((trans[0],trans[1],trans[2]),
-                    tf.transformations.quaternion_from_euler(0,0,0),
-                    rospy.Time.now(),
-                    "desired_gantry_pose_offset",
-                    "gantry")
+                trans = probe_to_gantry_transform(desired_probe_tip, desired_gantry_pose.angular)
 
                 desired_gantry_pose.linear.x = trans[0]
                 desired_gantry_pose.linear.y = trans[1]
@@ -147,7 +148,6 @@ def main():
 
                 print "desired_gantry_pose", desired_gantry_pose
 
-                # send message to gantry planner
                 pub.publish(desired_gantry_pose)
                 set_desired_gantry_pose = True
 
