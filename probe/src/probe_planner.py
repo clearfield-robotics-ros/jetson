@@ -4,6 +4,7 @@ import rospy
 import numpy as np
 from geometry_msgs.msg import Point
 from geometry_msgs.msg import Twist
+from std_msgs.msg import Int16MultiArray
 from std_msgs.msg import Int16
 import tf
 import math
@@ -74,6 +75,13 @@ def probe_to_gantry_transform(loc,rot):
 
 
 
+def update_gantry_state(data):
+    global gantry_current_state
+    gantry_current_state = data.data
+
+    print gantry_current_state
+
+
 ### States ###
 # 0 - Initial Search
 # 1 - 45deg Search
@@ -81,7 +89,7 @@ def probe_to_gantry_transform(loc,rot):
 probe_state = 0 # initial state
 
 def main():
-    rospy.init_node('probe_sim')
+    rospy.init_node('probe_planner')
 
     global br
     br = tf.TransformBroadcaster()
@@ -110,6 +118,10 @@ def main():
 
 
     pub = rospy.Publisher("/gantry_probe_cmd", Twist, queue_size=10)
+    # replace with gantry_desired_state
+
+    sub2 = rospy.Subscriber("/gantry_current_state", Int16MultiArray, update_gantry_state)
+
     sub = rospy.Subscriber("/set_probe_target", Point, setTarget)
 
     r = rospy.Rate(100)  # 100 Hz
@@ -127,12 +139,6 @@ def main():
                 desired_probe_tip.x = target.x - landmine_diameter/2*probe_safety_factor
                 desired_probe_tip.y = target.y
                 desired_probe_tip.z = -scorpion_gantry_offset_loc[2] + landmine_pos[2] # set to depth
-
-                # br.sendTransform((desired_probe_tip.x,desired_probe_tip.y,desired_probe_tip.z),
-                #     tf.transformations.quaternion_from_euler(0,0,0),
-                #     rospy.Time.now(),
-                #     "desired_probe_tip",
-                #     "gantry")
 
                 # we know our desired yaw angle
                 desired_gantry_pose = Twist()
@@ -162,8 +168,6 @@ def main():
             # wait for response - mine_sim function
 
             # determine intersection point
-
-
 
 
         r.sleep()  # indent less when going back to regular gantry_lib

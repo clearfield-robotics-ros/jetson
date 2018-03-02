@@ -4,6 +4,7 @@ import rospy
 import numpy as np
 from geometry_msgs.msg import Point
 from geometry_msgs.msg import Twist
+from std_msgs.msg import Int16MultiArray
 from std_msgs.msg import Int16
 import tf
 
@@ -61,13 +62,13 @@ def publish_transforms():
         "probe_base",
         "sensor_head")
 
-    br.sendTransform((probe_distance,
-        0,
-        0),
-        tf.transformations.quaternion_from_euler(0,0,0),
-        rospy.Time.now(),
-        "probe_tip",
-        "probe_base")
+    # br.sendTransform((probe_distance,
+    #     0,
+    #     0),
+    #     tf.transformations.quaternion_from_euler(0,0,0),
+    #     rospy.Time.now(),
+    #     "probe_tip",
+    #     "probe_base")
 
 
 def update_cmd(data):
@@ -79,10 +80,10 @@ def update_cmd_probe(data):
     print "we made it!"
     global cmd_probe
     cmd_probe = data
-    global finished_probing
-    finished_probing = False
     global probe_distance
     probe_distance = 0 # reset
+
+
 
 def main():
     rospy.init_node('gantry_sim')
@@ -101,18 +102,15 @@ def main():
     cmd_probe = Twist()
     sub2 = rospy.Subscriber("gantry_probe_cmd", Twist, update_cmd_probe)
 
-    global finished_probing
-    finished_probing = True
-
+    gantry_current_state_pub = rospy.Publisher("/gantry_current_state", Int16MultiArray, queue_size=10)
+    desired_state_reached = False
     global probe_yaw_angle
     probe_yaw_angle = probe_base_offset_rot[2]
-    global probe_distance
-    probe_distance = 0
+
 
     trans = [0, 0, 0]
     rot = [0, 0, 0]
     vel_dir = 1
-
     gantry_width = rospy.get_param('gantry_width')
     gantry_sweep_speed = rospy.get_param('gantry_sweep_speed')
     low_lim = 0
@@ -120,7 +118,7 @@ def main():
     lat_vel = gantry_sweep_speed
     tolerance = 0.005
 
-    rate = 100
+    rate = 50
     r = rospy.Rate(rate)  # 100 Hz
 
     while not rospy.is_shutdown():
@@ -183,22 +181,47 @@ def main():
                 continue
 
         ### probe ###
-        elif current_state == 4 and not finished_probing:
+        elif current_state == 4:
 
-            probe_yaw_angle = 0
-            probe_distance += 1
+            rate = 10
+            diff = np.zeros(7)
 
-            sensor_head[0] = cmd_probe.linear.x # add smoothing for viz for SDR
-            sensor_head[1] = cmd_probe.linear.y
-            sensor_head[2] = cmd_probe.linear.z
-            sensor_head[3] = cmd_probe.angular.x
-            sensor_head[4] = cmd_probe.angular.y
-            sensor_head[5] = cmd_probe.angular.z
+            # do this more nicely
+            diff[0] = (cmd_probe.linear.x - sensor_head[0])/rate
+            sensor_head[0] += diff[0] #cmd_probe.linear.x # add smoothing for viz for SDR
+            diff[1] = (cmd_probe.linear.y - sensor_head[1])/rate
+            sensor_head[1] += diff[1] #cmd_probe.linear.y
+            diff[2] = (cmd_probe.linear.z - sensor_head[2])/rate
+            sensor_head[2] += diff[2] #cmd_probe.linear.z
 
-            # if probe_distance > 800:
-                # send message for no contact
+            diff[3] = (cmd_probe.angular.x - sensor_head[3])/rate
+            sensor_head[3] += diff[3]#cmd_probe.angular.x
+            diff[4] = (cmd_probe.angular.y - sensor_head[4])/rate
+            sensor_head[4] += diff[4] #cmd_probe.angular.y
+            diff[5] = (cmd_probe.angular.z - sensor_head[5])/rate
+            sensor_head[5] += diff[5] #cmd_probe.angular.z
 
-            # wait till we reach max extention or we hit a mine!
+            diff[6] = (0 - probe_yaw_angle)/rate
+            probe_yaw_angle += diff[6]
+
+
+            if abs(np.sum(diff)) < 0.1:
+                desired_state_reached = True
+            else:
+                desired_state_reached = False
+
+
+        # Send out update every loop
+        gantry_current_state_msg = Int16MultiArray()
+        gantry_current_state_msg.data = [
+            current_state,
+            0, #current_sweep_velocity
+            sensor_head[0], #current_x_position
+            sensor_head[1], # current_y_position
+            sensor_head[5], # current_yaw_angle
+            probe_yaw_angle, #current_probe_yaw_angle
+            desired_state_reached]
+        gantry_current_state_pub.publish(gantry_current_state_msg)
 
 
         # print "Cur: ", [round(val, 2) for val in trans]

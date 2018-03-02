@@ -3,7 +3,7 @@
 ##############################
 
 ### Landmine ###
-landmine_pos: [1700, 100, -150]
+landmine_pos: [1800, 100, -150]
 landmine_diameter: 100
 landmine_height: 50
 metal_detector_decay: 30
@@ -24,5 +24,6 @@ md_gantry_offset_loc: [350,-100,-300] # y offset is half of width
 ### Probe ###
 probe_base_offset_loc: [0,100,-100]
 probe_base_offset_rot: [0,0.523599,1.5708] # start out of the way
-probe_speed: 100 #mm/s
-probe_safety_factor: 1.25
+probe_speed: 2 #mm/s
+probe_safety_factor: 0.2
+max_probe_distance: 900

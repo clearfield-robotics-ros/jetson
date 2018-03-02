@@ -28,6 +28,7 @@ class CylinderMineExp:
     def __init__(self, x, y, z, diameter, decay):
         self.x = x
         self.y = y
+        self.z = z
         self.radius = diameter / 2.0  # in meters
         self.decay = decay  # in meters
 
@@ -67,15 +68,66 @@ class CylinderMineExp:
         # print 15*numpy.exp(-(dist - self.radius) / self.decay)
         return ret
 
-def query_mine(x,y):
+    def query_probe(self,x,y,z):
+
+        z_bounds = False
+        if z > self.z and z < (self.z + 50):
+            z_bounds = True
+
+        radius_bounds = False
+        dist = numpy.sqrt((x - self.x)*(x - self.x) + (y - self.y)*(y - self.y))
+        if dist < self.radius:
+            radius_bounds = True
+
+        # print "z_bounds", z_bounds, "radius_bounds", radius_bounds, "dist", dist
+
+        return z_bounds and radius_bounds
+
+
+def query_mine_md(x,y):
     ret = mine.query(x,y)
     pub.publish(Int16(ret))
+
+
+contact_viz_id = 0
+def query_mine_probe(x,y,z):
+    # print "x", x, " y:", y, " z:", z
+    global contact_viz_id
+    global contact_viz_pub
+
+    if mine.query_probe(x,y,z):
+        p = Point()
+        p.x = x
+        p.y = y
+        p.z = z
+        pub2.publish(p)
+
+        msg = Marker()
+        msg.header.frame_id = "world"
+        msg.header.seq = contact_viz_id
+        msg.header.stamp = rospy.Time.now()
+        msg.ns = "probe_contact_viz"
+        msg.id = contact_viz_id
+        msg.type = 2  # cube
+        msg.action = 0  # add
+        msg.pose.position = Point(x,y,z)
+        msg.pose.orientation.w = 1
+        msg.scale.x = 10
+        msg.scale.y = 10
+        msg.scale.z = 10
+        msg.color.a = 1.0
+        msg.color.r = 1.0
+        msg.color.g = 0.0
+        msg.color.b = 0.0
+        contact_viz_pub.publish(msg)
+        contact_viz_id += 1
 
 
 def main():
     rospy.init_node('mine_sim')
     global mine
     global pub
+    global pub2
 
     landmine_pos = rospy.get_param('landmine_pos')
     landmine_diameter = rospy.get_param('landmine_diameter')
@@ -84,13 +136,22 @@ def main():
 
     listener = tf.TransformListener()
     pub = rospy.Publisher("md_signal", Int16, queue_size=10)
+    pub2 = rospy.Publisher("probe_contact", Point, queue_size=10)
+    global contact_viz_pub
+    contact_viz_pub = rospy.Publisher('probe_contact_viz', Marker, queue_size=10)
 
     r = rospy.Rate(100) # 100 Hz
     while not rospy.is_shutdown():
 
         try:
             (trans,rot) = listener.lookupTransform('/world', '/md', rospy.Time(0))
-            query_mine(trans[0],trans[1])
+            query_mine_md(trans[0],trans[1])
+        except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
+            continue
+
+        try:
+            (trans,rot) = listener.lookupTransform('/world', '/probe_tip', rospy.Time(0))
+            query_mine_probe(trans[0],trans[1],trans[2])
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
             continue
 

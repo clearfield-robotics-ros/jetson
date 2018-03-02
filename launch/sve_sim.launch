@@ -21,7 +21,8 @@
 <node name="md_gradientascent" pkg="md" type="gradientascent.py"></node>
 
 
-<node name="probe_sim" pkg="probe" type="probe_sim.py" output="screen"></node>
+<node name="probe_planner" pkg="probe" type="probe_planner.py" output="screen"></node>
+<node name="probe_teensy_SIM" pkg="probe" type="probe_teensy_SIM.py" output="screen"></node>
 
 
 <node name="rviz" pkg="rviz" type="rviz" args="-d $(find gantry)/../launch/sve_sim.rviz"/>/>
