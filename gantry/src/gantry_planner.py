@@ -212,7 +212,7 @@ def main():
             sensor_head[1], # current_y_position
             sensor_head[5], # current_yaw_angle
             probe_yaw_angle, #current_probe_yaw_angle
-            desired_state_reached]
+            int(desired_state_reached)]
         gantry_current_state_pub.publish(gantry_current_state_msg)
 
         r.sleep()  # indent less when going back to regular gantry_lib

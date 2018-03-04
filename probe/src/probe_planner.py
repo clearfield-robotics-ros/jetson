@@ -24,6 +24,7 @@ def setTarget(data):
     target = data
     print "target", target
 
+
 def probe_to_gantry_transform(loc,rot):
 
     Hprobe = np.array([[1,0,0,loc.x],
@@ -62,17 +63,27 @@ def probe_to_gantry_transform(loc,rot):
     return trans
 
 
-
 def update_gantry_state(data):
     global gantry_current_state
     gantry_current_state = data.data
 
 
-### States ###
+def update_probe_state(data):
+    global probe_current_state
+    probe_current_state = data.data
+
+
+def update_probe_contact(data):
+    pass
+    # TODO draw point with marker
+    # TODO add point to vector
+
+
+### Probe Planner States ###
 # 0 - Initial Search
 # 1 - 45deg Search
 # 2 - Max Info Search
-probe_state = 0 # initial state
+probe_plan_state = 0 # initial state
 
 def main():
     rospy.init_node('probe_planner')
@@ -100,13 +111,17 @@ def main():
     null_target = Point()
     global target
     target = null_target
+
+    # blocking variables
     set_desired_gantry_pose = False
+    set_probe = False
 
-
-    pub = rospy.Publisher("/gantry_probe_cmd", Twist, queue_size=10)
-    # replace with gantry_desired_state
+    pub = rospy.Publisher("/gantry_probe_cmd", Twist, queue_size=10) # TODO replace with gantry_desired_state
+    pub2 = rospy.Publisher("/probe_cmd_send", Int16, queue_size=10)
 
     sub2 = rospy.Subscriber("/gantry_current_state", Int16MultiArray, update_gantry_state)
+    sub3 = rospy.Subscriber("/probe_status_reply", Int16MultiArray, update_probe_state)
+    sub4 = rospy.Subscriber("/probe_contact_reply", Int16MultiArray, update_probe_contact)
 
     sub = rospy.Subscriber("/set_probe_target", Point, setTarget)
 
@@ -118,46 +133,54 @@ def main():
         if current_state == 4 and not target == null_target:
 
             # get first probe Point - find x/y position for desired probe
-            if probe_state == 0 and not set_desired_gantry_pose:
+            if probe_plan_state == 0:
 
-                # define desired probe tip position in gantry frame
-                desired_probe_tip = Point()
-                desired_probe_tip.x = target.x - landmine_diameter/2*probe_safety_factor
-                desired_probe_tip.y = target.y
-                desired_probe_tip.z = -scorpion_gantry_offset_loc[2] + landmine_pos[2] # set to depth
+                if not set_desired_gantry_pose:
 
-                # we know our desired yaw angle
-                desired_gantry_pose = Twist()
-                desired_gantry_pose.angular.x = 0
-                desired_gantry_pose.angular.y = 0
-                desired_gantry_pose.angular.z = 0
+                    # define desired probe tip position in gantry frame
+                    desired_probe_tip = Point()
+                    desired_probe_tip.x = target.x - landmine_diameter/2*probe_safety_factor
+                    desired_probe_tip.y = target.y
+                    desired_probe_tip.z = -scorpion_gantry_offset_loc[2] + landmine_pos[2] # set to depth
 
-                trans = probe_to_gantry_transform(desired_probe_tip, desired_gantry_pose.angular)
+                    # we know our desired yaw angle
+                    desired_gantry_pose = Twist()
+                    desired_gantry_pose.angular.x = 0
+                    desired_gantry_pose.angular.y = 0
+                    desired_gantry_pose.angular.z = 0
 
-                desired_gantry_pose.linear.x = trans[0]
-                desired_gantry_pose.linear.y = trans[1]
-                desired_gantry_pose.linear.z = trans[2]
+                    trans = probe_to_gantry_transform(desired_probe_tip, desired_gantry_pose.angular)
 
-                print "desired_gantry_pose", desired_gantry_pose
+                    desired_gantry_pose.linear.x = trans[0]
+                    desired_gantry_pose.linear.y = trans[1]
+                    desired_gantry_pose.linear.z = trans[2]
 
-                pub.publish(desired_gantry_pose)
-                set_desired_gantry_pose = True
+                    print "desired_gantry_pose", desired_gantry_pose
 
-            elif probe_state == 1:
+                    pub.publish(desired_gantry_pose)
+                    set_desired_gantry_pose = True
+
+                elif not set_probe and gantry_current_state[6] == 1: # we're finished moving the gantry
+
+                    pub2.publish(2) # start probing
+                    set_probe = True
+
+                elif set_desired_gantry_pose and set_probe and probe_current_state[2] == 1:
+
+                    # TODO generate new plan
+                    # or change state based on contact point
+
+            elif probe_plan_state == 1:
+
+                # TODO
                 print "get 2nd point"
 
-            elif probe_state == 2:
+            elif probe_plan_state == 2:
+
+                # TODO
                 print "Fill in the gaps"
 
-            # set state to that
-
-            # wait for response - mine_sim function
-
-            # determine intersection point
-
-
-        r.sleep()  # indent less when going back to regular gantry_lib
-
+        r.sleep()
 
 if __name__ == "__main__":
     main()
