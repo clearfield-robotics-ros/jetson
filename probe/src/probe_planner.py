@@ -49,12 +49,6 @@ def probe_to_gantry_transform(loc,rot):
     H = np.matmul(np.matmul(np.matmul(Hprobe,Hyaw),Hyrot),Hd)
     test = np.matmul(H,np.array([[0],[0],[0],[1]]))
 
-    # br.sendTransform((test[0],test[1],test[2]),
-    #     tf.transformations.quaternion_from_euler(0,0,0),
-    #     rospy.Time.now(),
-    #     "desired_gantry_pose",
-    #     "gantry")
-
     (trans,rot) = listener.lookupTransform('/probe_base', '/sensor_head', rospy.Time(0))
 
     Hoffset = np.array([[1,0,0,-probe_base_offset_loc[0]],
@@ -65,12 +59,6 @@ def probe_to_gantry_transform(loc,rot):
     H = np.matmul(np.matmul(np.matmul(np.matmul(Hoffset,Hprobe),Hyaw),Hyrot),Hd)
     trans = np.matmul(H,np.array([[0],[0],[0],[1]]))
 
-    # br.sendTransform((trans[0],trans[1],trans[2]),
-    #     tf.transformations.quaternion_from_euler(0,0,0),
-    #     rospy.Time.now(),
-    #     "desired_gantry_pose_offset",
-    #     "gantry")
-
     return trans
 
 
@@ -78,8 +66,6 @@ def probe_to_gantry_transform(loc,rot):
 def update_gantry_state(data):
     global gantry_current_state
     gantry_current_state = data.data
-
-    print gantry_current_state
 
 
 ### States ###
