@@ -33,12 +33,28 @@ def probeCmdClbk(data):
     global probe_state
     probe_state = data.data
 
+    global finished_probing
+    global foundObject
     if probe_state == 2: # ie. change to probing
         finished_probing = False
+        foundObject = False
 
 def probe_contact(data):
     global finished_probing
     finished_probing = True
+    global foundObject
+    foundObject = True
+
+    # Send out update every loop
+    probe_contact_reply_msg = Int16MultiArray()
+    probe_contact_reply_msg.data = [
+        probe_state,                     # Echo: probe mode
+        1,                               # Flag: probe initialization status
+        int(finished_probing == 'True'), # Flag: probe complete status
+        probe_distance,                  # Value: probe linear positon (mm)
+        int(foundObject == 'True')]       # Flag: contact type
+    contact_pub.publish(probe_contact_reply_msg)
+
 
 def main():
     rospy.init_node('probe_teensy_SIM')
@@ -55,11 +71,14 @@ def main():
 
     global finished_probing
     finished_probing = True
-    probe_contact_sub = rospy.Subscriber("probe_contact", Point, probe_contact)
 
-    pub = rospy.Publisher("/probe_status_reply", Int16MultiArray, queue_size=10)
-    pub = rospy.Publisher("/probe_contact_reply", Int16MultiArray, queue_size=10)
-    sub = rospy.Subscriber("/probe_cmd_send", Int16, probeCmdClbk)
+    global foundObject
+    foundObject = False
+
+    status_pub = rospy.Publisher("/probe_status_reply", Int16MultiArray, queue_size=10)
+    contact_pub = rospy.Publisher("/probe_contact_reply", Int16MultiArray, queue_size=10)
+    probe_contact_sub = rospy.Subscriber("probe_contact", Point, probe_contact)
+    cmd_sub = rospy.Subscriber("/probe_cmd_send", Int16, probeCmdClbk)
 
     r = rospy.Rate(100)  # 100 Hz
 
@@ -83,6 +102,16 @@ def main():
             rospy.Time.now(),
             "probe_tip",
             "probe_base")
+
+        # Send out update every loop
+        probe_status_reply_msg = Int16MultiArray()
+        probe_status_reply_msg.data = [
+            probe_state,                     # Echo: probe mode
+            1,                               # Flag: probe initialization status
+            int(finished_probing == 'True'), # Flag: probe complete status
+            probe_distance,                  # Value: probe linear positon (mm)
+            int(foundObject == 'True')]       # Flag: contact type
+        status_pub.publish(probe_status_reply_msg)
 
         r.sleep()  # indent less when going back to regular gantry_lib
 

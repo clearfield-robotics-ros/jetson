@@ -62,14 +62,6 @@ def publish_transforms():
         "probe_base",
         "sensor_head")
 
-    # br.sendTransform((probe_distance,
-    #     0,
-    #     0),
-    #     tf.transformations.quaternion_from_euler(0,0,0),
-    #     rospy.Time.now(),
-    #     "probe_tip",
-    #     "probe_base")
-
 
 def update_cmd(data):
     global cmd
@@ -223,11 +215,6 @@ def main():
             desired_state_reached]
         gantry_current_state_pub.publish(gantry_current_state_msg)
 
-
-        # print "Cur: ", [round(val, 2) for val in trans]
-        # print "Cmd: ", cmd
-        # print "current_state: ", current_state
-        # print "-------------------"
         r.sleep()  # indent less when going back to regular gantry_lib
 
 
