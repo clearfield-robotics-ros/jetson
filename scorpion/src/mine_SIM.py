@@ -79,8 +79,6 @@ class CylinderMineExp:
         if dist < self.radius:
             radius_bounds = True
 
-        # print "z_bounds", z_bounds, "radius_bounds", radius_bounds, "dist", dist
-
         return z_bounds and radius_bounds
 
 
@@ -89,38 +87,13 @@ def query_mine_md(x,y):
     pub.publish(Int16(ret))
 
 
-contact_viz_id = 0
 def query_mine_probe(x,y,z):
-    # print "x", x, " y:", y, " z:", z
-    global contact_viz_id
-    global contact_viz_pub
-
     if mine.query_probe(x,y,z):
         p = Point()
         p.x = x
         p.y = y
         p.z = z
         pub2.publish(p)
-
-        msg = Marker()
-        msg.header.frame_id = "world"
-        msg.header.seq = contact_viz_id
-        msg.header.stamp = rospy.Time.now()
-        msg.ns = "probe_contact_viz"
-        msg.id = contact_viz_id
-        msg.type = 2  # cube
-        msg.action = 0  # add
-        msg.pose.position = Point(x,y,z)
-        msg.pose.orientation.w = 1
-        msg.scale.x = 10
-        msg.scale.y = 10
-        msg.scale.z = 10
-        msg.color.a = 1.0
-        msg.color.r = 1.0
-        msg.color.g = 0.0
-        msg.color.b = 0.0
-        contact_viz_pub.publish(msg)
-        contact_viz_id += 1
 
 
 def main():
@@ -137,8 +110,6 @@ def main():
     listener = tf.TransformListener()
     pub = rospy.Publisher("md_signal", Int16, queue_size=10)
     pub2 = rospy.Publisher("probe_contact", Point, queue_size=10)
-    global contact_viz_pub
-    contact_viz_pub = rospy.Publisher('probe_contact_viz', Marker, queue_size=10)
 
     r = rospy.Rate(100) # 100 Hz
     while not rospy.is_shutdown():
@@ -155,9 +126,7 @@ def main():
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
             continue
 
-        # do things
         r.sleep()  # indent less when going back to regular gantry_lib
-
 
 if __name__ == "__main__":
     main()

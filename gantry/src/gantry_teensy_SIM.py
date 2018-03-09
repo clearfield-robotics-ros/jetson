@@ -89,8 +89,8 @@ def main():
     sub = rospy.Subscriber("gantry_cmd_send", Point, update_cmd)
 
     # new MSG type
-    global gantry_desired_state
-    gantry_desired_state = Int16MultiArray()
+    # global gantry_desired_state
+    # gantry_desired_state = Int16MultiArray()
     gantry_desired_state_sub = rospy.Subscriber("/gantry_desired_state", Int16MultiArray, update_gantry_desired_state)
     gantry_current_state_pub = rospy.Publisher("/gantry_current_state", Int16MultiArray, queue_size=10)
     desired_state_reached = False
@@ -173,28 +173,31 @@ def main():
         elif current_state == 4:
 
             rate = 10
-            diff = np.zeros(4)
 
-            # X Position
-            diff[0] = (gantry_desired_state[2] - sensor_head[0])/rate
-            sensor_head[0] += diff[0]
+            if 'gantry_desired_state' in globals():
 
-            # Y Position
-            diff[1] = (gantry_desired_state[3] - sensor_head[1])/rate
-            sensor_head[1] += diff[1]
+                diff = np.zeros(4)
 
-            # Gantry Yaw
-            diff[2] = (gantry_desired_state[4] - sensor_head[5])/rate
-            sensor_head[5] += diff[2]
+                # X Position
+                diff[0] = (gantry_desired_state[2] - sensor_head[0])/rate
+                sensor_head[0] += diff[0]
 
-            # Probe Yaw
-            diff[3] = (gantry_desired_state[5] - probe_yaw_angle)/rate
-            probe_yaw_angle += diff[3]
+                # Y Position
+                diff[1] = (gantry_desired_state[3] - sensor_head[1])/rate
+                sensor_head[1] += diff[1]
 
-            if abs(np.sum(diff)) < 0.1:
-                desired_state_reached = True
-            else:
-                desired_state_reached = False
+                # Gantry Yaw
+                diff[2] = (gantry_desired_state[4] - sensor_head[5])/rate
+                sensor_head[5] += diff[2]
+
+                # Probe Yaw
+                diff[3] = (gantry_desired_state[5] - probe_yaw_angle)/rate
+                probe_yaw_angle += diff[3]
+
+                if abs(np.sum(diff)) < 0.1:
+                    desired_state_reached = True
+                else:
+                    desired_state_reached = False
 
 
         # Send out update every loop
