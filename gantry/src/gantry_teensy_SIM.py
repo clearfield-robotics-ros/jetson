@@ -67,14 +67,9 @@ def update_cmd(data):
     global cmd
     cmd = [data.x, data.y, data.z]
 
-
-def update_cmd_probe(data):
-    print "we made it!"
-    global cmd_probe
-    cmd_probe = data
-    global probe_distance
-    probe_distance = 0 # reset
-
+def update_gantry_desired_state(data):
+    global gantry_desired_state
+    gantry_desired_state = data.data
 
 
 def main():
@@ -84,21 +79,23 @@ def main():
     br = tf.TransformBroadcaster()
     listener = tf.TransformListener()
 
+    # sensor head state
     global sensor_head
     sensor_head = [0]*6
 
+    # TODO gotta fix these
     global cmd
     cmd = [0, 0, 0]
     sub = rospy.Subscriber("gantry_cmd_send", Point, update_cmd)
-    global cmd_probe
-    cmd_probe = Twist()
-    sub2 = rospy.Subscriber("gantry_probe_cmd", Twist, update_cmd_probe)
 
+    # new MSG type
+    global gantry_desired_state
+    gantry_desired_state = Int16MultiArray()
+    gantry_desired_state_sub = rospy.Subscriber("/gantry_desired_state", Int16MultiArray, update_gantry_desired_state)
     gantry_current_state_pub = rospy.Publisher("/gantry_current_state", Int16MultiArray, queue_size=10)
     desired_state_reached = False
     global probe_yaw_angle
     probe_yaw_angle = probe_base_offset_rot[2]
-
 
     trans = [0, 0, 0]
     rot = [0, 0, 0]
@@ -176,26 +173,23 @@ def main():
         elif current_state == 4:
 
             rate = 10
-            diff = np.zeros(7)
+            diff = np.zeros(4)
 
-            # do this more nicely
-            diff[0] = (cmd_probe.linear.x - sensor_head[0])/rate
-            sensor_head[0] += diff[0] #cmd_probe.linear.x # add smoothing for viz for SDR
-            diff[1] = (cmd_probe.linear.y - sensor_head[1])/rate
-            sensor_head[1] += diff[1] #cmd_probe.linear.y
-            diff[2] = (cmd_probe.linear.z - sensor_head[2])/rate
-            sensor_head[2] += diff[2] #cmd_probe.linear.z
+            # X Position
+            diff[0] = (gantry_desired_state[2] - sensor_head[0])/rate
+            sensor_head[0] += diff[0]
 
-            diff[3] = (cmd_probe.angular.x - sensor_head[3])/rate
-            sensor_head[3] += diff[3]#cmd_probe.angular.x
-            diff[4] = (cmd_probe.angular.y - sensor_head[4])/rate
-            sensor_head[4] += diff[4] #cmd_probe.angular.y
-            diff[5] = (cmd_probe.angular.z - sensor_head[5])/rate
-            sensor_head[5] += diff[5] #cmd_probe.angular.z
+            # Y Position
+            diff[1] = (gantry_desired_state[3] - sensor_head[1])/rate
+            sensor_head[1] += diff[1]
 
-            diff[6] = (0 - probe_yaw_angle)/rate
-            probe_yaw_angle += diff[6]
+            # Gantry Yaw
+            diff[2] = (gantry_desired_state[4] - sensor_head[5])/rate
+            sensor_head[5] += diff[2]
 
+            # Probe Yaw
+            diff[3] = (gantry_desired_state[5] - probe_yaw_angle)/rate
+            probe_yaw_angle += diff[3]
 
             if abs(np.sum(diff)) < 0.1:
                 desired_state_reached = True

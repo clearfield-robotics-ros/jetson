@@ -25,15 +25,15 @@ def setTarget(data):
     print "target", target
 
 
-def probe_to_gantry_transform(loc,rot):
+def probe_to_gantry_transform(loc,yaw):
 
     Hprobe = np.array([[1,0,0,loc.x],
                        [0,1,0,loc.y],
                        [0,0,1,loc.z],
                        [0,0,0,1]])
 
-    Hyaw = np.array([[math.cos(rot.z),-math.sin(rot.z),0,0],
-                     [math.sin(rot.z),math.cos(rot.z),0,0],
+    Hyaw = np.array([[math.cos(yaw),-math.sin(yaw),0,0],
+                     [math.sin(yaw),math.cos(yaw),0,0],
                      [0,0,1,0],
                      [0,0,0,1]])
 
@@ -88,11 +88,13 @@ probe_plan_state = 0 # initial state
 def main():
     rospy.init_node('probe_planner')
 
+    # Transforms
     global br
     br = tf.TransformBroadcaster()
     global listener
     listener = tf.TransformListener()
 
+    # Parameters
     landmine_pos = rospy.get_param('landmine_pos')
     landmine_diameter = rospy.get_param('landmine_diameter')
     landmine_height = rospy.get_param('landmine_height')
@@ -104,29 +106,28 @@ def main():
     scorpion_gantry_offset_loc = rospy.get_param('scorpion_gantry_offset_loc')
     global probe_length
     probe_length = (scorpion_gantry_offset_loc[2] + probe_base_offset_loc[2] + abs(landmine_pos[2])) / math.sin(probe_angle)
-
     maxForwardSearch = math.cos(probe_angle)*landmine_height*(1/probe_safety_factor);
-
-
-    null_target = Point()
-    global target
-    target = null_target
 
     # blocking variables
     set_desired_gantry_pose = False
     set_probe = False
 
-    pub = rospy.Publisher("/gantry_probe_cmd", Twist, queue_size=10) # TODO replace with gantry_desired_state
-    pub2 = rospy.Publisher("/probe_cmd_send", Int16, queue_size=10)
-
+    # Gantry Control Messages
+    gantry_desired_state_pub = rospy.Publisher("/gantry_desired_state",Int16MultiArray,queue_size=10)
     sub2 = rospy.Subscriber("/gantry_current_state", Int16MultiArray, update_gantry_state)
+
+    # Probe Control Messages
+    pub2 = rospy.Publisher("/probe_cmd_send", Int16, queue_size=10)
     sub3 = rospy.Subscriber("/probe_status_reply", Int16MultiArray, update_probe_state)
     sub4 = rospy.Subscriber("/probe_contact_reply", Int16MultiArray, update_probe_contact)
 
+    # Recieving Target from Metal Detector
     sub = rospy.Subscriber("/set_probe_target", Point, setTarget)
+    null_target = Point()
+    global target
+    target = null_target
 
-    r = rospy.Rate(100)  # 100 Hz
-
+    r = rospy.Rate(100) # Hz
     while not rospy.is_shutdown():
 
         # check we're in the right state and have a Target
@@ -143,21 +144,23 @@ def main():
                     desired_probe_tip.y = target.y
                     desired_probe_tip.z = -scorpion_gantry_offset_loc[2] + landmine_pos[2] # set to depth
 
-                    # we know our desired yaw angle
-                    desired_gantry_pose = Twist()
-                    desired_gantry_pose.angular.x = 0
-                    desired_gantry_pose.angular.y = 0
-                    desired_gantry_pose.angular.z = 0
+                    # get desired yaw
+                    gantry_yaw = 0
 
-                    trans = probe_to_gantry_transform(desired_probe_tip, desired_gantry_pose.angular)
+                    # work out gantry carriage position
+                    trans = probe_to_gantry_transform(desired_probe_tip, gantry_yaw)
 
-                    desired_gantry_pose.linear.x = trans[0]
-                    desired_gantry_pose.linear.y = trans[1]
-                    desired_gantry_pose.linear.z = trans[2]
+                    # send gantry position message
+                    gantry_desired_state_msg = Int16MultiArray()
+                    gantry_desired_state_msg.data = [
+                        3,                               # 0: desired state = pos control
+                        0,                               # 1: sweep velocity
+                        trans[0],                        # 2: x Position
+                        trans[1],                        # 3: y position
+                        gantry_yaw,                      # 4: yaw angle
+                        0]                               # 5: probe yaw angle
+                    gantry_desired_state_pub.publish(gantry_desired_state_msg)
 
-                    print "desired_gantry_pose", desired_gantry_pose
-
-                    pub.publish(desired_gantry_pose)
                     set_desired_gantry_pose = True
 
                 elif not set_probe and gantry_current_state[6] == 1: # we're finished moving the gantry
@@ -167,8 +170,7 @@ def main():
 
                 elif set_desired_gantry_pose and set_probe and probe_current_state[2] == 1:
 
-                    # TODO generate new plan
-                    # or change state based on contact point
+                    # TODO generate new plan or change state based on contact point
                     pass
 
             elif probe_plan_state == 1:
