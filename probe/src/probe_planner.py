@@ -169,6 +169,7 @@ def main():
 
                     # TODO generate new plan
                     # or change state based on contact point
+                    pass
 
             elif probe_plan_state == 1:
 
