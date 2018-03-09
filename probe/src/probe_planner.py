@@ -197,13 +197,14 @@ def main():
                     gantry_yaw = 0 # get desired yaw
 
                     move_gantry(desired_probe_tip, gantry_yaw)
+                    set_probe = False
 
                 elif not set_probe and gantry_current_state[6] == 1: # we're finished moving the gantry
 
                     probe_cmd_pub.publish(2) # start probing
                     set_probe = True
 
-                elif set_desired_gantry_pose and set_probe and probe_current_state[2] == 1:
+                elif set_desired_gantry_pose and set_probe and probe_current_state[2] == 1: # we're finished probing
 
                     # generate new plan or change state based on contact point
                     if len(contact_points) > 0:
@@ -211,6 +212,7 @@ def main():
                     else:
                         desired_probe_tip.x += maxForwardSearch
                         move_gantry(desired_probe_tip, gantry_yaw)
+                        set_probe = False
 
             elif probe_plan_state == 1:
 
