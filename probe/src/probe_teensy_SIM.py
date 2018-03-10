@@ -43,21 +43,23 @@ def probeCmdClbk(data):
 
 
 def probe_contact(data):
-    global finished_probing
-    finished_probing = True
-    global foundObject
-    foundObject = True
 
-    # Send out update every loop
+    global foundObject
+    global finished_probing
     global contact_pub
-    probe_contact_reply_msg = Int16MultiArray()
-    probe_contact_reply_msg.data = [
-        probe_state,                     # Echo: probe mode
-        1,                               # Flag: probe initialization status
-        int(finished_probing == 'True'), # Flag: probe complete status
-        probe_distance,                  # Value: probe linear positon (mm)
-        int(foundObject == 'True')]       # Flag: contact type
-    contact_pub.publish(probe_contact_reply_msg)
+
+    if not finished_probing:
+        probe_contact_reply_msg = Int16MultiArray()
+        probe_contact_reply_msg.data = [
+            probe_state,                     # Echo: probe mode
+            1,                               # Flag: probe initialization status
+            int(finished_probing == 'True'), # Flag: probe complete status
+            probe_distance,                  # Value: probe linear positon (mm)
+            int(foundObject == 'True')]       # Flag: contact type
+        contact_pub.publish(probe_contact_reply_msg)
+
+    foundObject = True
+    finished_probing = True
 
 
 def main():
@@ -85,7 +87,7 @@ def main():
     probe_contact_sub = rospy.Subscriber("probe_contact", Point, probe_contact)
     cmd_sub = rospy.Subscriber("/probe_cmd_send", Int16, probeCmdClbk)
 
-    r = rospy.Rate(100)  # 100 Hz
+    r = rospy.Rate(100) # 100 Hz
 
     while not rospy.is_shutdown():
 

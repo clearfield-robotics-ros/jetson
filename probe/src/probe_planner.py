@@ -90,13 +90,7 @@ def update_probe_state(data):
     probe_current_state = data.data
 
 contact_viz_id = 0
-def update_probe_contact(data):
-    # Update contact point
-    (trans,rot) = listener.lookupTransform('/gantry', '/probe_tip', rospy.Time(0))
-    new_contact = np.array([trans[0], trans[1], trans[2]])
-    global contact_points
-    contact_points = np.vstack((contact_points, new_contact))
-
+def plot_point(x,y,z):
     # Visualize probe point
     global contact_viz_id
     global contact_viz_pub
@@ -108,7 +102,7 @@ def update_probe_contact(data):
     msg.id = contact_viz_id
     msg.type = 2  # cube
     msg.action = 0  # add
-    msg.pose.position = Point(trans[0], trans[1], trans[2])
+    msg.pose.position = Point(x,y,z)
     msg.pose.orientation.w = 1
     msg.scale.x = 10
     msg.scale.y = 10
@@ -121,6 +115,13 @@ def update_probe_contact(data):
     contact_viz_id += 1
 
 
+def update_probe_contact(data):
+    # Update contact point
+    (trans,rot) = listener.lookupTransform('/gantry', '/probe_tip', rospy.Time(0))
+    new_contact = np.array(trans)
+    global contact_points
+    contact_points = np.vstack((contact_points, new_contact))
+    plot_point(trans[0], trans[1], trans[2])
 
 
 ### Probe Planner States ###
@@ -151,6 +152,7 @@ def main():
     global probe_length
     probe_length = (scorpion_gantry_offset_loc[2] + probe_base_offset_loc[2] + abs(landmine_pos[2])) / math.sin(probe_angle)
     maxForwardSearch = math.cos(probe_angle)*landmine_height*(1/probe_safety_factor);
+    gantry_width = rospy.get_param('gantry_width')
 
     # blocking variables
     global set_desired_gantry_pose
@@ -184,17 +186,67 @@ def main():
 
         # check we're in the right state and have a Target
         if current_state == 4 and not target == null_target:
-
-            # get first probe Point - find x/y position for desired probe
+            '''
+            Get First Probe Point
+            '''
             if probe_plan_state == 0:
 
                 if not set_desired_gantry_pose:
-
                     # define desired probe tip position in gantry frame
                     desired_probe_tip.x = target.x - landmine_diameter/2*probe_safety_factor
                     desired_probe_tip.y = target.y
                     desired_probe_tip.z = -scorpion_gantry_offset_loc[2] + landmine_pos[2] # set to depth
-                    gantry_yaw = 0 # get desired yaw
+                    gantry_yaw = 0
+
+                    move_gantry(desired_probe_tip, gantry_yaw)
+                    set_probe = False
+
+                elif not set_probe and gantry_current_state[6] == 1: # we're finished moving the gantry
+                    probe_cmd_pub.publish(2) # start probing
+                    set_probe = True
+
+                elif set_desired_gantry_pose and set_probe and probe_current_state[2] == 1: # we're finished probing
+                    # generate new plan or change state based on contact point
+                    if len(contact_points) > 0:
+                        probe_plan_state = 1
+                        set_desired_gantry_pose = False
+                    else:
+                        desired_probe_tip.x += maxForwardSearch
+                        move_gantry(desired_probe_tip, gantry_yaw)
+                        set_probe = False
+
+            elif probe_plan_state == 1:
+
+                if not set_desired_gantry_pose:
+
+                    # define desired probe tip position in gantry frame
+                    th = np.array([-math.pi/2,0,math.pi/2])
+                    print "th", th
+                    x = landmine_diameter/2*np.cos(th) + contact_points[0,0]
+                    print "x", x
+                    y = landmine_diameter/2*np.sin(th) + contact_points[0,1]
+                    print "y", y
+                    z = np.ones(len(th))*contact_points[0,2]
+                    print "z", z
+
+                    if target.y > gantry_width/2:
+                        gantry_yaw = th[2] # get desired yaw
+                        plan_x = x[0]
+                        plan_y = y[0]
+                    else:
+                        gantry_yaw = th[0] # get desired yaw
+                        plan_x = x[2]
+                        plan_y = y[2]
+
+                    print "gantry_yaw", gantry_yaw
+
+                    desired_probe_tip.x = plan_x # - math.cos(gantry_yaw)*landmine_diameter/2*probe_safety_factor
+                    desired_probe_tip.y = plan_y # + math.sin(gantry_yaw)*landmine_diameter/2*probe_safety_factor
+                    desired_probe_tip.z = -scorpion_gantry_offset_loc[2] + landmine_pos[2] # set to depth
+
+                    plot_point(desired_probe_tip.x,desired_probe_tip.y,desired_probe_tip.z) # debug
+
+                    print "desired_probe_tip", desired_probe_tip
 
                     move_gantry(desired_probe_tip, gantry_yaw)
                     set_probe = False
@@ -207,22 +259,19 @@ def main():
                 elif set_desired_gantry_pose and set_probe and probe_current_state[2] == 1: # we're finished probing
 
                     # generate new plan or change state based on contact point
-                    if len(contact_points) > 0:
-                        probe_plan_state = 1
+                    if len(contact_points) > 1:
+                        probe_plan_state = 2
                     else:
-                        desired_probe_tip.x += maxForwardSearch
+                        desired_probe_tip.x += math.cos(gantry_yaw)*maxForwardSearch
+                        desired_probe_tip.x += math.sin(gantry_yaw)*maxForwardSearch
                         move_gantry(desired_probe_tip, gantry_yaw)
                         set_probe = False
-
-            elif probe_plan_state == 1:
-
-                # TODO
-                print "get 2nd point"
 
             elif probe_plan_state == 2:
 
                 # TODO
                 print "Fill in the gaps"
+                pass
 
         r.sleep()
 
