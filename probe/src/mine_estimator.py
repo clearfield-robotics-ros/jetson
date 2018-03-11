@@ -28,31 +28,34 @@ class Mine_Estimator:
 
     def draw_radius(self,col):
 
-        for i in range(0,20):
+        msg = Marker()
+        # msg.header.frame_id = "gantry"
+        msg.header.frame_id = "probe_tip" # DEBUG
+        msg.id = 1
+        msg.header.seq = 1
+        msg.header.stamp = rospy.Time.now()
+        msg.ns = "probe_radius_viz"
+        msg.type = msg.LINE_STRIP  # line strip
+        msg.action = msg.ADD  # add
+
+        msg.pose.orientation.w = 1
+        msg.scale.x = 2.
+        msg.scale.y = 2.
+        msg.scale.z = 2.
+        msg.color.a = 1.
+        msg.color.r = col[0]
+        msg.color.g = col[1]
+        msg.color.b = col[2]
+
+        msg.points = []
+        for i in range(0,21):
 
             x = self.radius*math.sin(360/20*i * math.pi/180) + self.c_x
             y = self.radius*math.cos(360/20*i * math.pi/180) + self.c_y
             z = 0
+            msg.points.append(Point(x,y,z))
 
-            msg = Marker()
-            # msg.header.frame_id = "gantry"
-            msg.header.frame_id = "probe_tip" # DEBUG
-            msg.header.seq = i
-            msg.header.stamp = rospy.Time.now()
-            msg.ns = "probe_radius_viz"
-            msg.id = i
-            msg.type = 4  # line strip
-            msg.action = 0  # add
-            msg.pose.position = Point(x,y,z)
-            msg.pose.orientation.w = 1
-            msg.scale.x = 10
-            msg.scale.y = 10
-            msg.scale.z = 10
-            msg.color.a = 1.0
-            msg.color.r = col[0]
-            msg.color.g = col[1]
-            msg.color.b = col[2]
-            self.contact_viz_pub.publish(msg)
+        self.contact_viz_pub.publish(msg)
 
 
     def plot_point(self,x,y,z,col):

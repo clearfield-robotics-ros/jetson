@@ -4,9 +4,8 @@ Panels:
     Name: Displays
     Property Tree Widget:
       Expanded:
-        - /Grid1
-        - /probe_contact1
         - /Marker1
+        - /Marker1/Namespaces1
       Splitter Ratio: 0.572222233
     Tree Height: 552
   - Class: rviz/Selection
@@ -107,7 +106,8 @@ Visualization Manager:
       Marker Topic: /probe_contact_viz
       Name: Marker
       Namespaces:
-        {}
+        probe_contact_viz: true
+        probe_radius_viz: true
       Queue Size: 100
       Value: true
   Enabled: true
@@ -135,25 +135,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 685.240173
+      Distance: 832.233643
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 134.8134
-        Y: 2.77121806
-        Z: 20.1143818
+        X: 137.371811
+        Y: 30.1013527
+        Z: 51.5885353
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.0500000007
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Pitch: 0.71979779
+      Pitch: 0.774797678
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 3.66222572
+      Yaw: 3.72222805
     Saved: ~
 Window Geometry:
   Displays:
