@@ -29,8 +29,8 @@ class Mine_Estimator:
     def draw_radius(self,col):
 
         msg = Marker()
-        # msg.header.frame_id = "gantry"
-        msg.header.frame_id = "probe_tip" # DEBUG
+        msg.header.frame_id = "gantry"
+        # msg.header.frame_id = "probe_tip" # DEBUG
         msg.id = 1
         msg.header.seq = 1
         msg.header.stamp = rospy.Time.now()
@@ -63,8 +63,8 @@ class Mine_Estimator:
         global contact_viz_id
         global contact_viz_pub
         msg = Marker()
-        # msg.header.frame_id = "gantry"
-        msg.header.frame_id = "probe_tip" # DEBUG
+        msg.header.frame_id = "gantry"
+        # msg.header.frame_id = "probe_tip" # DEBUG
         msg.header.seq = self.contact_viz_id
         msg.header.stamp = rospy.Time.now()
         msg.ns = "probe_contact_viz"
@@ -84,6 +84,40 @@ class Mine_Estimator:
         self.contact_viz_id += 1
 
 
+    def plot_intersections(self, intersection):
+
+        # msg = Marker()
+        # msg.ns = "probe_intersection_viz"
+        # msg.action = msg.DELETEALL
+        # self.contact_viz_pub.publish(msg)
+
+        for i in range(0, len(intersection)):
+
+            x = intersection[i,0]
+            y = intersection[i,1]
+            z = 0
+
+            msg = Marker()
+            msg.header.frame_id = "gantry"
+            # msg.header.frame_id = "probe_tip" # DEBUG
+            msg.header.seq = i
+            msg.id = i
+            msg.header.stamp = rospy.Time.now()
+            msg.ns = "probe_intersection_viz"
+            msg.type = 2  # cube
+            msg.action = 0  # add
+            msg.pose.position = Point(x,y,z)
+            msg.pose.orientation.w = 1
+            msg.scale.x = 10
+            msg.scale.y = 10
+            msg.scale.z = 10
+            msg.color.a = 1.0
+            msg.color.r = 0.
+            msg.color.g = 1.
+            msg.color.b = 0.
+            self.contact_viz_pub.publish(msg)
+
+
     def hough(self):
         if len(self.contact_points) > 1:
             ### get Circular Intersections and plot
@@ -98,10 +132,15 @@ class Mine_Estimator:
             ### Remove points (bounding box)
             intersection_BB = np.array([], dtype=np.int64).reshape(0,2)
             for i in range(0,len(intersection)):
-                if ( intersection[i,0] > min(self.contact_points[:,0]) ):# and
+                if ( intersection[i,0] > min(self.contact_points[:,0]) ): # and
                 # intersection[i,1] > min(self.contact_points[:,1]) and
                 # intersection[i,1] < max(self.contact_points[:,1]) ):
                     intersection_BB = np.vstack((intersection_BB,intersection[i,:]))
+
+            intersection_BB = np.unique(intersection_BB, axis=0)
+
+            if False:
+                self.plot_intersections(intersection_BB)
 
             ### Determine center point
             if len(intersection_BB) > 1:
@@ -136,6 +175,15 @@ class Mine_Estimator:
 
         if self.visualize:
             self.plot_point(x,y,z, [1,0,0])
+
+
+    def most_recent_point(self):
+        p = Point()
+        if len(self.contact_points) > 0:
+            p.x = self.contact_points[len(self.contact_points),0]
+            p.y = self.contact_points[len(self.contact_points),1]
+            p.z = self.contact_points[len(self.contact_points),2]
+        return p
 
 
     def point_count(self):
