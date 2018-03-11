@@ -6,10 +6,10 @@ import tf
 import math
 import pdb
 from geometry_msgs.msg import Point
-# from geometry_msgs.msg import Twist
 from std_msgs.msg import Int16MultiArray
 from std_msgs.msg import Int16
 from visualization_msgs.msg import Marker
+from mine_estimator import Mine_Estimator
 
 ### monitor current state ###
 current_state = 0 # if we don't get msgs
@@ -95,7 +95,8 @@ def plot_point(x,y,z):
     global contact_viz_id
     global contact_viz_pub
     msg = Marker()
-    msg.header.frame_id = "gantry"
+    # msg.header.frame_id = "gantry"
+    msg.header.frame_id = "probe_tip" # only for debug
     msg.header.seq = contact_viz_id
     msg.header.stamp = rospy.Time.now()
     msg.ns = "probe_contact_viz"
@@ -116,19 +117,15 @@ def plot_point(x,y,z):
 
 
 def update_probe_contact(data):
-    # Update contact point
     (trans,rot) = listener.lookupTransform('/gantry', '/probe_tip', rospy.Time(0))
-    new_contact = np.array(trans)
-    global contact_points
-    contact_points = np.vstack((contact_points, new_contact))
-    plot_point(trans[0], trans[1], trans[2])
+    est.add_point(trans[0], trans[1], trans[2])
 
-
-### Probe Planner States ###
-# 0 - Initial Search
-# 1 - 45deg Search
-# 2 - Max Info Search
-
+'''
+Probe Planner States
+0 - Initial Search
+1 - 45deg Search
+2 - Max Info Search
+'''
 def main():
     rospy.init_node('probe_planner')
     probe_plan_state = 0 # initial state
@@ -170,8 +167,7 @@ def main():
     gantry_yaw = 0
     sub3 = rospy.Subscriber("/probe_status_reply", Int16MultiArray, update_probe_state)
     sub4 = rospy.Subscriber("/probe_contact_reply", Int16MultiArray, update_probe_contact)
-    global contact_points
-    contact_points = np.array([], dtype=np.int64).reshape(0,3)
+
     global contact_viz_pub
     contact_viz_pub = rospy.Publisher('probe_contact_viz', Marker, queue_size=10)
 
@@ -180,6 +176,24 @@ def main():
     null_target = Point()
     global target
     target = null_target
+
+    est = Mine_Estimator(landmine_diameter, landmine_height)
+
+    # DEBUG
+    rospy.sleep(1) # Sleeps for 1 sec
+    for i in range(0,10):
+        x = -landmine_diameter/2*math.sin(180/10*i * math.pi/180)+250
+        y = landmine_diameter/2*math.cos(180/10*i * math.pi/180)
+
+        est.add_point(x,y,0)
+
+        rospy.sleep(0.5)
+
+    print(est.get_est())
+
+    pdb.set_trace()
+    # DEBUG
+
 
     r = rospy.Rate(100) # Hz
     while not rospy.is_shutdown():
