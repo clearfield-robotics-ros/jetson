@@ -7,6 +7,7 @@ from geometry_msgs.msg import Twist
 from std_msgs.msg import Int16MultiArray
 from std_msgs.msg import Int16
 import tf
+import math
 
 # in: command of sweeping / position
 # out: position of gantry (geometry_msgs/Point)
@@ -93,7 +94,7 @@ def main():
     # gantry_desired_state = Int16MultiArray()
     gantry_desired_state_sub = rospy.Subscriber("/gantry_desired_state", Int16MultiArray, update_gantry_desired_state)
     gantry_current_state_pub = rospy.Publisher("/gantry_current_state", Int16MultiArray, queue_size=10)
-    desired_state_reached = False
+    desired_state_reached = True
     global probe_yaw_angle
     probe_yaw_angle = probe_base_offset_rot[2]
 
@@ -191,7 +192,7 @@ def main():
                 sensor_head[5] += diff[2]
 
                 # Probe Yaw
-                diff[3] = (gantry_desired_state[5] - probe_yaw_angle)/rate
+                diff[3] = (gantry_desired_state[5]/180*math.pi - probe_yaw_angle)/rate
                 probe_yaw_angle += diff[3]
 
                 if abs(np.sum(diff)) < 0.1:
@@ -199,6 +200,7 @@ def main():
                 else:
                     desired_state_reached = False
 
+        # print "probe_yaw_angle", probe_yaw_angle
 
         # Send out update every loop
         gantry_current_state_msg = Int16MultiArray()
@@ -208,7 +210,7 @@ def main():
             sensor_head[0], #current_x_position
             sensor_head[1], # current_y_position
             sensor_head[5], # current_yaw_angle
-            probe_yaw_angle, #current_probe_yaw_angle
+            probe_yaw_angle*180/math.pi, #current_probe_yaw_angle
             int(desired_state_reached)]
         gantry_current_state_pub.publish(gantry_current_state_msg)
 
