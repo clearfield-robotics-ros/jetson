@@ -188,19 +188,17 @@ def main():
                 sensor_head[1] += diff[1]
 
                 # Gantry Yaw
-                diff[2] = (gantry_desired_state[4] - sensor_head[5])/rate
+                diff[2] = (float(gantry_desired_state[4])/180*math.pi - sensor_head[5])/rate
                 sensor_head[5] += diff[2]
 
                 # Probe Yaw
-                diff[3] = (gantry_desired_state[5]/180*math.pi - probe_yaw_angle)/rate
+                diff[3] = (float(gantry_desired_state[5])/180*math.pi - probe_yaw_angle)/rate
                 probe_yaw_angle += diff[3]
 
                 if abs(np.sum(diff)) < 0.1:
                     desired_state_reached = True
                 else:
                     desired_state_reached = False
-
-        # print "probe_yaw_angle", probe_yaw_angle
 
         # Send out update every loop
         gantry_current_state_msg = Int16MultiArray()
@@ -209,7 +207,7 @@ def main():
             0, #current_sweep_velocity
             sensor_head[0], #current_x_position
             sensor_head[1], # current_y_position
-            sensor_head[5], # current_yaw_angle
+            sensor_head[5]*180/math.pi, # current_yaw_angle
             probe_yaw_angle*180/math.pi, #current_probe_yaw_angle
             int(desired_state_reached)]
         gantry_current_state_pub.publish(gantry_current_state_msg)

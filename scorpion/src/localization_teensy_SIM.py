@@ -22,6 +22,7 @@ def updateLocation(loc, rot):
 
     if current_state == 2:
         loc[0] += 1.5 # advance!
+        pass
 
 	# send transform
     q_rot = tf.transformations.quaternion_from_euler(rot[0],rot[1],rot[2])

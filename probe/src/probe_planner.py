@@ -33,7 +33,7 @@ def probe_to_gantry_transform(loc,yaw):
     br.sendTransform((trans[0],trans[1],trans[2]),
        tf.transformations.quaternion_from_euler(0,0,0),
        rospy.Time.now(),
-       "H_desired pos",
+       "H1",
        "gantry")
 
     Hyaw = np.array([[math.cos(yaw),-math.sin(yaw),0,0],
@@ -53,10 +53,11 @@ def probe_to_gantry_transform(loc,yaw):
 
     H = Hprobe.dot(Hyaw).dot(Hyrot).dot(Hd)
     trans = np.matmul(H,np.array([[0],[0],[0],[1]]))
+
     br.sendTransform((trans[0],trans[1],trans[2]),
        tf.transformations.quaternion_from_euler(0,0,0),
        rospy.Time.now(),
-       "H_after_rot",
+       "H2",
        "gantry")
 
     Hoffset = np.array([[1,0,0,-probe_base_offset_loc[0]],
@@ -64,8 +65,17 @@ def probe_to_gantry_transform(loc,yaw):
                        [0,0,1,-probe_base_offset_loc[2]],
                        [0,0,0,1]])
 
-    H = Hoffset.dot(Hprobe).dot(Hyaw).dot(Hyrot).dot(Hd)
+    H = Hprobe.dot(Hyaw).dot(Hoffset).dot(Hyrot).dot(Hd)
     trans = np.matmul(H,np.array([[0],[0],[0],[1]]))
+
+    # H = Hprobe.dot(Hyaw).dot(Hyrot).dot(Hd)
+    # trans = np.matmul(H,np.array([[0],[0],[0],[1]]))
+
+    br.sendTransform((trans[0],trans[1],trans[2]),
+       tf.transformations.quaternion_from_euler(0,0,0),
+       rospy.Time.now(),
+       "H3",
+       "gantry")
 
     return trans
 
@@ -141,7 +151,7 @@ def update_probe_contact(data):
 
 def main():
     rospy.init_node('probe_planner')
-    probe_plan_state = 0 # initial state
+    probe_plan_state = 1 #DEBUG 0 # initial state
 
     # Transforms
     global br
@@ -247,9 +257,9 @@ def main():
 
                     # define desired probe tip position in gantry frame
                     th = np.array([-math.pi/4,0.,math.pi/4])
-                    x = landmine_diameter/2*np.cos(th) + est.most_recent_point().x
-                    y = landmine_diameter/2*np.sin(th) + est.most_recent_point().y
-                    z = np.ones(len(th))*est.most_recent_point().z
+                    x = landmine_diameter/2*np.cos(th) + 0#est.most_recent_point().x
+                    y = landmine_diameter/2*np.sin(th) + 0#est.most_recent_point().y
+                    z = np.ones(len(th))*-100#est.most_recent_point().z
 
                     if target.y > gantry_width/2:
                         gantry_yaw = th[2] # get desired yaw
