@@ -117,8 +117,7 @@ Visualization Manager:
       Marker Topic: /probe_contact_viz
       Name: probe_contact
       Namespaces:
-        probe_contact_viz: true
-        probe_radius_viz: true
+        {}
       Queue Size: 100
       Value: true
   Enabled: true
@@ -146,25 +145,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 647.97821
+      Distance: 1224.53333
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 1362.33362
-        Y: 138.147522
-        Z: 405.716614
+        X: 1605.7135
+        Y: 117.481544
+        Z: 178.946533
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.0500000007
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Pitch: 0.644797027
+      Pitch: 0.519797146
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 1.93584716
+      Yaw: 0.660847306
     Saved: ~
 Window Geometry:
   Displays:

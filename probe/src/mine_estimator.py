@@ -180,9 +180,9 @@ class Mine_Estimator:
     def most_recent_point(self):
         p = Point()
         if len(self.contact_points) > 0:
-            p.x = self.contact_points[len(self.contact_points),0]
-            p.y = self.contact_points[len(self.contact_points),1]
-            p.z = self.contact_points[len(self.contact_points),2]
+            p.x = self.contact_points[len(self.contact_points)-1,0]
+            p.y = self.contact_points[len(self.contact_points)-1,1]
+            p.z = self.contact_points[len(self.contact_points)-1,2]
         return p
 
 

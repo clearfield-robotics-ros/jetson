@@ -57,6 +57,10 @@ def probe_to_gantry_transform(loc,yaw):
     return trans
 
 def move_gantry(desired_probe_tip, gantry_yaw):
+
+    print "MOVE GANTRY TO:", desired_probe_tip
+    plot_point(desired_probe_tip.x,desired_probe_tip.y,desired_probe_tip.z)
+
     # work out gantry carriage position
     trans = probe_to_gantry_transform(desired_probe_tip, gantry_yaw)
 
@@ -105,12 +109,12 @@ def plot_point(x,y,z):
     msg.action = 0  # add
     msg.pose.position = Point(x,y,z)
     msg.pose.orientation.w = 1
-    msg.scale.x = 10
-    msg.scale.y = 10
-    msg.scale.z = 10
-    msg.color.a = 1.0
-    msg.color.r = 1.0
-    msg.color.g = 0.0
+    msg.scale.x = 30
+    msg.scale.y = 30
+    msg.scale.z = 30
+    msg.color.a = 0.5
+    msg.color.r = 0.0
+    msg.color.g = 1.0
     msg.color.b = 0.0
     contact_viz_pub.publish(msg)
     contact_viz_id += 1
@@ -181,6 +185,7 @@ def main():
     global est
     est = Mine_Estimator(landmine_diameter, landmine_height)
 
+
     # # DEBUG
     # rospy.sleep(1) # Sleeps for 1 sec
     # for i in range(0,10):
@@ -234,6 +239,8 @@ def main():
 
                 if not set_desired_gantry_pose:
 
+                    # print "get 2nd point..."
+
                     # define desired probe tip position in gantry frame
                     th = np.array([-math.pi/2,0,math.pi/2])
                     print "th", th
@@ -258,8 +265,6 @@ def main():
                     desired_probe_tip.x = plan_x # - math.cos(gantry_yaw)*landmine_diameter/2*probe_safety_factor
                     desired_probe_tip.y = plan_y # + math.sin(gantry_yaw)*landmine_diameter/2*probe_safety_factor
                     desired_probe_tip.z = -scorpion_gantry_offset_loc[2] + landmine_pos[2] # set to depth
-
-                    plot_point(desired_probe_tip.x,desired_probe_tip.y,desired_probe_tip.z) # debug
 
                     print "desired_probe_tip", desired_probe_tip
 
