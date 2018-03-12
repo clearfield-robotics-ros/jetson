@@ -186,47 +186,64 @@ class Mine_Estimator:
 
     def get_sparsest_point(self):
 
-        angle = []
-        for i in range(0,len(self.contact_points)):
-            a = math.atan2(self.contact_points[i,1] - self.get_est()[1] , self.contact_points[i,0] - self.get_est()[0] )
-            if a < 0:
-                a += 2*math.pi
-            angle.append(a)
+        if len(self.contact_points) >= 2: # need two points to get started
+            angle = []
+            for i in range(0,len(self.contact_points)):
+                a = math.atan2( -(self.contact_points[i,1] - self.get_est()[1]), -(self.contact_points[i,0] - self.get_est()[0]) )
+                angle.append(a)
+            angle.sort()
 
-        angle.sort()
+            angle_range = 80./180*math.pi # PARAM
 
-        print "angle pre:", angle
+            if min(angle) > -angle_range:
+                angle.insert(0, -angle_range)
 
-        angle_range = 90/180*math.pi # PARAM
-        lower = math.pi - angle_range
-        if min(angle) > lower:
-            angle.insert(0, lower)
-        upper = math.pi + angle_range
-        if max(angle) < upper:
-            angle.append(upper)
+            if max(angle) < angle_range:
+                angle.append(angle_range)
 
-        print "angle post:", angle
+            # print "ANGLES:"
+            # for i in range(0,len(angle)):
+            #     print int(angle[i]*180/math.pi)
+            #
+            # for i in range(0,len(angle)):
+            #     x = self.c_x - math.cos(angle[i])*self.c_r
+            #     y = self.c_y - math.sin(angle[i])*self.c_r
+            #     z = self.c_z
+            #     self.plot_point(x,y,z-1,[1,1,0])
 
-        dist = []
-        for i in range(0,len(angle)-1):
-            dist.append( abs( angle[i+1] - angle[i] ) )
+            dist = []
+            for i in range(0,len(angle)-1):
+                dist.append( abs( angle[i+1] - angle[i] ) )
 
-        M = max(dist)
-        I = dist.index(M)
+            print dist
 
-        if I == 0 and angle[I] == lower:
-            probe_angle = lower
-        elif I == len(angle) and angle[I] == upper:
-            probe_angle = upper
+            M = max(dist)
+            I = dist.index(M)
+
+            print "Index:", I
+
+            if I == 0 and angle[I] == -angle_range:
+                probe_angle = -angle_range
+                print "LOWER", probe_angle*180/math.pi
+
+            elif I == len(angle)-2 and angle[I+1] == angle_range:
+                probe_angle = angle_range
+                print "UPPER", probe_angle*180/math.pi
+
+            else:
+                probe_angle = angle[I] + dist[I]/2
+                print "MIDDLE", probe_angle*180/math.pi
+
+            x = self.c_x - math.cos(probe_angle)*self.c_r
+            y = self.c_y - math.sin(probe_angle)*self.c_r
+            z = self.c_z
+
+            # self.plot_point(x,y,z-2,[1,1,1])
+            # print "PROBE ANGLE:", probe_angle
+
+            return [x,y,z,probe_angle]
         else:
-            probe_angle = angle[I] + dist[I]/2
-
-        x = self.c_x + math.cos(probe_angle - math.pi/2)*self.c_r
-        y = self.c_y + math.sin(probe_angle - math.pi/2)*self.c_r
-        z = self.c_z
-        a = probe_angle + math.pi/2 - 90
-
-        return [x,y,z,a]
+            return None
 
 
     def point_count(self):

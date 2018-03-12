@@ -53,7 +53,8 @@ def probe_to_gantry_transform(loc,yaw):
 
 def move_gantry(desired_probe_tip, gantry_yaw):
 
-    print "MOVE GANTRY TO:", desired_probe_tip
+    print "GANTRY YAW:", gantry_yaw*180/math.pi
+    print "GANTRY POSIITON:", desired_probe_tip
     plot_point(desired_probe_tip.x,desired_probe_tip.y,desired_probe_tip.z,[0,1,0],10)
 
     # work out gantry carriage position
@@ -177,19 +178,19 @@ def main():
     global est
     est = Mine_Estimator(landmine_diameter, landmine_height)
 
-    # DEBUG
-    # rospy.sleep(1) # Sleeps for 1 sec
-    # for i in range(0,10):
-    #     x = -landmine_diameter/2*math.sin(180/10*i * math.pi/180)+250
-    #     y = landmine_diameter/2*math.cos(180/10*i * math.pi/180)
+    # # DEBUG
+    # N = 4
+    # rospy.sleep(0.5) # Sleeps for 1 sec
+    # for i in range(0,N):
+    #     x = -landmine_diameter/2*math.sin( (100 + 120/(N-1)*i) * math.pi/180)+250
+    #     y = landmine_diameter/2*math.cos( (100 + 120/(N-1)*i) * math.pi/180)
     #
     #     est.add_point(x,y,0)
     #
-    #     rospy.sleep(0.5)
+    # rospy.sleep(0.5) # Sleeps for 1 sec
+    # p = est.get_sparsest_point()
     #
-    # print(est.get_est())
     # pdb.set_trace()
-
 
     r = rospy.Rate(100) # Hz
     while not rospy.is_shutdown():

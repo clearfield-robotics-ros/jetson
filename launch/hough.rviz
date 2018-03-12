@@ -7,7 +7,7 @@ Panels:
         - /Marker1
         - /Marker1/Namespaces1
       Splitter Ratio: 0.572222233
-    Tree Height: 552
+    Tree Height: 352
   - Class: rviz/Selection
     Name: Selection
   - Class: rviz/Tool Properties
@@ -97,7 +97,7 @@ Visualization Manager:
       Marker Topic: /probe_contact_viz
       Name: probe_contact
       Namespaces:
-        {}
+        probe_contact_viz: true
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -105,7 +105,7 @@ Visualization Manager:
       Marker Topic: /probe_contact_viz
       Name: Marker
       Namespaces:
-        {}
+        probe_contact_viz: true
       Queue Size: 100
       Value: true
   Enabled: true
@@ -133,25 +133,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 567.143921
+      Distance: 215.563644
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 129.439835
-        Y: 8.90343189
-        Z: 32.9369736
+        X: 201.629929
+        Y: -14.2484684
+        Z: 35.7556343
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.0500000007
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Pitch: 0.774797678
+      Pitch: 0.719798326
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 3.72222805
+      Yaw: 3.71723104
     Saved: ~
 Window Geometry:
   Displays:
@@ -169,5 +169,5 @@ Window Geometry:
   Views:
     collapsed: true
   Width: 1067
-  X: 624
-  Y: 106
+  X: 2698
+  Y: 144
