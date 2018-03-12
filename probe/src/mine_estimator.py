@@ -18,6 +18,7 @@ class Mine_Estimator:
 
         self.c_x = 0.
         self.c_y = 0.
+        self.c_z = 0.
         self.c_r = self.radius
 
         self.contact_viz_id = 0
@@ -52,7 +53,7 @@ class Mine_Estimator:
 
             x = self.radius*math.sin(360/20*i * math.pi/180) + self.c_x
             y = self.radius*math.cos(360/20*i * math.pi/180) + self.c_y
-            z = 0
+            z = self.c_z
             msg.points.append(Point(x,y,z))
 
         self.contact_viz_pub.publish(msg)
@@ -156,25 +157,23 @@ class Mine_Estimator:
                 self.c_x = np.mean(self.contact_points[:,0])
                 self.c_y = np.mean(self.contact_points[:,1])
         else:
-            self.c_x = self.contact_points[0,0]
+            self.c_x = self.contact_points[0,0] + self.radius
             self.c_y = self.contact_points[0,1]
 
-        if self.visualize:
-            self.plot_point(self.c_x, self.c_y, 0, [0,0,1])
-            self.draw_radius([0,0,1])
-
-
     def get_est(self):
-        return [self.c_x, self.c_y, self.c_r]
+        return [self.c_x, self.c_y, self.c_z, self.c_r]
 
 
     def add_point(self,x,y,z):
         new_contact = np.array([x,y,z])
         self.contact_points = np.vstack((self.contact_points, new_contact))
+        self.c_z = np.mean(self.contact_points[:,2])
         self.hough()
 
         if self.visualize:
             self.plot_point(x,y,z, [1,0,0])
+            self.draw_radius([1,0,0])
+            # self.plot_point(self.c_x, self.c_y, 0, [0,0,1])
 
 
     def most_recent_point(self):
@@ -185,9 +184,57 @@ class Mine_Estimator:
             p.z = self.contact_points[len(self.contact_points)-1,2]
         return p
 
+    def get_sparsest_point(self):
+
+        angle = []
+        for i in range(0,len(self.contact_points)):
+            a = math.atan2(self.contact_points[i,1] - self.get_est()[1] , self.contact_points[i,0] - self.get_est()[0] )
+            if a < 0:
+                a += 2*math.pi
+            angle.append(a)
+
+        angle.sort()
+
+        print "angle pre:", angle
+
+        angle_range = 90/180*math.pi # PARAM
+        lower = math.pi - angle_range
+        if min(angle) > lower:
+            angle.insert(0, lower)
+        upper = math.pi + angle_range
+        if max(angle) < upper:
+            angle.append(upper)
+
+        print "angle post:", angle
+
+        dist = []
+        for i in range(0,len(angle)-1):
+            dist.append( abs( angle[i+1] - angle[i] ) )
+
+        M = max(dist)
+        I = dist.index(M)
+
+        if I == 0 and angle[I] == lower:
+            probe_angle = lower
+        elif I == len(angle) and angle[I] == upper:
+            probe_angle = upper
+        else:
+            probe_angle = angle[I] + dist[I]/2
+
+        x = self.c_x + math.cos(probe_angle - math.pi/2)*self.c_r
+        y = self.c_y + math.sin(probe_angle - math.pi/2)*self.c_r
+        z = self.c_z
+        a = probe_angle + math.pi/2 - 90
+
+        return [x,y,z,a]
+
 
     def point_count(self):
         return len(self.contact_points)
+
+
+    def fit_error(self):
+        return 5
 
 
     def reset_est(self):

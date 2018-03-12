@@ -8,7 +8,7 @@ Panels:
         - /probe_contact1
         - /probe_contact1/Namespaces1
       Splitter Ratio: 0.602305472
-    Tree Height: 352
+    Tree Height: 424
   - Class: rviz/Selection
     Name: Selection
   - Class: rviz/Tool Properties
@@ -76,7 +76,7 @@ Visualization Manager:
       Name: TF
       Show Arrows: false
       Show Axes: true
-      Show Names: true
+      Show Names: false
       Tree:
         world:
           scorpion:
@@ -148,25 +148,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 592.363342
+      Distance: 1064.3186
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 1687.37561
-        Y: 118.990173
-        Z: -106.935181
+        X: 1594.5946
+        Y: 26.2864933
+        Z: 65.884407
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.0500000007
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Pitch: 1.14479673
+      Pitch: 0.544797838
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 1.02084875
+      Yaw: 0.170848489
     Saved: ~
 Window Geometry:
   Displays:
@@ -184,5 +184,5 @@ Window Geometry:
   Views:
     collapsed: true
   Width: 990
-  X: 273
-  Y: 130
+  X: 376
+  Y: 112

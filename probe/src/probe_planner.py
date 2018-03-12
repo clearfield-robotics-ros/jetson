@@ -54,7 +54,7 @@ def probe_to_gantry_transform(loc,yaw):
 def move_gantry(desired_probe_tip, gantry_yaw):
 
     print "MOVE GANTRY TO:", desired_probe_tip
-    plot_point(desired_probe_tip.x,desired_probe_tip.y,desired_probe_tip.z,[0,1,0],30)
+    plot_point(desired_probe_tip.x,desired_probe_tip.y,desired_probe_tip.z,[0,1,0],10)
 
     # work out gantry carriage position
     trans = probe_to_gantry_transform(desired_probe_tip, gantry_yaw)
@@ -178,14 +178,6 @@ def main():
     est = Mine_Estimator(landmine_diameter, landmine_height)
 
     # DEBUG
-    # Gantry: 1200,-400,300
-    # landmine_pos: [1800, 100, -150]
-
-    # target.x = 600
-    # target.y = 500
-    # target.z = -450
-
-    # DEBUG
     # rospy.sleep(1) # Sleeps for 1 sec
     # for i in range(0,10):
     #     x = -landmine_diameter/2*math.sin(180/10*i * math.pi/180)+250
@@ -197,7 +189,6 @@ def main():
     #
     # print(est.get_est())
     # pdb.set_trace()
-    # DEBUG
 
 
     r = rospy.Rate(100) # Hz
@@ -244,7 +235,6 @@ def main():
                     # DEBUG
                     # for i in range(0,len(th)):
                     #     plot_point(x[i],y[i],z[i],[1,0,0],10)
-                    # DEBUG
 
                     if target.y > gantry_width/2:
                         gantry_yaw = th[2] # get desired yaw
@@ -273,8 +263,19 @@ def main():
             elif probe_plan_state == 2:
 
                 print "PLAN STATE 2"
-                while True:
-                    pass
+
+                p = est.get_sparsest_point()
+
+                # DEBUG
+                plot_point(p[0],p[1],p[2],[0,1,1],10)
+
+                desired_probe_tip.x = p[0] - math.cos(gantry_yaw)*landmine_diameter/2*probe_safety_factor
+                desired_probe_tip.y = p[1] - math.sin(gantry_yaw)*landmine_diameter/2*probe_safety_factor
+                desired_probe_tip.z = -scorpion_gantry_offset_loc[2] + landmine_pos[2] # set to depth
+                gantry_yaw = p[3]
+
+                move_gantry(desired_probe_tip, gantry_yaw)
+                probe_sequence += 1
 
             '''
             Execute Probing Procedure
@@ -297,6 +298,10 @@ def main():
                 if est.point_count() > 1:
                     probe_plan_state = 2 # advance
                     probe_sequence = 0 # reset
+
+            elif probe_plan_state == 2:
+                # while(est.point_count() < 5 || est.fit_error > 2)
+                pass
 
         r.sleep()
 
