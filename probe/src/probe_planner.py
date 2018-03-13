@@ -180,6 +180,7 @@ def main():
             if probe_plan_state == 0:
 
                 print "PLAN STATE 0"
+                print "-----------------------"
 
                 if probe_sequence == 0:
                     # define desired probe tip position in gantry frame
@@ -198,6 +199,7 @@ def main():
             elif probe_plan_state == 1:
 
                 print "PLAN STATE 1"
+                print "-----------------------"
 
                 if probe_sequence == probe_sequence_prev:
                     # define desired probe tip position in gantry frame
@@ -231,6 +233,7 @@ def main():
             elif probe_plan_state == 2:
 
                 print "PLAN STATE 2"
+                print "-----------------------"
 
                 if probe_sequence == probe_sequence_prev:
 
