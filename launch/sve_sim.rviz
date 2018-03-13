@@ -4,8 +4,6 @@ Panels:
     Name: Displays
     Property Tree Widget:
       Expanded:
-        - /TF1
-        - /probe_contact1
         - /probe_contact1/Namespaces1
       Splitter Ratio: 0.602305472
     Tree Height: 424
@@ -72,7 +70,7 @@ Visualization Manager:
           Value: true
         world:
           Value: true
-      Marker Scale: 600
+      Marker Scale: 500
       Name: TF
       Show Arrows: false
       Show Axes: true
@@ -110,7 +108,7 @@ Visualization Manager:
       Marker Topic: /mine_marker
       Name: Mine
       Namespaces:
-        {}
+        mine: true
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -118,7 +116,8 @@ Visualization Manager:
       Marker Topic: /probe_contact_viz
       Name: probe_contact
       Namespaces:
-        probe_plan_viz: true
+        probe_contact_viz: true
+        probe_radius_viz: true
       Queue Size: 100
       Value: true
   Enabled: true
@@ -146,25 +145,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 1784.44031
+      Distance: 1281.72375
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 1509.85242
-        Y: 301.445892
-        Z: 296.339172
+        X: 1605.35962
+        Y: 291.923309
+        Z: 131.238541
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.0500000007
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Pitch: 0.40979746
+      Pitch: 0.549797356
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 0.592670321
+      Yaw: 0.812670231
     Saved: ~
 Window Geometry:
   Displays:
@@ -182,5 +181,5 @@ Window Geometry:
   Views:
     collapsed: true
   Width: 990
-  X: 2400
-  Y: 177
+  X: 378
+  Y: 168

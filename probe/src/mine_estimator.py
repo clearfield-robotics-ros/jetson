@@ -20,6 +20,7 @@ class Mine_Estimator:
         self.c_y = 0.
         self.c_z = 0.
         self.c_r = self.radius
+        self.error = 0
 
         self.contact_viz_id = 0
         self.contact_viz_pub = rospy.Publisher('probe_contact_viz', Marker, queue_size=10)
@@ -163,8 +164,26 @@ class Mine_Estimator:
             self.c_y = self.contact_points[0,1]
 
 
+    def compute_error(self):
+
+        dist = 0
+        for i in range(0,len(self.contact_points)):
+
+            dist += math.sqrt( (self.contact_points[i,0] - self.c_x)**2 + \
+                               (self.contact_points[i,1] - self.c_y)**2 )
+            dist -= self.c_r
+
+        self.error = dist/len(self.contact_points)
+
+        print "Fit Error:", self.error
+
+
     def get_est(self):
         return [self.c_x, self.c_y, self.c_z, self.c_r]
+
+
+    def get_error(self):
+        return self.error
 
 
     def print_results(self):
@@ -181,6 +200,7 @@ class Mine_Estimator:
         self.contact_points = np.vstack((self.contact_points, new_contact))
         self.c_z = np.mean(self.contact_points[:,2])
         self.hough()
+        self.compute_error()
 
         if self.visualize:
             self.plot_point(x,y,z, [1,0,0])
@@ -207,13 +227,11 @@ class Mine_Estimator:
                 angle.append(a)
             angle.sort()
 
-            # angle_range = 80./180*math.pi # PARAM
+            if min(angle) > -self.angle_range:
+                angle.insert(0, -self.angle_range)
 
-            if min(angle) > -angle_range:
-                angle.insert(0, -angle_range)
-
-            if max(angle) < angle_range:
-                angle.append(angle_range)
+            if max(angle) < self.angle_range:
+                angle.append(self.angle_range)
 
             # print "ANGLES:"
             # for i in range(0,len(angle)):
@@ -236,12 +254,12 @@ class Mine_Estimator:
 
             print "Index:", I
 
-            if I == 0 and angle[I] == -angle_range:
-                probe_angle = -angle_range
+            if I == 0 and angle[I] == -self.angle_range:
+                probe_angle = -self.angle_range
                 print "LOWER", probe_angle*180/math.pi
 
-            elif I == len(angle)-2 and angle[I+1] == angle_range:
-                probe_angle = angle_range
+            elif I == len(angle)-2 and angle[I+1] == self.angle_range:
+                probe_angle = self.angle_range
                 print "UPPER", probe_angle*180/math.pi
 
             else:
@@ -262,10 +280,6 @@ class Mine_Estimator:
 
     def point_count(self):
         return len(self.contact_points)
-
-
-    def fit_error(self):
-        return 5
 
 
     def reset_est(self):

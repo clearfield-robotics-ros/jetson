@@ -24,9 +24,10 @@ md_gantry_offset_loc: [350,-100,-300] # y offset is half of width
 ### Probe ###
 probe_base_offset_loc: [0,100,-100]
 probe_base_offset_rot: [0,0.523599,1.5708] # start out of the way
-probe_speed: 2 #mm/s
+probe_offset_distance: 300
+probe_speed: 1.5 #mm/s
 probe_safety_factor: 1
-max_probe_distance: 900
+max_probe_distance: 750
 
 ### Probe Planner ###
 third_stage_probe_angle: 1.3962634016

@@ -69,11 +69,12 @@ def main():
     br = tf.TransformBroadcaster()
     listener = tf.TransformListener()
 
+    probe_offset_distance = rospy.get_param('probe_offset_distance')
     max_probe_distance = rospy.get_param('max_probe_distance')
     probe_speed = rospy.get_param('probe_speed')
 
     global probe_distance
-    probe_distance = 0
+    probe_distance = probe_offset_distance
     global finished_probing
     finished_probing = True
     global retracted_probe
@@ -98,7 +99,7 @@ def main():
                 probe_distance += probe_speed
 
         elif finished_probing:
-            if probe_distance > 0: # retract
+            if probe_distance > probe_offset_distance: # retract
                 probe_distance -= probe_speed
             else:
                 retracted_probe = True
