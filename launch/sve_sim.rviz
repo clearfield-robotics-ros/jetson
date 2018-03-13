@@ -76,7 +76,7 @@ Visualization Manager:
       Name: TF
       Show Arrows: false
       Show Axes: true
-      Show Names: false
+      Show Names: true
       Tree:
         world:
           scorpion:
@@ -110,7 +110,7 @@ Visualization Manager:
       Marker Topic: /mine_marker
       Name: Mine
       Namespaces:
-        mine: true
+        {}
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -118,9 +118,7 @@ Visualization Manager:
       Marker Topic: /probe_contact_viz
       Name: probe_contact
       Namespaces:
-        probe_contact_viz: true
         probe_plan_viz: true
-        probe_radius_viz: true
       Queue Size: 100
       Value: true
   Enabled: true
@@ -148,25 +146,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 1042.08228
+      Distance: 1784.44031
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 1741.60986
-        Y: 193.035233
-        Z: -29.1359005
+        X: 1509.85242
+        Y: 301.445892
+        Z: 296.339172
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.0500000007
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Pitch: 0.72479713
+      Pitch: 0.40979746
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 3.79585218
+      Yaw: 0.592670321
     Saved: ~
 Window Geometry:
   Displays:

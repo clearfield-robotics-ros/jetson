@@ -81,6 +81,8 @@ def set_target(data):
     global target
     target = data
     print "target", target
+    global probe_plan_state
+    probe_plan_state = 0
 
 def update_gantry_state(data):
     global gantry_current_state
@@ -124,7 +126,9 @@ def update_probe_contact(data):
 
 def main():
     rospy.init_node('probe_planner')
-    probe_plan_state = 0 # initial state
+
+    global probe_plan_state
+    probe_plan_state = -1 # initial state
 
     # Transforms
     global br
@@ -147,6 +151,9 @@ def main():
         + abs(landmine_pos[2])) / math.sin(probe_angle)
     maxForwardSearch = math.cos(probe_angle)*landmine_height*(1/probe_safety_factor);
     gantry_width = rospy.get_param('gantry_width')
+
+    num_contact_points = rospy.get_param('num_contact_points')
+    min_fit_error = rospy.get_param('min_fit_error')
 
     # blocking variables
     global set_desired_gantry_pose
@@ -265,23 +272,32 @@ def main():
 
                 print "PLAN STATE 2"
 
-                p = est.get_sparsest_point()
+                if probe_sequence == 0:
 
-                # DEBUG
-                plot_point(p[0],p[1],p[2],[0,1,1],10)
+                    p = est.get_sparsest_point()
 
-                desired_probe_tip.x = p[0] - math.cos(gantry_yaw)*landmine_diameter/2*probe_safety_factor
-                desired_probe_tip.y = p[1] - math.sin(gantry_yaw)*landmine_diameter/2*probe_safety_factor
-                desired_probe_tip.z = -scorpion_gantry_offset_loc[2] + landmine_pos[2] # set to depth
-                gantry_yaw = p[3]
+                    # plot_point(p[0],p[1],p[2],[0,1,1],10) # DEBUG
 
-                move_gantry(desired_probe_tip, gantry_yaw)
-                probe_sequence += 1
+                    desired_probe_tip.x = p[0] - math.cos(gantry_yaw)*landmine_diameter/2*probe_safety_factor
+                    desired_probe_tip.y = p[1] - math.sin(gantry_yaw)*landmine_diameter/2*probe_safety_factor
+                    desired_probe_tip.z = -scorpion_gantry_offset_loc[2] + landmine_pos[2] # set to depth ???
+                    gantry_yaw = p[3]
+
+                    move_gantry(desired_probe_tip, gantry_yaw)
+                    probe_sequence += 1
+
+                elif probe_sequence > 0:
+
+                    desired_probe_tip.x += math.cos(gantry_yaw)*maxForwardSearch
+                    desired_probe_tip.y += math.sin(gantry_yaw)*maxForwardSearch
+
+                    move_gantry(desired_probe_tip, gantry_yaw)
+                    probe_sequence += 1
 
             '''
             Execute Probing Procedure
             '''
-            print "BEGIN PROBING"
+            print "PROBE #X"
             probe_cmd_pub.publish(2) # start probing
             rospy.sleep(0.5) # give time for handshake
             while not probe_current_state[2] == 1: # while not finished
@@ -291,18 +307,35 @@ def main():
             Advance States
             '''
             if probe_plan_state == 0:
+
                 if est.point_count() > 0:
                     probe_plan_state = 1 # advance
                     probe_sequence = 0 # reset
 
             elif probe_plan_state == 1:
+
                 if est.point_count() > 1:
                     probe_plan_state = 2 # advance
                     probe_sequence = 0 # reset
+                    prev_point_count = est.point_count()
 
             elif probe_plan_state == 2:
-                # while(est.point_count() < 5 || est.fit_error > 2)
-                pass
+
+                if not est.point_count() == prev_point_count:
+                    prev_point_count = est.point_count()
+                    probe_sequence = 0
+
+                if (est.point_count() >= num_contact_points
+                    or est.fit_error <= min_fit_error):
+
+                    print est.print_results()
+
+                    ### TODO: Change State in Jetson
+
+                    target = null_target
+                    probe_plan_state = -1
+                    probe_sequence = 0 # reset
+
 
         r.sleep()
 

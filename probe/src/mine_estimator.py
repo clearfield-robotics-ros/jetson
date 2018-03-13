@@ -26,6 +26,8 @@ class Mine_Estimator:
 
         self.visualize = True
 
+        self.angle_range = rospy.get_param('third_stage_probe_angle')
+
 
     def draw_radius(self,col):
 
@@ -160,8 +162,18 @@ class Mine_Estimator:
             self.c_x = self.contact_points[0,0] + self.radius
             self.c_y = self.contact_points[0,1]
 
+
     def get_est(self):
         return [self.c_x, self.c_y, self.c_z, self.c_r]
+
+
+    def print_results(self):
+        print "Landmine Survey Results"
+        print "-----------------------"
+        print "Centre X (mm):", self.c_x
+        print "Centre Y (mm):", self.c_y
+        print "Centre Z (mm):", self.c_z
+        print "Radius (mm):", self.c_r
 
 
     def add_point(self,x,y,z):
@@ -184,16 +196,18 @@ class Mine_Estimator:
             p.z = self.contact_points[len(self.contact_points)-1,2]
         return p
 
+
     def get_sparsest_point(self):
 
         if len(self.contact_points) >= 2: # need two points to get started
             angle = []
             for i in range(0,len(self.contact_points)):
-                a = math.atan2( -(self.contact_points[i,1] - self.get_est()[1]), -(self.contact_points[i,0] - self.get_est()[0]) )
+                a = math.atan2( -(self.contact_points[i,1] - self.get_est()[1]),
+                    -(self.contact_points[i,0] - self.get_est()[0]) )
                 angle.append(a)
             angle.sort()
 
-            angle_range = 80./180*math.pi # PARAM
+            # angle_range = 80./180*math.pi # PARAM
 
             if min(angle) > -angle_range:
                 angle.insert(0, -angle_range)

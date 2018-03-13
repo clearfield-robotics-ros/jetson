@@ -27,3 +27,8 @@ probe_base_offset_rot: [0,0.523599,1.5708] # start out of the way
 probe_speed: 2 #mm/s
 probe_safety_factor: 1
 max_probe_distance: 900
+
+### Probe Planner ###
+third_stage_probe_angle: 1.3962634016
+num_contact_points: 5
+min_fit_error: 2.
