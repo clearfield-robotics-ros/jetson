@@ -22,7 +22,6 @@
 
 
 <node name="probe_planner" pkg="probe" type="probe_planner.py" output="screen"></node>
-<node name="probe_state_monitor" pkg="probe" type="probe_state_monitor.py" output="screen"></node>
 <!-- <node name="probe_teensy_SIM" pkg="probe" type="probe_teensy_SIM.py" output="screen"></node> -->
 <node ns="probe_teensy" name="probe_teensy" pkg="rosserial_python" args="/dev/serial/by-id/usb-Teensyduino_USB_Serial_3652290-if00" type="serial_node.py" />
 
