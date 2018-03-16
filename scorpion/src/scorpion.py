@@ -3,11 +3,12 @@
 import rospy
 import numpy
 from geometry_msgs.msg import Point
-from std_msgs.msg import Int16
+from std_msgs.msg import Int16, Int16MultiArray
 from std_msgs.msg import String
 from visualization_msgs.msg import Marker
 import tf
 import math
+# from probe_state_monitor import Probe_State_Monitor
 
 def updateLocation(loc, rot):
 
@@ -60,44 +61,31 @@ def updateLocation(loc, rot):
 # 3 - MD Pinpointing
 # 4 - Probing
 # 5 - Marking
-current_state = 0 # initial state
 
 def update_state(data):
     global current_state
     desired_state = data.data
 
-    if desired_state == 3: # safety against awry metal detector signals
-        if current_state == 2:
-            current_state = desired_state
+    # print "GUI Desired State:", desired_state
+
+    if desired_state == 1: # Init
+        current_state = 1
+        print "GUI: Init"
+    elif desired_state == 2: # Start
+        current_state = 2
+        print "GUI: Start"
+    elif desired_state == 0: # End
+        current_state = 0
+        print "GUI: Stop"
     else:
-        current_state = desired_state
+        pass
+        # print "Something went wrong in the GUI"
 
 
-def state_machine():
+def update_probe_state(data):
+    global probe_current_state
+    probe_current_state = data.data
 
-    global loc, rot
-
-    if current_state == 0:
-        braking_desired_state.publish(0) # no brakes while we're chilling
-
-    elif current_state == 1:
-        print "we're calibrating"
-        braking_desired_state.publish(1) # brakes on while calibrating
-
-    elif current_state == 2:
-        braking_desired_state.publish(0) # brakes off while surveying
-
-    elif current_state == 3:
-        braking_desired_state.publish(1) # brakes on while pinpointing
-
-    elif current_state == 4:
-        braking_desired_state.publish(1) # brakes on while probing for sure
-
-    elif current_state == 5:
-        braking_desired_state.publish(1) # brakes on while marking for sure
-
-    else:
-        print ("jetson is in an invalid state: see scorpion.py")
 
 ### pub / sub ###
 pub = rospy.Publisher('scorpion', Marker, queue_size=10)
@@ -109,20 +97,30 @@ braking_desired_state = rospy.Publisher('braking_desired_state', Int16, queue_si
 def main():
     rospy.init_node('scorpion')
 
+    # Transforms
     global br
     br = tf.TransformBroadcaster()
     listener = tf.TransformListener()
 
-    global model_scorpion_offset_loc
-    global model_scorpion_offset_rot
+    # Parameters
+    global model_scorpion_offset_loc, model_scorpion_offset_rot
     model_scorpion_offset_loc = rospy.get_param('model_scorpion_offset_loc')
     model_scorpion_offset_rot = rospy.get_param('model_scorpion_offset_rot')
+
+    # States
+    global current_state
+    current_state = 0 # initial state
+    sub = rospy.Subscriber("/probe_teensy/probe_status_reply", Int16MultiArray, update_probe_state)
+    global probe_current_state
+    probe_current_state = Int16MultiArray()
+    probe_cmd_pub = rospy.Publisher("/probe_teensy/probe_cmd_send", Int16, queue_size=10)
 
     r = rospy.Rate(10)  # 10 Hz
     while not rospy.is_shutdown():
 
-        state_machine() # perform functions in the state
-
+        '''
+        Loop Updates
+        '''
         jetson_current_state.publish(current_state) # broadcast our state
 
         try:
@@ -130,6 +128,43 @@ def main():
             updateLocation(loc,rot)
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
             continue
+
+        '''
+        State Machine
+        '''
+        if current_state == 0:
+            braking_desired_state.publish(0) # no brakes while we're chilling
+
+        elif current_state == 1:
+            braking_desired_state.publish(1) # brakes on while calibrating
+
+            print "Calibrating Probes..."
+            probe_cmd_pub.publish(3) # start calibration
+            rospy.sleep(0.5) # give time for handshake
+            while probe_current_state[1] == 0: # while not finished
+                pass
+            print "...Probes Calibrated"
+
+            print "Calibrating Gantry..."
+            # TODO Add calibration for Gantry
+            print "...Gantry Calibrated"
+
+            current_state = 0 # return to idle state
+
+        elif current_state == 2:
+            braking_desired_state.publish(0) # brakes off while surveying
+
+        elif current_state == 3:
+            braking_desired_state.publish(1) # brakes on while pinpointing
+
+        elif current_state == 4:
+            braking_desired_state.publish(1) # brakes on while probing for sure
+
+        elif current_state == 5:
+            braking_desired_state.publish(1) # brakes on while marking for sure
+
+        else:
+            print ("jetson is in an invalid state: see scorpion.py")
 
         r.sleep()  # indent less when going back to regular gantry_lib
 

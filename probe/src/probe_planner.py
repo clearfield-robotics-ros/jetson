@@ -6,8 +6,7 @@ import tf
 import math
 import pdb
 from geometry_msgs.msg import Point
-from std_msgs.msg import Int16MultiArray
-from std_msgs.msg import Int16
+from std_msgs.msg import Int16, Int16MultiArray
 from visualization_msgs.msg import Marker
 from mine_estimator import Mine_Estimator
 
@@ -138,12 +137,12 @@ def main():
     sub2 = rospy.Subscriber("/gantry_current_state", Int16MultiArray, update_gantry_state)
 
     # Probe Related Messages
-    probe_cmd_pub = rospy.Publisher("/probe_cmd_send", Int16, queue_size=10)
+    probe_cmd_pub = rospy.Publisher("/probe_teensy/probe_cmd_send", Int16, queue_size=10)
     desired_probe_tip = Point()
     gantry_yaw = 0
     probe_sequence = 0
-    sub3 = rospy.Subscriber("/probe_status_reply", Int16MultiArray, update_probe_state)
-    sub4 = rospy.Subscriber("/probe_contact_reply", Int16MultiArray, update_probe_contact)
+    sub3 = rospy.Subscriber("/probe_teensy/probe_status_reply", Int16MultiArray, update_probe_state)
+    sub4 = rospy.Subscriber("/probe_teensy/probe_contact_reply", Int16MultiArray, update_probe_contact)
 
     # Recieving Target from Metal Detector
     sub = rospy.Subscriber("/set_probe_target", Point, set_target)

@@ -82,11 +82,11 @@ def main():
     global foundObject
     foundObject = False
 
-    status_pub = rospy.Publisher("/probe_status_reply", Int16MultiArray, queue_size=10)
+    status_pub = rospy.Publisher("/probe_teensy/probe_status_reply", Int16MultiArray, queue_size=10)
     global contact_pub
-    contact_pub = rospy.Publisher("/probe_contact_reply", Int16MultiArray, queue_size=10)
+    contact_pub = rospy.Publisher("/probe_teensy/probe_contact_reply", Int16MultiArray, queue_size=10)
     probe_contact_sub = rospy.Subscriber("probe_contact", Point, probe_contact)
-    cmd_sub = rospy.Subscriber("/probe_cmd_send", Int16, probeCmdClbk)
+    cmd_sub = rospy.Subscriber("/probe_teensy/probe_cmd_send", Int16, probeCmdClbk)
 
     r = rospy.Rate(100) # 100 Hz
 
