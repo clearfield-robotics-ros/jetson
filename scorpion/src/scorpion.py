@@ -65,21 +65,14 @@ def updateLocation(loc, rot):
 def update_state(data):
     global current_state
     desired_state = data.data
-
     # print "GUI Desired State:", desired_state
 
     if desired_state == 1: # Init
         current_state = 1
-        print "GUI: Init"
-    elif desired_state == 2: # Start
+    elif desired_state == 2 or desired_state == 3: # Start
         current_state = 2
-        print "GUI: Start"
     elif desired_state == 0: # End
         current_state = 0
-        print "GUI: Stop"
-    else:
-        pass
-        # print "Something went wrong in the GUI"
 
 
 def update_probe_state(data):
