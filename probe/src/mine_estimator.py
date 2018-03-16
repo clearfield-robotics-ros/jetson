@@ -199,7 +199,9 @@ class Mine_Estimator:
         new_contact = np.array([x,y,z])
         self.contact_points = np.vstack((self.contact_points, new_contact))
         self.c_z = np.mean(self.contact_points[:,2])
+        # print "computing hough transform..."
         self.hough()
+        # print "comptung error..."
         self.compute_error()
 
         if self.visualize:

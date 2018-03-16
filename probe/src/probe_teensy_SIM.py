@@ -65,9 +65,9 @@ def probe_contact(data):
 def main():
     rospy.init_node('probe_teensy_SIM')
 
-    global br
-    br = tf.TransformBroadcaster()
-    listener = tf.TransformListener()
+    # global br
+    # br = tf.TransformBroadcaster()
+    # listener = tf.TransformListener()
 
     probe_offset_distance = rospy.get_param('probe_offset_distance')
     max_probe_distance = rospy.get_param('max_probe_distance')
@@ -104,13 +104,13 @@ def main():
             else:
                 retracted_probe = True
 
-        br.sendTransform((probe_distance,
-            0,
-            0),
-            tf.transformations.quaternion_from_euler(0,0,0),
-            rospy.Time.now(),
-            "probe_tip",
-            "probe_base")
+        # br.sendTransform((probe_distance,
+        #     0,
+        #     0),
+        #     tf.transformations.quaternion_from_euler(0,0,0),
+        #     rospy.Time.now(),
+        #     "probe_tip",
+        #     "probe_base")
 
         # Send out update every loop
         probe_status_reply_msg = Int16MultiArray()

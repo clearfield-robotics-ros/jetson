@@ -261,7 +261,15 @@ def main():
             probe_cmd_pub.publish(2) # start probing
             rospy.sleep(0.5) # give time for handshake
             while not probe_current_state[2] == 1: # while not finished
-                pass
+
+                br.sendTransform((probe_current_state[3],
+                    0,
+                    0),
+                    tf.transformations.quaternion_from_euler(0,0,0),
+                    rospy.Time.now(),
+                    "probe_tip",
+                    "probe_base")
+                # pass
 
             '''
             Advance States

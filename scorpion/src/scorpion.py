@@ -44,7 +44,6 @@ def updateLocation(loc, rot):
     m.pose.orientation.z = scopion_q_rot[2]
     m.pose.orientation.w = scopion_q_rot[3]
 
-
     m.scale.x = 1
     m.scale.y = 1
     m.scale.z = 1
@@ -72,7 +71,6 @@ def update_state(data):
             current_state = desired_state
     else:
         current_state = desired_state
-
 
 
 def update_probe_state(data):
