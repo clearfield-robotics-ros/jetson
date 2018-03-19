@@ -8,7 +8,7 @@ from std_msgs.msg import Int16MultiArray
 from std_msgs.msg import Int16
 import tf
 
-from gantry_lib_for_sim import Gantry
+from gantry_lib_for_sim_WIP import Gantry
 
 # in: command of sweeping / position
 # out: position of gantry (geometry_msgs/Point)
@@ -23,6 +23,16 @@ cmd                         = Int16MultiArray();
 sensor_head                 = [0]*6;
 desired_state_reached       = False;
 
+### ------------------ TRANSFORMS ---------------------------- ###
+
+#setup params
+scorpion_gantry_offset_loc  = rospy.get_param('scorpion_gantry_offset_loc');
+scorpion_gantry_offset_rot  = rospy.get_param('scorpion_gantry_offset_rot');
+md_gantry_offset_loc        = rospy.get_param('md_gantry_offset_loc');
+probe_base_offset_loc       = rospy.get_param('probe_base_offset_loc');
+probe_base_offset_rot       = rospy.get_param('probe_base_offset_rot');
+probe_yaw_angle             = probe_base_offset_rot[2];
+
 ### -------------------- monitor current state --------------- ###
 def update_state(data):
     global current_state;
@@ -32,13 +42,14 @@ def update_state(data):
 def update_md_cmd(data):
     global cmd;
     global current_state;
+    global probe_yaw_angle;
     cmd                     = [current_state, 
                                 0,              # NOT USED
                                 data.x,         # desired x             MM
                                 data.y,         # desired y             MM
                                 data.z,         # desired yaw           DEG
-                                something,      # desired probe yaw     DEG
-                                0]              # dnot used)
+                                probe_yaw_angle,# desired probe yaw     DEG
+                                0];              # not used)
 
 def update_gantry_desired_state(data):
     global gantry_desired_state
@@ -54,15 +65,6 @@ def update_gantry_desired_state(data):
                                 int(desired_state_reached)];
 '''
 
-
-### ------------------ TRANSFORMS ---------------------------- ###
-
-#setup params
-scorpion_gantry_offset_loc  = rospy.get_param('scorpion_gantry_offset_loc');
-scorpion_gantry_offset_rot  = rospy.get_param('scorpion_gantry_offset_rot');
-md_gantry_offset_loc        = rospy.get_param('md_gantry_offset_loc');
-probe_base_offset_loc       = rospy.get_param('probe_base_offset_loc');
-probe_base_offset_rot       = rospy.get_param('probe_base_offset_rot');
 
 #getting the transforms out there
 def publish_transforms():
@@ -112,6 +114,9 @@ def main():
     global cmd;
     global sensor_head;
     global desired_state_reached;
+    global probe_base_offset_rot;
+    global probe_yaw_angle;
+    probe_yaw_angle = probe_base_offset_rot[2];
 
     rospy.init_node('gantry_planner');
 
@@ -131,7 +136,7 @@ def main():
     gantry_desired_state    = rospy.Subscriber("/gantry_desired_state", Int16MultiArray, update_gantry_desired_state);
     
     # from gantry
-    gantry_current_state_pub= rospy.Publisher("/gantry_current_state", Int16MultiArray);
+    gantry_current_state_pub= rospy.Publisher("/gantry_current_state", Int16MultiArray, queue_size=1);
     #to gantry teensy/sim
         #use g.send_state
         #use g.send_pos_cmd
@@ -140,6 +145,7 @@ def main():
     r = rospy.Rate(rate)  # 100 Hz
 
     while not rospy.is_shutdown():
+        publish_transforms();
         ### ----------------- UPDATE GANTRY POSITION ----------------- ###
         try:
             (trans,rot)     = listener.lookupTransform('/gantry', '/sensor_head', rospy.Time(0))

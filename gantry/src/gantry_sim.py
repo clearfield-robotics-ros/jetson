@@ -14,15 +14,22 @@ import tf
 # probe_base_offset_loc = rospy.get_param('probe_base_offset_loc')
 # probe_base_offset_rot = rospy.get_param('probe_base_offset_rot')
 
+### ----------------------------- TRANSFORMS --------------------------------------- ###
+
+#setup params
+scorpion_gantry_offset_loc  = rospy.get_param('scorpion_gantry_offset_loc');
+scorpion_gantry_offset_rot  = rospy.get_param('scorpion_gantry_offset_rot');
+md_gantry_offset_loc        = rospy.get_param('md_gantry_offset_loc');
+
 ### ---------------------------- Preset parameters --------------------------------- ###
 # TODO find out the values
 scorpion_gantry_offset_loc  = [];
 scorpion_gantry_offset_rot  = [];
-probe_base_offset_loc       = [];
-probe_base_offset_rot       = [];
+probe_base_offset_loc       = rospy.get_param('probe_base_offset_loc');
+probe_base_offset_rot       = rospy.get_param('probe_base_offset_rot');
 rate                        = 100;
-gantry_width                = 1;
-gantry_sweep_speed          = 0.5;
+gantry_width                = rospy.get_param('gantry_width')
+gantry_sweep_speed          = rospy.get_param('gantry_sweep_speed')
 
 ### ---------------------------- Parameters that are updated ------------------------ ###
 
@@ -138,9 +145,9 @@ def sweep():
     #if trans[1] < low_lim + tolerance or trans[1] > high_lim - tolerance:
     #    vel_dir *= -1
 
-    sensor_head[1] += vel_dir * lat_vel / rate
+    sensor_head[1] += vel_dir * lat_vel / rate;
     if sensor_head[1] < low_lim + tolerance or sensor_head[1] > high_lim - tolerance:
-        vel_dir *= -1
+        vel_dir *= -1;
 
     #sensor_head[0] = trans[0]
     #sensor_head[1] = trans[1]
@@ -165,8 +172,14 @@ def actuate_to_desired():
 
     #assuming it updates everytime this runs
     #otherwise we will offset twice
-    gantry_cmd[2] -= md_gantry_offset_loc[0]
-    gantry_cmd[3] -= md_gantry_offset_loc[1]
+    # gantry_cmd[2] -= md_gantry_offset_loc[0]
+    # gantry_cmd[3] -= md_gantry_offset_loc[1]
+    temp_gantry_cmd = [gantry_cmd[0],
+                        gantry_cmd[1],
+                        gantry_cmd[2] - md_gantry_offset_loc[0],
+                        gantry_cmd[3] - md_gantry_offset_loc[1],
+                        gantry_cmd[4],
+                        gantry_cmd[5]];
 
     #diff = [gantry_cmd[i] - sensor_head[i] for i in range(4)]
     #for i in range(4):
@@ -186,25 +199,35 @@ def actuate_to_desired():
     #sensor_head[5] = rot[2]
 
     # X Position
-    diff[0] = (gantry_cmd[2] - sensor_head[0])/rate;
+    diff[0] = (temp_gantry_cmd[2] - sensor_head[0])/rate;
     sensor_head[0] += diff[0];
 
     # Y Position
-    diff[1] = (gantry_cmd[3] - sensor_head[1])/rate;
+    diff[1] = (temp_gantry_cmd[3] - sensor_head[1])/rate;
     sensor_head[1] += diff[1];
 
     # Gantry Yaw
-    diff[2] = (gantry_cmd[4] - sensor_head[5])/rate;
+    diff[2] = (temp_gantry_cmd[4] - sensor_head[5])/rate;
     sensor_head[5] += diff[2];
 
     # Probe Yaw
-    diff[3] = (gantry_cmd[5] - probe_yaw_angle)/rate;
+    diff[3] = (temp_gantry_cmd[5] - probe_yaw_angle)/rate;
     probe_yaw_angle += diff[3];
 
     if abs(np.sum(diff)) < 0.1:
         desired_state_reached = True;
     else:
         desired_state_reached = False;
+
+    #diff = [gantry_cmd[i] - sensor_head[i] for i in range(4)]
+    #for i in range(4):
+    #    if abs(diff[i]) < (lat_vel / rate):
+    #        sensor_head[i] = cmd[i]
+    #    else:
+    #        if diff[i] > 0:
+    #            sensor_head[i] += (lat_vel / rate)
+    #        else:
+    #            sensor_head[i] -= (lat_vel / rate)
 
 ### ----------------------------------------------------------------------------- ###
 
@@ -219,27 +242,27 @@ def main():
 
     # update mode
     gantry_mode_sub     = rospy.Subscriber("gantry_cmd_hack_send", Int16, update_gantry_mode);
-    gantry_cmd_sub      = rospy.Subscriber("gantry_cmd_send", Point, update_gantry_cmd);
+    gantry_cmd_sub      = rospy.Subscriber("gantry_cmd_send", Int16MultiArray, update_gantry_cmd);
 
-    rate    = 20;
+    rate    = 50;
     r       = rospy.Rate(rate);
     
     while not rospy.is_shutdown():
 
         ### idle ###
-        if current_state == 0:
+        if gantry_mode == 0:
             pass;
 
         ### calibrate ###
-        elif current_state == 1:
+        elif gantry_mode == 1:
             pass;
 
         ### sweeping ###
-        elif current_state == 2:
+        elif gantry_mode == 2:
             sweep();
 
         ### moving to position ###
-        elif current_state == 3:
+        elif gantry_mode == 3:
             actuate_to_desired();
             
         # gantry teensy only publishes transforms
