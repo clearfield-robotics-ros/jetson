@@ -11,6 +11,11 @@ find_package(catkin REQUIRED COMPONENTS
 #   FILES
 # )
 
+add_message_files(
+  FILES
+  probe.msg
+)
+
 # generate_messages(
 #   DEPENDENCIES
 #   std_msgs

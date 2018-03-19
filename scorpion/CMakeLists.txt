@@ -12,11 +12,6 @@ find_package(catkin REQUIRED COMPONENTS
 #   FILES
 # )
 
-add_message_files(
- FILES
- detection_result.msg
-)
-
 generate_messages(
  DEPENDENCIES
  std_msgs
@@ -26,7 +21,6 @@ catkin_package(
   CATKIN_DEPENDS
   message_runtime
 )
-
 
 include_directories(
 # include
