@@ -9,6 +9,7 @@ from geometry_msgs.msg import Point
 from std_msgs.msg import Int16, Int16MultiArray
 from visualization_msgs.msg import Marker
 from mine_estimator import Mine_Estimator
+from probe.msg import probe_data
 
 ### monitor current state ###
 current_state = 0 # if we don't get msgs
@@ -92,7 +93,7 @@ def update_gantry_state(data):
 
 def update_probe_state(data):
     global probe_current_state
-    probe_current_state = data.data
+    probe_current_state = data#.data
 
 
 def update_probe_contact(data):
@@ -141,8 +142,8 @@ def main():
     desired_probe_tip = Point()
     gantry_yaw = 0
     probe_sequence = 0
-    sub3 = rospy.Subscriber("/probe_teensy/probe_status_reply", Int16MultiArray, update_probe_state)
-    sub4 = rospy.Subscriber("/probe_teensy/probe_contact_reply", Int16MultiArray, update_probe_contact)
+    sub3 = rospy.Subscriber("/probe_teensy/probe_status_reply", probe_data, update_probe_state)
+    sub4 = rospy.Subscriber("/probe_teensy/probe_contact_reply", probe_data, update_probe_contact)
 
     # Recieving Target from Metal Detector
     sub = rospy.Subscriber("/set_probe_target", Point, set_target)
@@ -260,16 +261,15 @@ def main():
 
             probe_cmd_pub.publish(2) # start probing
             rospy.sleep(0.5) # give time for handshake
-            while not probe_current_state[2] == 1: # while not finished
-
-                br.sendTransform((probe_current_state[3],
-                    0,
-                    0),
-                    tf.transformations.quaternion_from_euler(0,0,0),
-                    rospy.Time.now(),
-                    "probe_tip",
-                    "probe_base")
-                # pass
+            while not probe_current_state.probe_complete: # while not finished
+                # br.sendTransform((probe_current_state.linear_position,
+                #     0,
+                #     0),
+                #     tf.transformations.quaternion_from_euler(0,0,0),
+                #     rospy.Time.now(),
+                #     "probe_tip",
+                #     "probe_base")
+                pass
 
             '''
             Advance States

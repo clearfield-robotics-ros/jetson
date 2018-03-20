@@ -13,13 +13,13 @@ find_package(catkin REQUIRED COMPONENTS
 
 add_message_files(
   FILES
-  probe.msg
+  probe_data.msg
 )
 
-# generate_messages(
-#   DEPENDENCIES
-#   std_msgs
-# )
+generate_messages(
+  DEPENDENCIES
+  std_msgs
+)
 
 catkin_package(
   CATKIN_DEPENDS

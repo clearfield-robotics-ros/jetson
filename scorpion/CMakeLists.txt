@@ -4,7 +4,7 @@ project(scorpion)
 find_package(catkin REQUIRED COMPONENTS
   rospy
   std_msgs
-  message_generation
+  # message_generation
   dynamic_reconfigure
 )
 

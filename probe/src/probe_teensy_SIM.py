@@ -4,8 +4,8 @@ import rospy
 import numpy as np
 from geometry_msgs.msg import Point
 from geometry_msgs.msg import Twist
-from std_msgs.msg import Int16MultiArray
-from std_msgs.msg import Int16
+from probe.msg import probe_data
+from std_msgs.msg import Int16, Int16MultiArray
 import tf
 import math
 import pdb
@@ -49,13 +49,22 @@ def probe_contact(data):
     global contact_pub
 
     if not finished_probing:
-        probe_contact_reply_msg = Int16MultiArray()
-        probe_contact_reply_msg.data = [
-            probe_state,                     # Echo: probe mode
-            1,                               # Flag: probe initialization status
-            int(finished_probing == 'True'), # Flag: probe complete status
-            probe_distance,                  # Value: probe linear positon (mm)
-            int(foundObject == 'True')]       # Flag: contact type
+        # probe_contact_reply_msg = Int16MultiArray()
+        # probe_contact_reply_msg.data = [
+        #     probe_state,                     # Echo: probe mode
+        #     1,                               # Flag: probe initialization status
+        #     int(finished_probing == 'True'), # Flag: probe complete status
+        #     probe_distance,                  # Value: probe linear positon (mm)
+        #     int(foundObject == 'True')]       # Flag: contact type
+        # contact_pub.publish(probe_contact_reply_msg)
+
+
+        probe_contact_reply_msg = probe_data()
+        probe_contact_reply_msg.state            = probe_state
+        probe_contact_reply_msg.init             = True
+        probe_contact_reply_msg.probe_complete   = retracted_probe
+        probe_contact_reply_msg.linear_position  = probe_distance
+        probe_contact_reply_msg.contact_made     = foundObject
         contact_pub.publish(probe_contact_reply_msg)
 
     foundObject = True
@@ -65,9 +74,8 @@ def probe_contact(data):
 def main():
     rospy.init_node('probe_teensy_SIM')
 
-    # global br
-    # br = tf.TransformBroadcaster()
-    # listener = tf.TransformListener()
+    global br
+    br = tf.TransformBroadcaster()
 
     probe_offset_distance = rospy.get_param('probe_offset_distance')
     max_probe_distance = rospy.get_param('max_probe_distance')
@@ -82,9 +90,9 @@ def main():
     global foundObject
     foundObject = False
 
-    status_pub = rospy.Publisher("/probe_teensy/probe_status_reply", Int16MultiArray, queue_size=10)
+    status_pub = rospy.Publisher("/probe_teensy/probe_status_reply", probe_data, queue_size=10)
     global contact_pub
-    contact_pub = rospy.Publisher("/probe_teensy/probe_contact_reply", Int16MultiArray, queue_size=10)
+    contact_pub = rospy.Publisher("/probe_teensy/probe_contact_reply", probe_data, queue_size=10)
     probe_contact_sub = rospy.Subscriber("probe_contact", Point, probe_contact)
     cmd_sub = rospy.Subscriber("/probe_teensy/probe_cmd_send", Int16, probeCmdClbk)
 
@@ -104,22 +112,19 @@ def main():
             else:
                 retracted_probe = True
 
-        # br.sendTransform((probe_distance,
-        #     0,
-        #     0),
-        #     tf.transformations.quaternion_from_euler(0,0,0),
-        #     rospy.Time.now(),
-        #     "probe_tip",
-        #     "probe_base")
+        br.sendTransform((probe_distance,0,0),
+            tf.transformations.quaternion_from_euler(0,0,0),
+            rospy.Time.now(),
+            "probe_tip",
+            "probe_base")
 
         # Send out update every loop
-        probe_status_reply_msg = Int16MultiArray()
-        probe_status_reply_msg.data = [
-            probe_state,                     # Echo: probe mode
-            1,                               # Flag: probe initialization status
-            int(retracted_probe),            # Flag: probe complete status
-            probe_distance,                  # Value: probe linear positon (mm)
-            int(foundObject)]                # Flag: contact type
+        probe_status_reply_msg = probe_data()
+        probe_status_reply_msg.state            = probe_state
+        probe_status_reply_msg.init             = True
+        probe_status_reply_msg.probe_complete   = retracted_probe
+        probe_status_reply_msg.linear_position  = probe_distance
+        probe_status_reply_msg.contact_made     = foundObject
         status_pub.publish(probe_status_reply_msg)
 
         r.sleep()  # indent less when going back to regular gantry_lib

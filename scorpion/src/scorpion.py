@@ -8,7 +8,7 @@ from std_msgs.msg import String
 from visualization_msgs.msg import Marker
 import tf
 import math
-# from probe_state_monitor import Probe_State_Monitor
+from probe.msg import probe_data
 
 def updateLocation(loc, rot):
 
@@ -75,7 +75,7 @@ def update_state(data):
 
 def update_probe_state(data):
     global probe_current_state
-    probe_current_state = data.data
+    probe_current_state = data#.data
 
 
 ### pub / sub ###
@@ -101,9 +101,9 @@ def main():
     # States
     global current_state
     current_state = 0 # initial state
-    sub = rospy.Subscriber("/probe_teensy/probe_status_reply", Int16MultiArray, update_probe_state)
+    sub = rospy.Subscriber("/probe_teensy/probe_status_reply", probe_data, update_probe_state)
     global probe_current_state
-    probe_current_state = Int16MultiArray()
+    probe_current_state = probe_data()
     probe_cmd_pub = rospy.Publisher("/probe_teensy/probe_cmd_send", Int16, queue_size=10)
 
     r = rospy.Rate(10)  # 10 Hz
@@ -132,7 +132,7 @@ def main():
             print "Calibrating Probes..."
             probe_cmd_pub.publish(3) # start calibration
             rospy.sleep(0.5) # give time for handshake
-            while probe_current_state[1] == 0: # while not finished
+            while not probe_current_state.init: # while not finished
                 pass
             print "...Probes Calibrated"
 
