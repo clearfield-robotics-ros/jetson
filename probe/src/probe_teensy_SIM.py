@@ -49,16 +49,6 @@ def probe_contact(data):
     global contact_pub
 
     if not finished_probing:
-        # probe_contact_reply_msg = Int16MultiArray()
-        # probe_contact_reply_msg.data = [
-        #     probe_state,                     # Echo: probe mode
-        #     1,                               # Flag: probe initialization status
-        #     int(finished_probing == 'True'), # Flag: probe complete status
-        #     probe_distance,                  # Value: probe linear positon (mm)
-        #     int(foundObject == 'True')]       # Flag: contact type
-        # contact_pub.publish(probe_contact_reply_msg)
-
-
         probe_contact_reply_msg = probe_data()
         probe_contact_reply_msg.state            = probe_state
         probe_contact_reply_msg.init             = True
@@ -74,15 +64,13 @@ def probe_contact(data):
 def main():
     rospy.init_node('probe_teensy_SIM')
 
-    global br
     br = tf.TransformBroadcaster()
 
-    probe_offset_distance = rospy.get_param('probe_offset_distance')
     max_probe_distance = rospy.get_param('max_probe_distance')
     probe_speed = rospy.get_param('probe_speed')
 
     global probe_distance
-    probe_distance = probe_offset_distance
+    probe_distance = 0
     global finished_probing
     finished_probing = True
     global retracted_probe
@@ -90,13 +78,13 @@ def main():
     global foundObject
     foundObject = False
 
-    status_pub = rospy.Publisher("/probe_teensy/probe_status_reply", probe_data, queue_size=10)
     global contact_pub
     contact_pub = rospy.Publisher("/probe_teensy/probe_contact_reply", probe_data, queue_size=10)
+    status_pub = rospy.Publisher("/probe_teensy/probe_status_reply", probe_data, queue_size=10)
     probe_contact_sub = rospy.Subscriber("probe_contact", Point, probe_contact)
     cmd_sub = rospy.Subscriber("/probe_teensy/probe_cmd_send", Int16, probeCmdClbk)
 
-    r = rospy.Rate(100) # 100 Hz
+    r = rospy.Rate(50) # 50 Hz
 
     while not rospy.is_shutdown():
 
@@ -107,7 +95,7 @@ def main():
                 probe_distance += probe_speed
 
         elif finished_probing:
-            if probe_distance > probe_offset_distance: # retract
+            if probe_distance > 0: # retract
                 probe_distance -= probe_speed
             else:
                 retracted_probe = True
@@ -115,7 +103,7 @@ def main():
         br.sendTransform((probe_distance,0,0),
             tf.transformations.quaternion_from_euler(0,0,0),
             rospy.Time.now(),
-            "probe_tip",
+            "probe_car",
             "probe_base")
 
         # Send out update every loop

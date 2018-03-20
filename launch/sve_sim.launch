@@ -22,6 +22,7 @@
 
 
 <node name="probe_planner" pkg="probe" type="probe_planner.py" output="screen"></node>
+<node name="probe_tip_tf" pkg="probe" type="probe_tip_tf.py" output="screen"></node>
 <node name="probe_teensy_SIM" pkg="probe" type="probe_teensy_SIM.py" output="screen"></node>
 
 

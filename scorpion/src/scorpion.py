@@ -75,7 +75,7 @@ def update_state(data):
 
 def update_probe_state(data):
     global probe_current_state
-    probe_current_state = data#.data
+    probe_current_state = data
 
 
 ### pub / sub ###
