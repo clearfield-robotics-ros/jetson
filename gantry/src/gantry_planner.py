@@ -7,7 +7,8 @@ from geometry_msgs.msg import Twist
 from std_msgs.msg import Int16MultiArray
 from std_msgs.msg import Int16
 import tf
-
+from gantry.msg import gantry_status;
+from gantry.msg import to_gantry_msg;
 from gantry_lib_for_sim_WIP import Gantry
 
 # in: command of sweeping / position
@@ -19,7 +20,8 @@ desired_state               = 0;            # what we want the jetson to be in
 
 #GANTRY
 # cmd                         = [0, 0, 0];    # commands from metal detector
-cmd                         = Int16MultiArray();
+md_cmd                      = Int16MultiArray();
+probe_cmd                   = Int16MultiArray();
 sensor_head                 = [0]*6;
 desired_state_reached       = False;
 
@@ -40,21 +42,27 @@ def update_state(data):
 
 ### ---------------------------------------------------------- ###
 def update_md_cmd(data):
-    global cmd;
-    global current_state;
-    global probe_yaw_angle;
-    cmd                     = [current_state, 
-                                0,              # NOT USED
-                                data.x,         # desired x             MM
-                                data.y,         # desired y             MM
-                                data.z,         # desired yaw           DEG
-                                probe_yaw_angle,# desired probe yaw     DEG
-                                0];              # not used)
+    global cmd
+    cmd = [data.x, data.y, data.z]
+
+# def update_md_cmd(data):
+#     global md_cmd;
+#     global current_state;
+#     global probe_yaw_angle;
+#     md_cmd                  = [current_state, 
+#                                 0,              # NOT USED
+#                                 data.x,         # desired x             MM
+#                                 data.y,         # desired y             MM
+#                                 data.z,         # desired yaw           DEG
+#                                 probe_yaw_angle,# desired probe yaw     DEG
+#                                 0];              # not used)
+
 
 def update_gantry_desired_state(data):
     global gantry_desired_state
+    global probe_cmd;
     gantry_desired_state    = data.data
-
+    probe_cmd               = gantry_desired_state;
 '''
     gantry_desired_state    = [current_state,
                                 sweep_velocity,
@@ -111,7 +119,8 @@ def publish_transforms():
 
 def main():
     global current_state;
-    global cmd;
+    global md_cmd;
+    global probe_cmd;
     global sensor_head;
     global desired_state_reached;
     global probe_base_offset_rot;
@@ -131,16 +140,12 @@ def main():
     # from jetson
     jetson_current_state    = rospy.Subscriber('current_state', Int16, update_state);
     # from metal detector
-    md_subscriber           = rospy.Subscriber("cmd_from_md", Point, update_md_cmd);
+    global cmd;
+    cmd                     = [0.0, 0.0, 0.0];
+    md_subscriber           = rospy.Subscriber("/cmd_from_md", Point, update_md_cmd);
     # from probe
     gantry_desired_state    = rospy.Subscriber("/gantry_desired_state", Int16MultiArray, update_gantry_desired_state);
     
-    # from gantry
-    gantry_current_state_pub= rospy.Publisher("/gantry_current_state", Int16MultiArray, queue_size=1);
-    #to gantry teensy/sim
-        #use g.send_state
-        #use g.send_pos_cmd
-
     rate = 50
     r = rospy.Rate(rate)  # 100 Hz
 
@@ -192,14 +197,21 @@ def main():
         # pin pointing, listening to MD
         elif current_state  == 3:
             g.send_state(3);
-            g.send_pos_cmd(cmd);
-            print "positioning at " + str(cmd);
+            #translate md positioning to sensor head positioning
+            sensor_head_position    = [3,
+                                        0,
+                                        cmd[0] - md_gantry_offset_loc[0],
+                                        cmd[1] - md_gantry_offset_loc[1],
+                                        cmd[2],
+                                        probe_yaw_angle];
+            g.send_pos_cmd(sensor_head_position);            
+            print "positioning at " + str(sensor_head_position);
 
         # probing, listening to PROBE
         elif current_state  == 4:
-            g.send_state(3);
-            g.send_pos_cmd(cmd);
-            print "Probing at " + str(cmd);
+            g.send_state(4);
+            g.send_pos_cmd(probe_cmd);
+            print "Probing at " + str(probe_cmd);
 
             # telling probe whether desired position is reached
             diff = np.zeros(4)
@@ -222,22 +234,22 @@ def main():
                 desired_state_reached = False
 
 
-        ### ------------- PREPARE MESSAGES TO PUBLISH ---------------- ###
+        # ### ------------- PREPARE MESSAGES TO PUBLISH ---------------- ###
 
-        #prepare the messages
-        global desired_state;
-        gantry_current_state_msg = Int16MultiArray();
-        gantry_current_state_msg.data = [
-            current_state,
-            0, #current_sweep_velocity
-            sensor_head[0], #current_x_position
-            sensor_head[1], # current_y_position
-            sensor_head[5], # current_yaw_angle
-            probe_yaw_angle, #current_probe_yaw_angle
-            int(desired_state_reached)];
+        # #prepare the messages
+        # global desired_state;
+        # gantry_current_state_msg = Int16MultiArray();
+        # gantry_current_state_msg.data = [
+        #     current_state,
+        #     0, #current_sweep_velocity
+        #     sensor_head[0], #current_x_position
+        #     sensor_head[1], # current_y_position
+        #     sensor_head[5], # current_yaw_angle
+        #     probe_yaw_angle, #current_probe_yaw_angle
+        #     int(desired_state_reached)];
 
-        # publish the messages
-        gantry_current_state_pub.publish(gantry_current_state_msg);
+        # # publish the messages
+        # gantry_current_state_pub.publish(gantry_current_state_msg);
 
 
         # done
