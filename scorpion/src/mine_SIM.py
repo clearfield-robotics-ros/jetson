@@ -63,8 +63,8 @@ class CylinderMineExp:
     def query(self, x_q, y_q):
         dist = numpy.sqrt((x_q - self.x)*(x_q - self.x) + (y_q - self.y)*(y_q - self.y))
         if dist < self.radius:
-            return 15
-        ret = int(round(15*numpy.exp(-(dist - self.radius) / self.decay), 0))
+            return 1500
+        ret = int(round(1500*numpy.exp(-(dist - self.radius) / self.decay), 0))
         # print 15*numpy.exp(-(dist - self.radius) / self.decay)
         return ret
 
