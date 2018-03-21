@@ -18,7 +18,7 @@ scorpion_gantry_offset_rot: [0,0,0]
 gantry_width: 800 #mm
 gantry_sweep_speed: 500 #mm/s
 ### Gantry Simulation ###
-gantry_rot_speed: 0.75
+gantry_rot_speed: 1.5 #rad/s
 
 ### Metal Detector ###
 md_gantry_offset_loc: [350,-100,-300] # y offset is half of width

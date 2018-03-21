@@ -22,14 +22,14 @@ desired_state               = 0;            # what we want the jetson to be in
 # cmd                         = [0, 0, 0];    # commands from metal detector
 md_cmd                      = to_gantry_msg();
 probe_cmd                   = to_gantry_msg();
-sensor_head                 = [0]*6;
+# sensor_head                 = [0]*6;
 desired_state_reached       = False;
 
 ### ------------------ TRANSFORMS ---------------------------- ###
 
 #setup params
-scorpion_gantry_offset_loc  = rospy.get_param('scorpion_gantry_offset_loc');#mm
-scorpion_gantry_offset_rot  = rospy.get_param('scorpion_gantry_offset_rot');#rad
+# scorpion_gantry_offset_loc  = rospy.get_param('scorpion_gantry_offset_loc');#mm
+# scorpion_gantry_offset_rot  = rospy.get_param('scorpion_gantry_offset_rot');#rad
 md_gantry_offset_loc        = rospy.get_param('md_gantry_offset_loc');      #mm
 probe_base_offset_loc       = rospy.get_param('probe_base_offset_loc');     #mm
 probe_base_offset_rot       = rospy.get_param('probe_base_offset_rot');     #rad
@@ -43,12 +43,20 @@ def update_state(data):
     current_state           = data.data;
 
 ### ---------------------------------------------------------- ###
+
+# int16 state_desired
+# float64 sweep_speed_desired       mm/s
+# float64 x_desired                 mm
+# float64 y_desired                 mm
+# float64 yaw_desired               rad
+# float64 probe_angle_desired       rad
+
 def update_md_cmd(data):
     global md_cmd;
     global gantry_sweep_speed;
     global md_gantry_offset_loc;
     global probe_yaw_angle;
-    # cmd = [data.x, data.y, data.z]; #mm, mm, rad
+
     if (data.x < 0):
         #sweep
         md_cmd.state_desired        = 2;
@@ -66,13 +74,6 @@ def update_md_cmd(data):
         md_cmd.yaw_desired          = data.z;
         md_cmd.probe_angle_desired  = probe_yaw_angle;
 
-# int16 state_desired
-# float64 sweep_speed_desired       mm/s
-# float64 x_desired                 mm
-# float64 y_desired                 mm
-# float64 yaw_desired               rad
-# float64 probe_angle_desired       rad
-
 def update_probe_cmd(data):
     global probe_cmd;
     global gantry_sweep_speed;
@@ -85,36 +86,11 @@ def update_probe_cmd(data):
     probe_cmd.yaw_desired           = probe_cmd_multi_array[4]*math.pi/180.0;
     probe_cmd.probe_angle_desired   = probe_cmd_multi_array[5]*math.pi/180.0;
 
-'''
-    gantry_desired_state    = [current_state,
-                                sweep_velocity,
-                                x_position,
-                                y_position,
-                                yaw,
-                                probe_yaw];
-'''
-
-#getting the transforms out there
-def publish_transforms():
-    global br
-
-    # static
-    br.sendTransform((scorpion_gantry_offset_loc[0],
-        scorpion_gantry_offset_loc[1],
-        scorpion_gantry_offset_loc[2]),
-        tf.transformations.quaternion_from_euler(scorpion_gantry_offset_rot[0],
-                                                    scorpion_gantry_offset_rot[1],
-                                                    scorpion_gantry_offset_rot[2]),
-        rospy.Time.now(),
-        "gantry",
-        "scorpion")
-
 
 def main():
     global current_state;
     global md_cmd;
     global probe_cmd;
-    global sensor_head;
     global desired_state_reached;
     global probe_base_offset_rot;
     global probe_yaw_angle;
@@ -122,9 +98,6 @@ def main():
 
     rospy.init_node('gantry_planner');
 
-    # broadcaster and listener
-    global br
-    br = tf.TransformBroadcaster()
     listener = tf.TransformListener()
 
     # from jetson
@@ -143,21 +116,6 @@ def main():
     r = rospy.Rate(rate)  # 100 Hz
 
     while not rospy.is_shutdown():
-        publish_transforms();
-        ### ----------------- UPDATE GANTRY POSITION ----------------- ###
-        try:
-            (trans,rot)     = listener.lookupTransform('/gantry', '/sensor_head', rospy.Time(0))
-            sensor_head[0]  = trans[0]
-            sensor_head[1]  = trans[1]
-            sensor_head[2]  = trans[2]
-            sensor_head[3]  = rot[0]
-            sensor_head[4]  = rot[1]
-            sensor_head[5]  = rot[2]
-
-        except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
-            continue
-
-        ### ----------------- STATE OPERATION LOGIC ------------------ ###
 
         # idle
         if current_state == 0:

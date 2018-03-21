@@ -91,17 +91,6 @@ def publish_transforms():
     global sensor_head;
     global probe_yaw_angle;
 
-    # static
-    #br.sendTransform((scorpion_gantry_offset_loc[0],
-    #                scorpion_gantry_offset_loc[1],
-    #                scorpion_gantry_offset_loc[2]),
-    #                tf.transformations.quaternion_from_euler(scorpion_gantry_offset_rot[0],
-    #                                                        scorpion_gantry_offset_rot[1],
-    #                                                        scorpion_gantry_offset_rot[2]),
-    #                rospy.Time.now(),
-    #                "gantry",
-    #                "scorpion")
-
     # sent by teensy/sim
     br.sendTransform((sensor_head[0],sensor_head[1],sensor_head[2]),
         tf.transformations.quaternion_from_euler(sensor_head[3],sensor_head[4],sensor_head[5]),
@@ -158,12 +147,6 @@ def sweep():
     if sensor_head[1] < low_lim + tolerance or sensor_head[1] > high_lim - tolerance:
         vel_dir *= -1;
 
-    #sensor_head[0] = trans[0]
-    #sensor_head[1] = trans[1]
-    #sensor_head[2] = trans[2]
-    #sensor_head[3] = rot[0]
-    #sensor_head[4] = rot[1]
-    #sensor_head[5] = rot[2]
 
 def actuate_to_desired():
     global sensor_head;
@@ -180,17 +163,6 @@ def actuate_to_desired():
 
     trans_mm_per_loop   = gantry_trans_speed / float(rate);
     rot_rad_per_loop    = gantry_rot_speed / float(rate);
-
-    #assuming it updates everytime this runs
-    #otherwise we will offset twice
-    # gantry_cmd[2] -= md_gantry_offset_loc[0]
-    # gantry_cmd[3] -= md_gantry_offset_loc[1]
-    # temp_gantry_cmd = [gantry_cmd[0],
-    #                     gantry_cmd[1],
-    #                     gantry_cmd[2],    # x
-    #                     gantry_cmd[3],    # y
-    #                     gantry_cmd[4],
-    #                     gantry_cmd[5]];
 
     # move each DoF closer to desired by 1 step
     desired_state_reached_flag  = 0;
@@ -283,11 +255,9 @@ def main():
         ### ------------- PREPARE MESSAGES TO PUBLISH ---------------- ###
 
         #prepare the messages
-
-
         gantry_current_state = gantry_status()
         gantry_current_state.state = current_state
-        gantry_current_state.sweep_speed = 0 # TODO
+        gantry_current_state.sweep_speed = 0                 # TODO
         gantry_current_state.x = sensor_head[0]
         gantry_current_state.y = sensor_head[1]
         gantry_current_state.yaw = sensor_head[5]            # rad
