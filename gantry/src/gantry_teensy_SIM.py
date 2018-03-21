@@ -4,17 +4,8 @@ import rospy
 import tf
 import math;
 import numpy as np
-from std_msgs.msg import Int16
 from gantry.msg import gantry_status;
 from gantry.msg import to_gantry_msg;
-
-### monitor current state ###
-current_state = 0 # if we don't get msgs
-def update_state(data):
-    global current_state
-    current_state = data.data
-
-jetson_current_state = rospy.Subscriber('current_state', Int16, update_state)
 
 ### ----------------------------- TRANSFORMS --------------------------------------- ###
 
@@ -37,9 +28,7 @@ gantry_rot_speed            = rospy.get_param('gantry_rot_speed');     #rad per 
 
 ### ---------------------------- Parameters that are updated ------------------------ ###
 
-current_state               = 0;
 gantry_cmd                  = to_gantry_msg();
-
 sensor_head                 = [0]*6;
 probe_yaw_angle             = probe_base_offset_rot[2];
 vel_dir                     = 1;
@@ -185,7 +174,6 @@ def main():
     global sensor_head;
     global probe_yaw_angle;
     global desired_state_reached;
-    global current_state;
 
     rospy.init_node('gantry_teensy_SIM')
 
@@ -200,20 +188,21 @@ def main():
     r = rospy.Rate(50);
 
     while not rospy.is_shutdown():
+
         ### idle ###
         if gantry_cmd.state_desired == 0:
-            pass;
+            pass
 
         ### calibrate ###
         elif gantry_cmd.state_desired == 1:
-            pass;
+            pass
 
         ### sweeping ###
         elif gantry_cmd.state_desired == 2:
             sweep();
 
         ### moving to position ###
-        elif gantry_cmd.state_desired == 3 or gantry_cmd.state_desired == 4:
+        elif gantry_cmd.state_desired == 3:
             actuate_to_desired();
 
         # gantry teensy only publishes transforms
@@ -222,17 +211,17 @@ def main():
         ### ------------- PREPARE MESSAGES TO PUBLISH ---------------- ###
 
         #prepare the messages
-        gantry_current_state = gantry_status()
-        gantry_current_state.state = current_state
-        gantry_current_state.sweep_speed = 0                 # TODO
-        gantry_current_state.x = sensor_head[0]
-        gantry_current_state.y = sensor_head[1]
-        gantry_current_state.yaw = sensor_head[5]            # rad
-        gantry_current_state.probe_angle = probe_yaw_angle   # rad
-        gantry_current_state.position_reached = desired_state_reached
+        gantry_current_state_msg = gantry_status()
+        gantry_current_state_msg.state = gantry_cmd.state_desired
+        gantry_current_state_msg.sweep_speed = 0                 # TODO
+        gantry_current_state_msg.x = sensor_head[0]
+        gantry_current_state_msg.y = sensor_head[1]
+        gantry_current_state_msg.yaw = sensor_head[5]            # rad
+        gantry_current_state_msg.probe_angle = probe_yaw_angle   # rad
+        gantry_current_state_msg.position_reached = desired_state_reached
 
         # publish the messages
-        gantry_current_state_pub.publish(gantry_current_state);
+        gantry_current_state_pub.publish(gantry_current_state_msg);
 
         r.sleep();
 
