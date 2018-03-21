@@ -1,55 +1,41 @@
 #!/usr/bin/env python
 
 import rospy
+import tf
+import math;
 import numpy as np
 from geometry_msgs.msg import Point
 from geometry_msgs.msg import Twist
 from std_msgs.msg import Int16MultiArray
 from std_msgs.msg import Int16
-import tf
 from gantry.msg import gantry_status;
 from gantry.msg import to_gantry_msg;
-import math;
-
-# in: command of sweeping / position
-# out: position of gantry (geometry_msgs/Point)
 
 #JETSON
 current_state               = 0;            # status of jetson
 desired_state               = 0;            # what we want the jetson to be in
 
 #GANTRY
-# cmd                         = [0, 0, 0];    # commands from metal detector
 md_cmd                      = to_gantry_msg();
 probe_cmd                   = to_gantry_msg();
-# sensor_head                 = [0]*6;
 desired_state_reached       = False;
 
 ### ------------------ TRANSFORMS ---------------------------- ###
 
 #setup params
-# scorpion_gantry_offset_loc  = rospy.get_param('scorpion_gantry_offset_loc');#mm
-# scorpion_gantry_offset_rot  = rospy.get_param('scorpion_gantry_offset_rot');#rad
 md_gantry_offset_loc        = rospy.get_param('md_gantry_offset_loc');      #mm
 probe_base_offset_loc       = rospy.get_param('probe_base_offset_loc');     #mm
 probe_base_offset_rot       = rospy.get_param('probe_base_offset_rot');     #rad
 probe_yaw_angle             = probe_base_offset_rot[2];                     #rad
-
 gantry_sweep_speed          = rospy.get_param('gantry_sweep_speed');        #mm/s
 
 ### -------------------- monitor current state --------------- ###
+
 def update_state(data):
     global current_state;
     current_state           = data.data;
 
 ### ---------------------------------------------------------- ###
-
-# int16 state_desired
-# float64 sweep_speed_desired       mm/s
-# float64 x_desired                 mm
-# float64 y_desired                 mm
-# float64 yaw_desired               rad
-# float64 probe_angle_desired       rad
 
 def update_md_cmd(data):
     global md_cmd;
@@ -108,13 +94,9 @@ def main():
     gantry_desired_state    = rospy.Subscriber("/gantry_desired_state", Int16MultiArray, update_probe_cmd);
 
     gantry_send_msg = to_gantry_msg()
-    gantry_mode_msg = Int16()
     gantry_cmd_pub = rospy.Publisher("gantry_cmd_send", to_gantry_msg, queue_size=10)
-    gantry_mode_pub = rospy.Publisher("gantry_cmd_hack_send", Int16, queue_size=10)
 
-    rate = 50
-    r = rospy.Rate(rate)  # 100 Hz
-
+    r = rospy.Rate(50)
     while not rospy.is_shutdown():
 
         # idle
@@ -123,30 +105,28 @@ def main():
 
         # calibration
         elif current_state == 1:
-            gantry_mode_pub.publish(1);
+            gantry_send_msg.state_desired = current_state
+            gantry_cmd_pub.publish(gantry_send_msg)
             print ("Calibrating!");
 
         # sweeping
         elif current_state == 2:
-            #continue sweeping
-            gantry_mode_pub.publish(2);
+            gantry_send_msg.state_desired = current_state
+            gantry_send_msg.sweep_speed_desired = 0         # TODO
+            gantry_cmd_pub.publish(gantry_send_msg)
             print ("Sweeping!");
 
         # pin pointing, listening to MD
         elif current_state == 3:
-            gantry_mode_pub.publish(3);
             gantry_cmd_pub.publish(md_cmd)
-
             print "positioning at " + str(md_cmd);
 
         # probing, listening to PROBE
         elif current_state == 4:
-            gantry_mode_pub.publish(4);
             gantry_cmd_pub.publish(probe_cmd)
             print "Probing at " + str(probe_cmd);
 
         r.sleep()  # indent less when going back to regular gantry_lib
-
 
 if __name__ == "__main__":
     main()

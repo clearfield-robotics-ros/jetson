@@ -1,21 +1,15 @@
 #!/usr/bin/env python
 
 import rospy
+import tf
+import math;
 import numpy as np
 from geometry_msgs.msg import Point
 from geometry_msgs.msg import Twist
 from std_msgs.msg import Int16MultiArray
 from std_msgs.msg import Int16
-import tf
 from gantry.msg import gantry_status;
 from gantry.msg import to_gantry_msg;
-import math;
-
-# scorpion_gantry_offset_loc = rospy.get_param('scorpion_gantry_offset_loc')
-# scorpion_gantry_offset_rot = rospy.get_param('scorpion_gantry_offset_rot')
-# md_gantry_offset_loc = rospy.get_param('md_gantry_offset_loc')
-# probe_base_offset_loc = rospy.get_param('probe_base_offset_loc')
-# probe_base_offset_rot = rospy.get_param('probe_base_offset_rot')
 
 ### monitor current state ###
 current_state = 0 # if we don't get msgs
@@ -47,15 +41,8 @@ gantry_rot_speed            = rospy.get_param('gantry_rot_speed');     #rad per 
 ### ---------------------------- Parameters that are updated ------------------------ ###
 
 current_state               = 0;
-gantry_mode                 = 0;
-# gantry_cmd                  = [0]*6;
 gantry_cmd                  = to_gantry_msg();
-# int16 state_desired
-# float64 sweep_speed_desired       mm/s
-# float64 x_desired                 mm
-# float64 y_desired                 mm
-# float64 yaw_desired               rad
-# float64 probe_angle_desired       rad
+
 sensor_head                 = [0]*6;
 probe_yaw_angle             = probe_base_offset_rot[2];
 vel_dir                     = 1;
@@ -63,15 +50,10 @@ desired_state_reached       = False;
 
 ### --------------------------- Updating the modes and commands -------------------- ###
 
-def update_gantry_mode(data):
-    global gantry_mode;
-    gantry_mode = data.data;
-
 def update_gantry_cmd(data):
     global gantry_cmd;
     global gantry_state;
     gantry_cmd          = data;
-    # gantry_state        = gantry_cmd[0];
 
 # int16 state_desired
 # float64 sweep_speed_desired       mm/s
@@ -210,7 +192,6 @@ def actuate_to_desired():
 ### ----------------------------------------------------------------------------- ###
 
 def main():
-    global gantry_mode;
     global gantry_cmd;
     global sensor_head;
     global probe_yaw_angle;
@@ -223,30 +204,27 @@ def main():
     br = tf.TransformBroadcaster()
 
     # update mode
-    gantry_mode_sub         = rospy.Subscriber("gantry_cmd_hack_send", Int16, update_gantry_mode);
-    gantry_cmd_sub          = rospy.Subscriber("gantry_cmd_send", to_gantry_msg, update_gantry_cmd);
+    gantry_cmd_sub           = rospy.Subscriber("gantry_cmd_send", to_gantry_msg, update_gantry_cmd);
     # from gantry
-    gantry_current_state_pub= rospy.Publisher("/gantry_current_state", gantry_status, queue_size=1);
-    #to gantry teensy/sim
+    gantry_current_state_pub = rospy.Publisher("/gantry_current_state", gantry_status, queue_size=1);
 
-    rate    = 50;
-    r       = rospy.Rate(rate);
+    r = rospy.Rate(50);
 
     while not rospy.is_shutdown():
         ### idle ###
-        if gantry_mode == 0:
+        if gantry_cmd.state_desired == 0:
             pass;
 
         ### calibrate ###
-        elif gantry_mode == 1:
+        elif gantry_cmd.state_desired == 1:
             pass;
 
         ### sweeping ###
-        elif gantry_mode == 2:
+        elif gantry_cmd.state_desired == 2:
             sweep();
 
         ### moving to position ###
-        elif gantry_mode == 3 or gantry_mode == 4:
+        elif gantry_cmd.state_desired == 3 or gantry_cmd.state_desired == 4:
             actuate_to_desired();
 
         # gantry teensy only publishes transforms
