@@ -7,7 +7,7 @@ from geometry_msgs.msg import Twist
 from std_msgs.msg import Int16MultiArray
 from std_msgs.msg import Int16
 import tf
-from gantry.msg import gantry_status;   
+from gantry.msg import gantry_status;
 from gantry.msg import to_gantry_msg;
 import math;
 
@@ -42,7 +42,7 @@ rate                        = 50;
 gantry_width                = rospy.get_param('gantry_width')
 gantry_sweep_speed          = rospy.get_param('gantry_sweep_speed')
 gantry_trans_speed          = gantry_sweep_speed;
-gantry_rot_speed            = 0.5;     #rad per second
+gantry_rot_speed            = rospy.get_param('gantry_rot_speed');     #rad per second
 
 ### ---------------------------- Parameters that are updated ------------------------ ###
 
@@ -50,7 +50,7 @@ current_state               = 0;
 gantry_mode                 = 0;
 # gantry_cmd                  = [0]*6;
 gantry_cmd                  = to_gantry_msg();
-# int16 state_desired               
+# int16 state_desired
 # float64 sweep_speed_desired       mm/s
 # float64 x_desired                 mm
 # float64 y_desired                 mm
@@ -73,7 +73,7 @@ def update_gantry_cmd(data):
     gantry_cmd          = data;
     # gantry_state        = gantry_cmd[0];
 
-# int16 state_desired               
+# int16 state_desired
 # float64 sweep_speed_desired       mm/s
 # float64 x_desired                 mm
 # float64 y_desired                 mm
@@ -211,7 +211,7 @@ def actuate_to_desired():
         desired_state_reached_flag += 1;
     else:
         sensor_head[1] += y_dir * trans_mm_per_loop;
-    
+
     # yaw
     yaw_diff        = gantry_cmd.yaw_desired - sensor_head[5];
     yaw_dir         = np.sign(yaw_diff);
@@ -220,7 +220,7 @@ def actuate_to_desired():
         desired_state_reached_flag += 1;
     else:
         sensor_head[5] += yaw_dir * rot_rad_per_loop;
-    
+
     # probe yaw
     probe_yaw_diff  = gantry_cmd.probe_angle_desired - probe_yaw_angle;
     probe_yaw_dir   = np.sign(probe_yaw_diff);
@@ -259,7 +259,7 @@ def main():
 
     rate    = 50;
     r       = rospy.Rate(rate);
-    
+
     while not rospy.is_shutdown():
         ### idle ###
         if gantry_mode == 0:
@@ -276,7 +276,7 @@ def main():
         ### moving to position ###
         elif gantry_mode == 3 or gantry_mode == 4:
             actuate_to_desired();
-            
+
         # gantry teensy only publishes transforms
         publish_transforms();
 
