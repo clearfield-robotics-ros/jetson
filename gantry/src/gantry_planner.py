@@ -4,12 +4,12 @@ import rospy
 import numpy as np
 from geometry_msgs.msg import Point
 from geometry_msgs.msg import Twist
-from std_msgs.msg import Int16MultiArray
+# from std_msgs.msg import Int16MultiArray
 from std_msgs.msg import Int16
 import tf
 from gantry.msg import gantry_status;
 from gantry.msg import to_gantry_msg;
-from gantry_lib_for_sim_WIP import Gantry
+from gantry_lib import Gantry
 import math;
 
 # in: command of sweeping / position
@@ -146,10 +146,6 @@ def main():
         ### ----------------- UPDATE GANTRY POSITION ----------------- ###
         try:
             (trans,rot)     = listener.lookupTransform('/gantry', '/sensor_head', rospy.Time(0))
-            #all this will be handled by gantry_sim
-            # trans[1] += vel_dir * lat_vel / rate
-            # if trans[1] < low_lim + tolerance or trans[1] > high_lim - tolerance:
-            #     vel_dir *= -1
             sensor_head[0]  = trans[0]
             sensor_head[1]  = trans[1]
             sensor_head[2]  = trans[2]

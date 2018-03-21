@@ -245,7 +245,7 @@ def main():
     global desired_state_reached;
     global current_state;
 
-    rospy.init_node('gantry_sim')
+    rospy.init_node('gantry_teensy_SIM')
 
     global br
     br = tf.TransformBroadcaster()
