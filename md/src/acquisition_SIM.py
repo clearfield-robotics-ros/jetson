@@ -24,7 +24,7 @@ def update_detection(data):
     global seq
     pos_history.append(prev_pos)
     detection_history.append(data.data)
-    if data.data > 1:
+    if data.data > 100:
         a = float(prev_pos[0])
         b = float(prev_pos[1])
 
@@ -43,7 +43,7 @@ def update_detection(data):
         msg2.id = seq
         msg2.type = 1  # cube
         msg2.action = 0  # add
-        msg2.pose.position = Point(prev_world_pos[0], prev_world_pos[1], float(data.data)*10)
+        msg2.pose.position = Point(prev_world_pos[0], prev_world_pos[1], float(data.data)/10)
         msg2.pose.orientation.w = 1
         msg2.scale.x = 10
         msg2.scale.y = 10

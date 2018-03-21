@@ -35,7 +35,7 @@ def incoming_signal(data):
     # print "updating pos"
     # print data.point
 
-    if data.point.z > 5:
+    if data.point.z > 500:
         jetson_desired_state.publish(3) # start pinpointing
         found_something = True
 
@@ -126,7 +126,7 @@ def main():
                 v2 = p2 - p1
                 cp2 = np.cross(v1, v2)[:2]
                 sigs = [p1[2], p2[2], p3[2]]
-                grad_factor = (max(sigs) - min(sigs)) / 10.0
+                grad_factor = (max(sigs) - min(sigs)) / 1000.0
                 print "grad_factor", grad_factor
                 if grad_factor < 0.01:
                     done = True
@@ -140,7 +140,7 @@ def main():
                     new_point = cur_pos + grad
                     print "new_point", new_point
                     p_new = set_and_wait_for_goal(new_point)
-                    if p_new[2] == cur_sig_pow:
+                    if p_new[2] == cur_sig_pow or p_new[2] < cur_sig_pow:
                         done = True
             else:
 
