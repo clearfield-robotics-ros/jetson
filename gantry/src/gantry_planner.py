@@ -48,6 +48,7 @@ def update_md_cmd(data):
     global md_cmd;
     global gantry_sweep_speed;
     global md_gantry_offset_loc;
+    global probe_yaw_angle;
     # cmd = [data.x, data.y, data.z]; #mm, mm, rad
     if (data.x < 0):
         #sweep
@@ -64,7 +65,7 @@ def update_md_cmd(data):
         md_cmd.x_desired            = data.x - md_gantry_offset_loc[0];
         md_cmd.y_desired            = data.y - md_gantry_offset_loc[1];
         md_cmd.yaw_desired          = data.z;
-        md_cmd.probe_angle_desired  = 0;
+        md_cmd.probe_angle_desired  = probe_yaw_angle;
 
 # int16 state_desired               
 # float64 sweep_speed_desired       mm/s
