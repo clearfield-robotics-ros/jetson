@@ -4,9 +4,6 @@ import rospy
 import tf
 import math;
 import numpy as np
-from geometry_msgs.msg import Point
-from geometry_msgs.msg import Twist
-from std_msgs.msg import Int16MultiArray
 from std_msgs.msg import Int16
 from gantry.msg import gantry_status;
 from gantry.msg import to_gantry_msg;
@@ -52,15 +49,7 @@ desired_state_reached       = False;
 
 def update_gantry_cmd(data):
     global gantry_cmd;
-    global gantry_state;
-    gantry_cmd          = data;
-
-# int16 state_desired
-# float64 sweep_speed_desired       mm/s
-# float64 x_desired                 mm
-# float64 y_desired                 mm
-# float64 yaw_desired               rad
-# float64 probe_angle_desired       rad
+    gantry_cmd = data;
 
 ### --------------------------------- Publish Transforms --------------------------- ###
 

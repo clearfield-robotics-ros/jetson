@@ -6,7 +6,6 @@ import math;
 import numpy as np
 from geometry_msgs.msg import Point
 from geometry_msgs.msg import Twist
-from std_msgs.msg import Int16MultiArray
 from std_msgs.msg import Int16
 from gantry.msg import gantry_status;
 from gantry.msg import to_gantry_msg;
@@ -22,7 +21,6 @@ desired_state_reached       = False;
 
 ### ------------------ TRANSFORMS ---------------------------- ###
 
-#setup params
 md_gantry_offset_loc        = rospy.get_param('md_gantry_offset_loc');      #mm
 probe_base_offset_loc       = rospy.get_param('probe_base_offset_loc');     #mm
 probe_base_offset_rot       = rospy.get_param('probe_base_offset_rot');     #rad
@@ -61,17 +59,8 @@ def update_md_cmd(data):
         md_cmd.probe_angle_desired  = probe_yaw_angle;
 
 def update_probe_cmd(data):
-    global probe_cmd;
-    global gantry_sweep_speed;
-    probe_cmd_multi_array           = data.data;
-
-    probe_cmd.state_desired         = probe_cmd_multi_array[0];
-    probe_cmd.sweep_speed_desired   = probe_cmd_multi_array[1];
-    probe_cmd.x_desired             = probe_cmd_multi_array[2];
-    probe_cmd.y_desired             = probe_cmd_multi_array[3];
-    probe_cmd.yaw_desired           = probe_cmd_multi_array[4]*math.pi/180.0;
-    probe_cmd.probe_angle_desired   = probe_cmd_multi_array[5]*math.pi/180.0;
-
+    global probe_cmd
+    probe_cmd = data
 
 def main():
     global current_state;
@@ -91,7 +80,7 @@ def main():
     # from metal detector
     md_subscriber           = rospy.Subscriber("/cmd_from_md", Point, update_md_cmd);
     # from probe
-    gantry_desired_state    = rospy.Subscriber("/gantry_desired_state", Int16MultiArray, update_probe_cmd);
+    gantry_desired_state    = rospy.Subscriber("/cmd_from_probe", to_gantry_msg, update_probe_cmd);
 
     gantry_send_msg = to_gantry_msg()
     gantry_cmd_pub = rospy.Publisher("gantry_cmd_send", to_gantry_msg, queue_size=10)

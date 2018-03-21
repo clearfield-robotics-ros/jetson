@@ -5,12 +5,13 @@ import numpy as np
 import tf
 import math
 import pdb
-from geometry_msgs.msg import Point
-from std_msgs.msg import Int16, Int16MultiArray
-from visualization_msgs.msg import Marker
 from mine_estimator import Mine_Estimator
+from visualization_msgs.msg import Marker
+from geometry_msgs.msg import Point
+from std_msgs.msg import Int16
 from probe.msg import probe_data
 from gantry.msg import gantry_status
+from gantry.msg import to_gantry_msg;
 
 ### monitor current state ###
 current_state = 0 # if we don't get msgs
@@ -61,17 +62,14 @@ def move_gantry(desired_probe_tip, gantry_yaw):
     # work out gantry carriage position
     trans = probe_to_gantry_transform(desired_probe_tip, gantry_yaw)
 
-    # send gantry position message
-    gantry_desired_state_msg = Int16MultiArray()
-    gantry_desired_state_msg.data = [
-        3,                               # 0: desired state = pos control
-        0,                               # 1: sweep velocity
-        trans[0],                        # 2: x Position
-        trans[1],                        # 3: y position
-        gantry_yaw*180/math.pi,          # 4: yaw angle (deg)
-        0]                               # 5: probe yaw angle
+    gantry_desired_state = to_gantry_msg()
+    gantry_desired_state.state_desired      = 3
+    gantry_desired_state.x_desired          = trans[0]
+    gantry_desired_state.y_desired          = trans[1]
+    gantry_desired_state.yaw_desired        = gantry_yaw
+    gantry_desired_state.probe_angle_desired= 0
     global gantry_desired_state_pub
-    gantry_desired_state_pub.publish(gantry_desired_state_msg)
+    gantry_desired_state_pub.publish(gantry_desired_state)
 
     rospy.sleep(0.5) # give time for handshake
 
@@ -135,7 +133,7 @@ def main():
 
     # Gantry Control Messages
     global gantry_desired_state_pub
-    gantry_desired_state_pub = rospy.Publisher("/gantry_desired_state",Int16MultiArray,queue_size=10)
+    gantry_desired_state_pub = rospy.Publisher("/cmd_from_probe", to_gantry_msg, queue_size=10)
     sub2 = rospy.Subscriber("/gantry_current_state", gantry_status, update_gantry_state)
 
     # Probe Related Messages
