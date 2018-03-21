@@ -109,8 +109,6 @@ def main():
     probe_plan_state = -1 # initial state
 
     # Transforms
-    # global br
-    # br = tf.TransformBroadcaster()
     global listener
     listener = tf.TransformListener()
 

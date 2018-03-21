@@ -130,36 +130,40 @@ class Mine_Estimator:
                 for j in range(0,i):
                     p = self.g.circle_intersection( np.append(self.contact_points[i,0:2],self.radius),
                                                     np.append(self.contact_points[j,0:2],self.radius) )
-                    for j in range(0,len(p)):
-                        intersection = np.vstack(( intersection,np.array([p[j][0],p[j][1]]) ))
+                    if p is not None:
+                        for j in range(0,len(p)):
+                            intersection = np.vstack(( intersection,np.array([p[j][0],p[j][1]]) ))
 
-            ### Remove points (bounding box)
-            intersection_BB = np.array([], dtype=np.int64).reshape(0,2)
-            for i in range(0,len(intersection)):
-                if ( intersection[i,0] > min(self.contact_points[:,0]) ): # and
-                # intersection[i,1] > min(self.contact_points[:,1]) and
-                # intersection[i,1] < max(self.contact_points[:,1]) ):
-                    intersection_BB = np.vstack((intersection_BB,intersection[i,:]))
+            if len(intersection) > 0: # if we have intersections!
 
-            intersection_BB = np.unique(intersection_BB, axis=0)
+                ### Remove points (bounding box)
+                intersection_BB = np.array([], dtype=np.int64).reshape(0,2)
+                for i in range(0,len(intersection)):
+                    if ( intersection[i,0] > min(self.contact_points[:,0]) ): # and
+                    # intersection[i,1] > min(self.contact_points[:,1]) and
+                    # intersection[i,1] < max(self.contact_points[:,1]) ):
+                        intersection_BB = np.vstack((intersection_BB,intersection[i,:]))
+                intersection_BB = np.unique(intersection_BB, axis=0)
 
-            if False:
-                self.plot_intersections(intersection_BB)
+                ### Debugging
+                if False:
+                    self.plot_intersections(intersection_BB)
 
-            ### Determine center point
-            if len(intersection_BB) > 1:
-                km = KMeans(n_clusters=2)
-                km.fit(intersection_BB)
-                labels = km.labels_
-                self.c_x = km.cluster_centers_[0,0]
-                self.c_y = km.cluster_centers_[0,1]
-            elif len(intersection_BB) == 1:
-                self.c_x = intersection_BB[0,0]
-                self.c_y = intersection_BB[0,1]
-            else:
-                self.c_x = np.mean(self.contact_points[:,0])
-                self.c_y = np.mean(self.contact_points[:,1])
+                ### Determine center point
+                if len(intersection_BB) > 1:
+                    km = KMeans(n_clusters=2)
+                    km.fit(intersection_BB)
+                    labels = km.labels_
+                    self.c_x = km.cluster_centers_[0,0]
+                    self.c_y = km.cluster_centers_[0,1]
+                elif len(intersection_BB) == 1:
+                    self.c_x = intersection_BB[0,0]
+                    self.c_y = intersection_BB[0,1]
+                else:
+                    self.c_x = np.mean(self.contact_points[:,0])
+                    self.c_y = np.mean(self.contact_points[:,1])
         else:
+            ### Just use first contact point for centre point
             self.c_x = self.contact_points[0,0] + self.radius
             self.c_y = self.contact_points[0,1]
 
