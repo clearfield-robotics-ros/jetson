@@ -15,6 +15,8 @@ add_message_files(
   FILES
   control.msg
   detection_result.msg
+  gantry_status.msg
+  to_gantry_msg.msg
 )
 
 generate_messages(

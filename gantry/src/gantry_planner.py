@@ -10,6 +10,7 @@ import tf
 from gantry.msg import gantry_status;
 from gantry.msg import to_gantry_msg;
 from gantry_lib_for_sim_WIP import Gantry
+import math;
 
 # in: command of sweeping / position
 # out: position of gantry (geometry_msgs/Point)
@@ -20,20 +21,22 @@ desired_state               = 0;            # what we want the jetson to be in
 
 #GANTRY
 # cmd                         = [0, 0, 0];    # commands from metal detector
-md_cmd                      = Int16MultiArray();
-probe_cmd                   = Int16MultiArray();
+md_cmd                      = to_gantry_msg();
+probe_cmd                   = to_gantry_msg();
 sensor_head                 = [0]*6;
 desired_state_reached       = False;
 
 ### ------------------ TRANSFORMS ---------------------------- ###
 
 #setup params
-scorpion_gantry_offset_loc  = rospy.get_param('scorpion_gantry_offset_loc');
-scorpion_gantry_offset_rot  = rospy.get_param('scorpion_gantry_offset_rot');
-md_gantry_offset_loc        = rospy.get_param('md_gantry_offset_loc');
-probe_base_offset_loc       = rospy.get_param('probe_base_offset_loc');
-probe_base_offset_rot       = rospy.get_param('probe_base_offset_rot');
-probe_yaw_angle             = probe_base_offset_rot[2];
+scorpion_gantry_offset_loc  = rospy.get_param('scorpion_gantry_offset_loc');#mm
+scorpion_gantry_offset_rot  = rospy.get_param('scorpion_gantry_offset_rot');#rad
+md_gantry_offset_loc        = rospy.get_param('md_gantry_offset_loc');      #mm
+probe_base_offset_loc       = rospy.get_param('probe_base_offset_loc');     #mm
+probe_base_offset_rot       = rospy.get_param('probe_base_offset_rot');     #rad
+probe_yaw_angle             = probe_base_offset_rot[2];                     #rad
+
+gantry_sweep_speed          = rospy.get_param('gantry_sweep_speed');        #mm/s
 
 ### -------------------- monitor current state --------------- ###
 def update_state(data):
@@ -42,37 +45,54 @@ def update_state(data):
 
 ### ---------------------------------------------------------- ###
 def update_md_cmd(data):
-    global cmd
-    cmd = [data.x, data.y, data.z]
+    global md_cmd;
+    global gantry_sweep_speed;
+    global md_gantry_offset_loc;
+    # cmd = [data.x, data.y, data.z]; #mm, mm, rad
+    if (data.x < 0):
+        #sweep
+        md_cmd.state_desired        = 2;
+        md_cmd.sweep_speed_desired  = gantry_sweep_speed;
+        md_cmd.x_desired            = 0;
+        md_cmd.y_desired            = 0;
+        md_cmd.yaw_desired          = 0;
+        md_cmd.probe_angle_desired  = 0;
+    else:
+        #pin pointing
+        md_cmd.state_desired        = 3;
+        md_cmd.sweep_speed_desired  = gantry_sweep_speed;
+        md_cmd.x_desired            = data.x - md_gantry_offset_loc[0];
+        md_cmd.y_desired            = data.y - md_gantry_offset_loc[1];
+        md_cmd.yaw_desired          = data.z;
+        md_cmd.probe_angle_desired  = 0;
 
-# def update_md_cmd(data):
-#     global md_cmd;
-#     global current_state;
-#     global probe_yaw_angle;
-#     md_cmd                  = [current_state, 
-#                                 0,              # NOT USED
-#                                 data.x,         # desired x             MM
-#                                 data.y,         # desired y             MM
-#                                 data.z,         # desired yaw           DEG
-#                                 probe_yaw_angle,# desired probe yaw     DEG
-#                                 0];              # not used)
+# int16 state_desired               
+# float64 sweep_speed_desired       mm/s
+# float64 x_desired                 mm
+# float64 y_desired                 mm
+# float64 yaw_desired               rad
+# float64 probe_angle_desired       rad
 
-
-def update_gantry_desired_state(data):
-    global gantry_desired_state
+def update_probe_cmd(data):
     global probe_cmd;
-    gantry_desired_state    = data.data
-    probe_cmd               = gantry_desired_state;
+    global gantry_sweep_speed;
+    probe_cmd_multi_array           = data.data;
+
+    probe_cmd.state_desired         = probe_cmd_multi_array[0];
+    probe_cmd.sweep_speed_desired   = probe_cmd_multi_array[1];
+    probe_cmd.x_desired             = probe_cmd_multi_array[2];
+    probe_cmd.y_desired             = probe_cmd_multi_array[3];
+    probe_cmd.yaw_desired           = probe_cmd_multi_array[4]*math.pi/180.0;
+    probe_cmd.probe_angle_desired   = probe_cmd_multi_array[5]*math.pi/180.0;
+
 '''
     gantry_desired_state    = [current_state,
                                 sweep_velocity,
                                 x_position,
                                 y_position,
                                 yaw,
-                                probe_yaw,
-                                int(desired_state_reached)];
+                                probe_yaw];
 '''
-
 
 #getting the transforms out there
 def publish_transforms():
@@ -83,38 +103,11 @@ def publish_transforms():
         scorpion_gantry_offset_loc[1],
         scorpion_gantry_offset_loc[2]),
         tf.transformations.quaternion_from_euler(scorpion_gantry_offset_rot[0],
-            scorpion_gantry_offset_rot[1],
-            scorpion_gantry_offset_rot[2]),
+                                                    scorpion_gantry_offset_rot[1],
+                                                    scorpion_gantry_offset_rot[2]),
         rospy.Time.now(),
         "gantry",
         "scorpion")
-
-    # sent by teensy/sim
-    #br.sendTransform((sensor_head[0],sensor_head[1],sensor_head[2]),
-    #    tf.transformations.quaternion_from_euler(sensor_head[3],sensor_head[4],sensor_head[5]),
-    #    rospy.Time.now(),
-    #    "sensor_head",
-    #    "gantry")
-
-    # sent by teensy/sim
-    #br.sendTransform((md_gantry_offset_loc[0],
-    #    md_gantry_offset_loc[1],
-    #    md_gantry_offset_loc[2]),
-    #    tf.transformations.quaternion_from_euler(0,0,0),
-    #    rospy.Time.now(),
-    #    "md",
-    #    "sensor_head")
-
-    # sent by teensy/sim
-    #br.sendTransform((probe_base_offset_loc[0],
-    #    probe_base_offset_loc[1],
-    #    probe_base_offset_loc[2]),
-    #    tf.transformations.quaternion_from_euler(probe_base_offset_rot[0],
-    #        probe_base_offset_rot[1],
-    #        probe_yaw_angle),
-    #    rospy.Time.now(),
-    #    "probe_base",
-    #    "sensor_head")
 
 
 def main():
@@ -140,11 +133,9 @@ def main():
     # from jetson
     jetson_current_state    = rospy.Subscriber('current_state', Int16, update_state);
     # from metal detector
-    global cmd;
-    cmd                     = [0.0, 0.0, 0.0];
     md_subscriber           = rospy.Subscriber("/cmd_from_md", Point, update_md_cmd);
     # from probe
-    gantry_desired_state    = rospy.Subscriber("/gantry_desired_state", Int16MultiArray, update_gantry_desired_state);
+    gantry_desired_state    = rospy.Subscriber("/gantry_desired_state", Int16MultiArray, update_probe_cmd);
     
     rate = 50
     r = rospy.Rate(rate)  # 100 Hz
@@ -168,15 +159,6 @@ def main():
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
             continue
 
-
-        ### ----------------- STATE CHANGING LOGIC ------------------- ###
-        
-        # sweeping, the cmd changed to positioning
-        # check current state, publish desired, jetson will switch
-        # if (current_state == 2 and cmd[0] < 0):
-        #     request_state_change(3);
-
-
         ### ----------------- STATE OPERATION LOGIC ------------------ ###
         
         # idle
@@ -197,60 +179,14 @@ def main():
         # pin pointing, listening to MD
         elif current_state  == 3:
             g.send_state(3);
-            #translate md positioning to sensor head positioning
-            sensor_head_position    = [3,
-                                        0,
-                                        cmd[0] - md_gantry_offset_loc[0],
-                                        cmd[1] - md_gantry_offset_loc[1],
-                                        cmd[2],
-                                        probe_yaw_angle];
-            g.send_pos_cmd(sensor_head_position);            
-            print "positioning at " + str(sensor_head_position);
+            g.send_pos_cmd(md_cmd);            
+            print "positioning at " + str(md_cmd);
 
         # probing, listening to PROBE
         elif current_state  == 4:
             g.send_state(4);
             g.send_pos_cmd(probe_cmd);
             print "Probing at " + str(probe_cmd);
-
-            # telling probe whether desired position is reached
-            diff = np.zeros(4)
-            # X Position
-            diff[0]             = gantry_desired_state[2] - sensor_head[0];
-            # sensor_head[0] += diff[0]
-            # Y Position
-            diff[1]             = gantry_desired_state[3] - sensor_head[1];
-            # sensor_head[1] += diff[1]
-            # Gantry Yaw
-            diff[2]             = gantry_desired_state[4] - sensor_head[5];
-            # sensor_head[5] += diff[2]
-            # Probe Yaw
-            diff[3]             = gantry_desired_state[5] - probe_yaw_angle;
-            # probe_yaw_angle += diff[3]
-
-            if abs(np.sum(diff)) < 1:               #THIS SHOULD BE DETERMINED BY THE TEENSY, NOT PLANNER
-                desired_state_reached = True
-            else:
-                desired_state_reached = False
-
-
-        # ### ------------- PREPARE MESSAGES TO PUBLISH ---------------- ###
-
-        # #prepare the messages
-        # global desired_state;
-        # gantry_current_state_msg = Int16MultiArray();
-        # gantry_current_state_msg.data = [
-        #     current_state,
-        #     0, #current_sweep_velocity
-        #     sensor_head[0], #current_x_position
-        #     sensor_head[1], # current_y_position
-        #     sensor_head[5], # current_yaw_angle
-        #     probe_yaw_angle, #current_probe_yaw_angle
-        #     int(desired_state_reached)];
-
-        # # publish the messages
-        # gantry_current_state_pub.publish(gantry_current_state_msg);
-
 
         # done
         r.sleep()  # indent less when going back to regular gantry_lib

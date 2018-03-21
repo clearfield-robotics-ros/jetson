@@ -1,0 +1,6 @@
+int16 state_desired
+float64 sweep_speed_desired
+float64 x_desired
+float64 y_desired
+float64 yaw_desired
+float64 probe_angle_desired

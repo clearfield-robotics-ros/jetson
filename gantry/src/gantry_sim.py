@@ -38,17 +38,24 @@ scorpion_gantry_offset_loc  = [];
 scorpion_gantry_offset_rot  = [];
 probe_base_offset_loc       = rospy.get_param('probe_base_offset_loc');
 probe_base_offset_rot       = rospy.get_param('probe_base_offset_rot');
-rate                        = 100;
+rate                        = 50;
 gantry_width                = rospy.get_param('gantry_width')
 gantry_sweep_speed          = rospy.get_param('gantry_sweep_speed')
 gantry_trans_speed          = gantry_sweep_speed;
-gantry_rot_speed            = 10;     #deg per second
+gantry_rot_speed            = 0.5;     #rad per second
 
 ### ---------------------------- Parameters that are updated ------------------------ ###
 
 current_state               = 0;
 gantry_mode                 = 0;
-gantry_cmd                  = [0]*6;
+# gantry_cmd                  = [0]*6;
+gantry_cmd                  = to_gantry_msg();
+# int16 state_desired               
+# float64 sweep_speed_desired       mm/s
+# float64 x_desired                 mm
+# float64 y_desired                 mm
+# float64 yaw_desired               rad
+# float64 probe_angle_desired       rad
 sensor_head                 = [0]*6;
 probe_yaw_angle             = probe_base_offset_rot[2];
 vel_dir                     = 1;
@@ -63,18 +70,15 @@ def update_gantry_mode(data):
 def update_gantry_cmd(data):
     global gantry_cmd;
     global gantry_state;
-    gantry_cmd          = data.data;
-    gantry_state        = gantry_cmd[0];
+    gantry_cmd          = data;
+    # gantry_state        = gantry_cmd[0];
 
-'''
-    Int16MultiArray_msg     = [current_state,
-                                sweep_velocity,
-                                x_position,
-                                y_position,
-                                yaw,
-                                probe_yaw,
-                                int(desired_state_reached)];
-'''
+# int16 state_desired               
+# float64 sweep_speed_desired       mm/s
+# float64 x_desired                 mm
+# float64 y_desired                 mm
+# float64 yaw_desired               rad
+# float64 probe_angle_desired       rad
 
 ### --------------------------------- Publish Transforms --------------------------- ###
 
@@ -175,65 +179,61 @@ def actuate_to_desired():
     diff    = np.zeros(4);
 
     trans_mm_per_loop   = gantry_trans_speed / float(rate);
-    rot_deg_per_loop    = gantry_rot_speed / float(rate);
+    rot_rad_per_loop    = gantry_rot_speed / float(rate);
 
     #assuming it updates everytime this runs
     #otherwise we will offset twice
     # gantry_cmd[2] -= md_gantry_offset_loc[0]
     # gantry_cmd[3] -= md_gantry_offset_loc[1]
-    temp_gantry_cmd = [gantry_cmd[0],
-                        gantry_cmd[1],
-                        gantry_cmd[2],    # x
-                        gantry_cmd[3],    # y
-                        gantry_cmd[4],
-                        gantry_cmd[5]];
+    # temp_gantry_cmd = [gantry_cmd[0],
+    #                     gantry_cmd[1],
+    #                     gantry_cmd[2],    # x
+    #                     gantry_cmd[3],    # y
+    #                     gantry_cmd[4],
+    #                     gantry_cmd[5]];
 
     # move each DoF closer to desired by 1 step
     desired_state_reached_flag  = 0;
     # x position
-    x_diff          = temp_gantry_cmd[2] - sensor_head[0];
+    x_diff          = gantry_cmd.x_desired - sensor_head[0];
     x_dir           = np.sign(x_diff);
-    if (x_diff <= trans_mm_per_loop):
-        sensor_head[0]  = temp_gantry_cmd[2];
+    if (abs(x_diff) <= trans_mm_per_loop):
+        sensor_head[0]  = gantry_cmd.x_desired;
         desired_state_reached_flag += 1;
     else:
         sensor_head[0] += x_dir * trans_mm_per_loop;
 
     # y position
-    y_diff          = temp_gantry_cmd[3] - sensor_head[1];
+    y_diff          = gantry_cmd.y_desired - sensor_head[1];
     y_dir           = np.sign(y_diff);
-    if (y_diff <= trans_mm_per_loop):
-        sensor_head[1]  = temp_gantry_cmd[3];
+    if (abs(y_diff) <= trans_mm_per_loop):
+        sensor_head[1]  = gantry_cmd.y_desired;
         desired_state_reached_flag += 1;
     else:
         sensor_head[1] += y_dir * trans_mm_per_loop;
     
     # yaw
-    yaw_diff        = float(temp_gantry_cmd[4])*math.pi/180.0 - sensor_head[5];
+    yaw_diff        = gantry_cmd.yaw_desired - sensor_head[5];
     yaw_dir         = np.sign(yaw_diff);
-    if (yaw_diff <= rot_deg_per_loop):
-        sensor_head[5]  = temp_gantry_cmd[4];
+    if (abs(yaw_diff) <= rot_rad_per_loop):
+        sensor_head[5]  = gantry_cmd.yaw_desired;
         desired_state_reached_flag += 1;
     else:
-        sensor_head[5] += yaw_dir * rot_deg_per_loop;
+        sensor_head[5] += yaw_dir * rot_rad_per_loop;
     
     # probe yaw
-    probe_yaw_diff  = float(temp_gantry_cmd[5])*math.pi/180.0 - probe_yaw_angle;
+    probe_yaw_diff  = gantry_cmd.probe_angle_desired - probe_yaw_angle;
     probe_yaw_dir   = np.sign(probe_yaw_diff);
-    if (probe_yaw_diff <= rot_deg_per_loop):
-        probe_yaw_angle = temp_gantry_cmd[5];
+    if (abs(probe_yaw_diff) <= rot_rad_per_loop):
+        probe_yaw_angle = gantry_cmd.probe_angle_desired;
         desired_state_reached_flag += 1;
     else:
-        probe_yaw_angle+= probe_yaw_dir * rot_deg_per_loop;
-
+        probe_yaw_angle+= probe_yaw_dir * rot_rad_per_loop;
 
     if (desired_state_reached_flag == 4):
         desired_state_reached   = True;
     else:
         desired_state_reached   = False;
-
-    print desired_state_reached;
-
 
 ### ----------------------------------------------------------------------------- ###
 
@@ -252,7 +252,7 @@ def main():
 
     # update mode
     gantry_mode_sub         = rospy.Subscriber("gantry_cmd_hack_send", Int16, update_gantry_mode);
-    gantry_cmd_sub          = rospy.Subscriber("gantry_cmd_send", Int16MultiArray, update_gantry_cmd);
+    gantry_cmd_sub          = rospy.Subscriber("gantry_cmd_send", to_gantry_msg, update_gantry_cmd);
     # from gantry
     gantry_current_state_pub= rospy.Publisher("/gantry_current_state", Int16MultiArray, queue_size=1);
     #to gantry teensy/sim
@@ -290,8 +290,8 @@ def main():
             0, #current_sweep_velocity
             sensor_head[0], #current_x_position
             sensor_head[1], # current_y_position
-            sensor_head[5], # current_yaw_angle
-            probe_yaw_angle, #current_probe_yaw_angle
+            int(sensor_head[5]*180/math.pi), # current_yaw_angle
+            int(probe_yaw_angle*180/math.pi), #current_probe_yaw_angle
             int(desired_state_reached)];
 
         # publish the messages
