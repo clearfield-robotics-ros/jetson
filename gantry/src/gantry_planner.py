@@ -4,12 +4,11 @@ import rospy
 import numpy as np
 from geometry_msgs.msg import Point
 from geometry_msgs.msg import Twist
-# from std_msgs.msg import Int16MultiArray
+from std_msgs.msg import Int16MultiArray
 from std_msgs.msg import Int16
 import tf
 from gantry.msg import gantry_status;
 from gantry.msg import to_gantry_msg;
-from gantry_lib import Gantry
 import math;
 
 # in: command of sweeping / position
@@ -128,15 +127,17 @@ def main():
     br = tf.TransformBroadcaster()
     listener = tf.TransformListener()
 
-    #gantry teensy/sim object
-    g = Gantry();
-
     # from jetson
     jetson_current_state    = rospy.Subscriber('current_state', Int16, update_state);
     # from metal detector
     md_subscriber           = rospy.Subscriber("/cmd_from_md", Point, update_md_cmd);
     # from probe
     gantry_desired_state    = rospy.Subscriber("/gantry_desired_state", Int16MultiArray, update_probe_cmd);
+
+    gantry_send_msg = to_gantry_msg()
+    gantry_mode_msg = Int16()
+    gantry_cmd_pub = rospy.Publisher("gantry_cmd_send", to_gantry_msg, queue_size=10)
+    gantry_mode_pub = rospy.Publisher("gantry_cmd_hack_send", Int16, queue_size=10)
 
     rate = 50
     r = rospy.Rate(rate)  # 100 Hz
@@ -159,33 +160,33 @@ def main():
         ### ----------------- STATE OPERATION LOGIC ------------------ ###
 
         # idle
-        if current_state    == 0:
+        if current_state == 0:
             pass;
 
         # calibration
-        elif current_state  == 1:
-            g.send_state(1);
+        elif current_state == 1:
+            gantry_mode_pub.publish(1);
             print ("Calibrating!");
 
         # sweeping
-        elif current_state  == 2:
+        elif current_state == 2:
             #continue sweeping
-            g.send_state(2);
+            gantry_mode_pub.publish(2);
             print ("Sweeping!");
 
         # pin pointing, listening to MD
-        elif current_state  == 3:
-            g.send_state(3);
-            g.send_pos_cmd(md_cmd);
+        elif current_state == 3:
+            gantry_mode_pub.publish(3);
+            gantry_cmd_pub.publish(md_cmd)
+
             print "positioning at " + str(md_cmd);
 
         # probing, listening to PROBE
-        elif current_state  == 4:
-            g.send_state(4);
-            g.send_pos_cmd(probe_cmd);
+        elif current_state == 4:
+            gantry_mode_pub.publish(4);
+            gantry_cmd_pub.publish(probe_cmd)
             print "Probing at " + str(probe_cmd);
 
-        # done
         r.sleep()  # indent less when going back to regular gantry_lib
 
 
