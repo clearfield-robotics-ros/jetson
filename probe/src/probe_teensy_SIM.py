@@ -35,29 +35,29 @@ def probeCmdClbk(data):
     probe_state = data.data
     global finished_probing
     global retracted_probe
-    global foundObject
+    global found_object
     if probe_state == 2: # ie. change to probing
         finished_probing = False
         retracted_probe = False
-        foundObject = False
+        found_object = False
 
 
 def probe_contact(data):
 
-    global foundObject
+    global found_object
     global finished_probing
     global contact_pub
 
     if not finished_probing:
-        probe_contact_reply_msg = probe_data()
-        probe_contact_reply_msg.state            = probe_state
-        probe_contact_reply_msg.init             = True
-        probe_contact_reply_msg.probe_complete   = retracted_probe
-        probe_contact_reply_msg.linear_position  = probe_distance
-        probe_contact_reply_msg.contact_made     = foundObject
-        contact_pub.publish(probe_contact_reply_msg)
+        probe_contact_reply = probe_data()
+        probe_contact_reply.state            = probe_state
+        probe_contact_reply.init             = True
+        probe_contact_reply.probe_complete   = retracted_probe
+        probe_contact_reply.linear_position  = probe_distance
+        probe_contact_reply.contact_made     = found_object
+        contact_pub.publish(probe_contact_reply)
 
-    foundObject = True
+    found_object = True
     finished_probing = True
 
 
@@ -75,8 +75,8 @@ def main():
     finished_probing = True
     global retracted_probe
     retracted_probe = True
-    global foundObject
-    foundObject = False
+    global found_object
+    found_object = False
 
     global contact_pub
     contact_pub = rospy.Publisher("/probe_teensy/probe_contact_reply", probe_data, queue_size=10)
@@ -85,7 +85,6 @@ def main():
     cmd_sub = rospy.Subscriber("/probe_teensy/probe_cmd_send", Int16, probeCmdClbk)
 
     r = rospy.Rate(50) # 50 Hz
-
     while not rospy.is_shutdown():
 
         if not finished_probing:
@@ -107,13 +106,13 @@ def main():
             "probe_base")
 
         # Send out update every loop
-        probe_status_reply_msg = probe_data()
-        probe_status_reply_msg.state            = probe_state
-        probe_status_reply_msg.init             = True
-        probe_status_reply_msg.probe_complete   = retracted_probe
-        probe_status_reply_msg.linear_position  = probe_distance
-        probe_status_reply_msg.contact_made     = foundObject
-        status_pub.publish(probe_status_reply_msg)
+        probe_status_reply = probe_data()
+        probe_status_reply.state            = probe_state
+        probe_status_reply.init             = True
+        probe_status_reply.probe_complete   = retracted_probe
+        probe_status_reply.linear_position  = probe_distance
+        probe_status_reply.contact_made     = found_object
+        status_pub.publish(probe_status_reply)
 
         r.sleep()  # indent less when going back to regular gantry_lib
 
