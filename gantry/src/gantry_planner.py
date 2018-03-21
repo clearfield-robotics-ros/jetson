@@ -67,7 +67,7 @@ def update_md_cmd(data):
         md_cmd.yaw_desired          = data.z;
         md_cmd.probe_angle_desired  = probe_yaw_angle;
 
-# int16 state_desired               
+# int16 state_desired
 # float64 sweep_speed_desired       mm/s
 # float64 x_desired                 mm
 # float64 y_desired                 mm
@@ -137,7 +137,7 @@ def main():
     md_subscriber           = rospy.Subscriber("/cmd_from_md", Point, update_md_cmd);
     # from probe
     gantry_desired_state    = rospy.Subscriber("/gantry_desired_state", Int16MultiArray, update_probe_cmd);
-    
+
     rate = 50
     r = rospy.Rate(rate)  # 100 Hz
 
@@ -161,7 +161,7 @@ def main():
             continue
 
         ### ----------------- STATE OPERATION LOGIC ------------------ ###
-        
+
         # idle
         if current_state    == 0:
             pass;
@@ -180,7 +180,7 @@ def main():
         # pin pointing, listening to MD
         elif current_state  == 3:
             g.send_state(3);
-            g.send_pos_cmd(md_cmd);            
+            g.send_pos_cmd(md_cmd);
             print "positioning at " + str(md_cmd);
 
         # probing, listening to PROBE

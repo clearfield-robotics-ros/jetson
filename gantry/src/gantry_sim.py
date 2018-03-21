@@ -254,7 +254,7 @@ def main():
     gantry_mode_sub         = rospy.Subscriber("gantry_cmd_hack_send", Int16, update_gantry_mode);
     gantry_cmd_sub          = rospy.Subscriber("gantry_cmd_send", to_gantry_msg, update_gantry_cmd);
     # from gantry
-    gantry_current_state_pub= rospy.Publisher("/gantry_current_state", Int16MultiArray, queue_size=1);
+    gantry_current_state_pub= rospy.Publisher("/gantry_current_state", gantry_status, queue_size=1);
     #to gantry teensy/sim
 
     rate    = 50;
@@ -283,19 +283,27 @@ def main():
         ### ------------- PREPARE MESSAGES TO PUBLISH ---------------- ###
 
         #prepare the messages
-        global desired_state;
-        gantry_current_state_msg = Int16MultiArray();
-        gantry_current_state_msg.data = [
-            current_state,
-            0, #current_sweep_velocity
-            sensor_head[0], #current_x_position
-            sensor_head[1], # current_y_position
-            int(sensor_head[5]*180/math.pi), # current_yaw_angle
-            int(probe_yaw_angle*180/math.pi), #current_probe_yaw_angle
-            int(desired_state_reached)];
+        # gantry_current_state_msg = Int16MultiArray();
+        # gantry_current_state_msg.data = [
+        #     current_state,
+        #     0, #current_sweep_velocity
+        #     sensor_head[0], #current_x_position
+        #     sensor_head[1], # current_y_position
+        #     int(sensor_head[5]*180/math.pi), # current_yaw_angle
+        #     int(probe_yaw_angle*180/math.pi), #current_probe_yaw_angle
+        #     int(desired_state_reached)];
+
+        gantry_current_state = gantry_status()
+        gantry_current_state.state = current_state
+        gantry_current_state.sweep_speed = 0 # TODO
+        gantry_current_state.x = sensor_head[0]
+        gantry_current_state.y = sensor_head[1]
+        gantry_current_state.yaw = sensor_head[5]            # rad
+        gantry_current_state.probe_angle = probe_yaw_angle   # rad
+        gantry_current_state.position_reached = desired_state_reached
 
         # publish the messages
-        gantry_current_state_pub.publish(gantry_current_state_msg);
+        gantry_current_state_pub.publish(gantry_current_state);
 
         r.sleep();
 

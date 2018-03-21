@@ -10,6 +10,7 @@ from std_msgs.msg import Int16, Int16MultiArray
 from visualization_msgs.msg import Marker
 from mine_estimator import Mine_Estimator
 from probe.msg import probe_data
+from gantry.msg import gantry_status
 
 ### monitor current state ###
 current_state = 0 # if we don't get msgs
@@ -74,7 +75,7 @@ def move_gantry(desired_probe_tip, gantry_yaw):
 
     rospy.sleep(0.5) # give time for handshake
 
-    while not gantry_current_state[6] == 1: # block while not finished
+    while not gantry_current_state.position_reached: # block while not finished
         pass
 
 
@@ -88,7 +89,7 @@ def set_target(data):
 
 def update_gantry_state(data):
     global gantry_current_state
-    gantry_current_state = data.data
+    gantry_current_state = data
 
 
 def update_probe_state(data):
@@ -135,7 +136,7 @@ def main():
     # Gantry Control Messages
     global gantry_desired_state_pub
     gantry_desired_state_pub = rospy.Publisher("/gantry_desired_state",Int16MultiArray,queue_size=10)
-    sub2 = rospy.Subscriber("/gantry_current_state", Int16MultiArray, update_gantry_state)
+    sub2 = rospy.Subscriber("/gantry_current_state", gantry_status, update_gantry_state)
 
     # Probe Related Messages
     probe_cmd_pub = rospy.Publisher("/probe_teensy/probe_cmd_send", Int16, queue_size=10)
