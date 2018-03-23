@@ -21,13 +21,13 @@ class Geometry(object):
         dx,dy = x2-x1,y2-y1
         d = sqrt(dx*dx+dy*dy)
         if d > r1+r2:
-            print "#1"
+            # print "#1"
             return None # no solutions, the circles are separate
         if d < abs(r1-r2):
-            print "#2"
+            # print "#2"
             return None # no solutions because one circle is contained within the other
         if d == 0 and r1 == r2:
-            print "#3"
+            # print "#3"
             return None # circles are coincident and there are an infinite number of solutions
 
         a = (r1*r1-r2*r2+d*d)/(2*d)

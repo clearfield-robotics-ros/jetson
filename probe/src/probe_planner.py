@@ -296,7 +296,6 @@ def main():
                     probe_plan_state = -1
                     probe_sequence = 0 # reset
 
-
         r.sleep()
 
 if __name__ == "__main__":
