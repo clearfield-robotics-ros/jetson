@@ -25,3 +25,6 @@ rosrun rosserial_client make_libraries.py <PATH_TO_arduino>/arduino-*version*/li
 
 5) Sanity check that it is in your arduino libraries folder, and your next arduino code should allow including the custom messages to_gantry_msg and gantry_status.
 
+## Example
+
+An example .ino file can be found in the folder customMsgLib/Example/, with the appropriate syntax.
