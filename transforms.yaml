@@ -17,6 +17,8 @@ scorpion_gantry_offset_loc: [1200,-400,300] # y offset is half of width
 scorpion_gantry_offset_rot: [0,0,0]
 gantry_width: 800 #mm
 gantry_sweep_speed: 500 #mm/s
+gantry_x_range: 400 #mm
+gantry_y_range: 700 #mm
 ### Gantry Simulation ###
 gantry_rot_speed: 1.5 #rad/s
 
