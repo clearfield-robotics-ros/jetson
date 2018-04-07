@@ -21,12 +21,12 @@ def main():
         br.sendTransform((scorpion_gantry_offset_loc[0],
                           scorpion_gantry_offset_loc[1],
                           scorpion_gantry_offset_loc[2]),
-            tf.transformations.quaternion_from_euler(scorpion_gantry_offset_rot[0],
-                                                     scorpion_gantry_offset_rot[1],
-                                                     scorpion_gantry_offset_rot[2]),
-            rospy.Time.now(),
-            "gantry",
-            "scorpion")
+                          tf.transformations.quaternion_from_euler(scorpion_gantry_offset_rot[0],
+                                                                    scorpion_gantry_offset_rot[1],
+                                                                    scorpion_gantry_offset_rot[2]),
+                          rospy.Time.now(),
+                          "gantry",
+                          "scorpion");
 
         r.sleep()
 
