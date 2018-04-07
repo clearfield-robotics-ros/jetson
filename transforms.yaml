@@ -21,7 +21,7 @@ gantry_sweep_speed: 500 #mm/s
 gantry_rot_speed: 1.5 #rad/s
 
 ### Metal Detector ###
-md_gantry_offset_loc: [350,-100,-300] # y offset is half of width
+md_gantry_offset_loc: [373,-140,-365] # y offset is half of width
 
 ### Probe ###
 probe_base_offset_loc: [0,100,-100]
