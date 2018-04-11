@@ -40,6 +40,7 @@ def update_md_cmd(data):
     global gantry_sweep_speed;
     global md_gantry_offset_loc;
     global probe_yaw_angle;
+    global current_state;
 
     if (data.x < 0):
         #sweep
@@ -49,18 +50,39 @@ def update_md_cmd(data):
         md_cmd.y_desired            = 0;
         md_cmd.yaw_desired          = 0;
         md_cmd.probe_angle_desired  = 0;
+        current_state               = 2;
     else:
         #pin pointing
         md_cmd.state_desired        = 3;
         md_cmd.sweep_speed_desired  = gantry_sweep_speed;
-        md_cmd.x_desired            = data.x - md_gantry_offset_loc[0];
-        md_cmd.y_desired            = data.y - md_gantry_offset_loc[1];
+        # md_cmd.x_desired            = data.x - md_gantry_offset_loc[0];
+        # md_cmd.y_desired            = data.y - md_gantry_offset_loc[1];
+        md_cmd.x_desired            = data.x;
+        md_cmd.y_desired            = data.y;
         md_cmd.yaw_desired          = data.z;
         md_cmd.probe_angle_desired  = probe_yaw_angle;
+        current_state               = 3;
 
 def update_probe_cmd(data):
     global probe_cmd
-    probe_cmd = data
+    probe_cmd = data;
+
+def gantry_feedback(data):
+    global gantry_status;
+    gantry_status = data;
+    #TODO check radians or degrees, update to radians for transform
+
+def transform_pub(br):
+    global gantry_status;
+    br.sendTransform((gantry_status.x,
+                        gantry_status.y,
+                        0.0),
+                        tf.transformations.quaternion_from_euler(0.0, 0.0, gantry_status.yaw),
+                        rospy.Time.now(),
+                        "gantry",
+                        "gantry_zero");
+
+    #TODO:gantry zero to gantry
 
 def main():
     global current_state;
@@ -73,20 +95,28 @@ def main():
 
     rospy.init_node('gantry_planner');
 
-    listener = tf.TransformListener()
+    listener                = tf.TransformListener();
+    br                      = tf.TransformBroadcaster();
 
     # from jetson
-    jetson_current_state    = rospy.Subscriber('current_state', Int16, update_state);
+    # jetson_current_state    = rospy.Subscriber('current_state', Int16, update_state);
     # from metal detector
     md_subscriber           = rospy.Subscriber("/cmd_from_md", Point, update_md_cmd);
     # from probe
     gantry_desired_state    = rospy.Subscriber("/cmd_from_probe", to_gantry_msg, update_probe_cmd);
+    # from gantry
+    gantry_current_state    = rospy.Subscriber("gantry_current_status", gantry_status, gantry_feedback);
 
-    gantry_send_msg = to_gantry_msg()
-    gantry_cmd_pub = rospy.Publisher("gantry_cmd_send", to_gantry_msg, queue_size=10)
+    gantry_send_msg = to_gantry_msg();
+    gantry_cmd_pub = rospy.Publisher("gantry_cmd_send", to_gantry_msg, queue_size=10);
 
     r = rospy.Rate(50)
     while not rospy.is_shutdown():
+        # publish all transforms
+        transform_pub(br);
+
+        # add calibration here
+        # stop everything and calibrate before continue
 
         # idle
         if current_state == 0:
