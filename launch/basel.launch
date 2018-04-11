@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<launch>
+
+<param name ="/use_sim_time" value="false"/>
+
+<rosparam command="load" file="$(find scorpion)/../transforms.yaml" />
+
+<include file="$(find gantry)/gantry_teensy.launch"/>
+<node name="gantry_planner" pkg="gantry" type="gantry_planner.py"></node>
+
+</launch>
