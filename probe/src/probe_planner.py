@@ -258,6 +258,8 @@ def main():
             probe_sequence += 1
             print "PROBE #", probe_sequence
 
+            raw_input("\nPress Enter to Probe...\n")
+
             probe_cmd_pub.publish(2) # start probing
             rospy.sleep(0.5) # give time for handshake
             while not probe_current_state.probe_complete: # while not finished
