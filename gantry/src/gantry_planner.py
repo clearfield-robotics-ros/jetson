@@ -21,7 +21,7 @@ desired_state_reached       = False;
 
 ### ------------------ TRANSFORMS ---------------------------- ###
 
-md_gantry_offset_loc        = rospy.get_param('md_gantry_offset_loc');      #mm
+gantry_md_offset_loc        = rospy.get_param('gantry_md_offset_loc');      #mm
 probe_base_offset_loc       = rospy.get_param('probe_base_offset_loc');     #mm
 probe_base_offset_rot       = rospy.get_param('probe_base_offset_rot');     #rad
 probe_yaw_angle             = probe_base_offset_rot[2];                     #rad
@@ -38,7 +38,7 @@ def update_state(data):
 def update_md_cmd(data):
     global md_cmd;
     global gantry_sweep_speed;
-    global md_gantry_offset_loc;
+    global gantry_md_offset_loc;
     global probe_yaw_angle;
 
     if (data.x < 0):
@@ -53,8 +53,8 @@ def update_md_cmd(data):
         #pin pointing
         md_cmd.state_desired        = 3;
         md_cmd.sweep_speed_desired  = gantry_sweep_speed;
-        md_cmd.x_desired            = data.x - md_gantry_offset_loc[0];
-        md_cmd.y_desired            = data.y - md_gantry_offset_loc[1];
+        md_cmd.x_desired            = data.x - gantry_md_offset_loc[0];
+        md_cmd.y_desired            = data.y - gantry_md_offset_loc[1];
         md_cmd.yaw_desired          = data.z;
         md_cmd.probe_angle_desired  = probe_yaw_angle;
 
