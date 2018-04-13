@@ -13,6 +13,7 @@ from gantry.msg import to_gantry_msg;
 scorpion_gantry_offset_loc  = rospy.get_param('scorpion_gantry_offset_loc');
 scorpion_gantry_offset_rot  = rospy.get_param('scorpion_gantry_offset_rot');
 gantry_md_offset_loc        = rospy.get_param('gantry_md_offset_loc');
+gantry_md_offset_rot        = rospy.get_param('gantry_md_offset_rot');
 
 ### ---------------------------- Preset parameters --------------------------------- ###
 # TODO find out the values
@@ -63,7 +64,7 @@ def publish_transforms():
     br.sendTransform((gantry_md_offset_loc[0],
         gantry_md_offset_loc[1],
         gantry_md_offset_loc[2]),
-        tf.transformations.quaternion_from_euler(0,0,0),
+        tf.transformations.quaternion_from_euler(gantry_md_offset_rot[0],gantry_md_offset_rot[1],gantry_md_offset_rot[2]),
         rospy.Time.now(),
         "md",
         "sensor_head")
