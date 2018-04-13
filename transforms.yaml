@@ -24,7 +24,7 @@ gantry_rot_speed: 1.5 #rad/s
 gantry_md_offset_loc: [373,-140,-455] # y offset is half of width
 
 ### Probe ###
-gantry_probe_offset_loc: [0.0, 264.4, 0.0]
+gantry_probe_offset_loc: [0.0, 289.51, 0.0]
 gantry_probe_offset_rot: [0.0, 0.0, -1.5708]
 probe_base_offset_loc: [0,100,-100]
 probe_base_offset_rot: [0,0.523599,1.5708] # start out of the way
