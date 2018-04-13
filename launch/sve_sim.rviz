@@ -6,7 +6,7 @@ Panels:
       Expanded:
         - /probe_contact1/Namespaces1
       Splitter Ratio: 0.602305472
-    Tree Height: 352
+    Tree Height: 424
   - Class: rviz/Selection
     Name: Selection
   - Class: rviz/Tool Properties
@@ -122,6 +122,14 @@ Visualization Manager:
         {}
       Queue Size: 100
       Value: true
+    - Class: rviz/Marker
+      Enabled: true
+      Marker Topic: /md_detection
+      Name: md_detection
+      Namespaces:
+        {}
+      Queue Size: 100
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -147,25 +155,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 1281.72375
+      Distance: 1296.93213
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 1605.35962
-        Y: 291.923309
-        Z: 131.238541
+        X: 1756.65881
+        Y: 88.8998032
+        Z: 202.729858
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.0500000007
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Pitch: 0.549797356
+      Pitch: 0.434797376
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 0.812670231
+      Yaw: 0.767670274
     Saved: ~
 Window Geometry:
   Displays:
@@ -183,5 +191,5 @@ Window Geometry:
   Views:
     collapsed: true
   Width: 921
-  X: 555
-  Y: 173
+  X: 545
+  Y: 163
