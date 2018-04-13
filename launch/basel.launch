@@ -6,6 +6,6 @@
 <rosparam command="load" file="$(find scorpion)/../transforms.yaml" />
 
 <include file="$(find gantry)/gantry_teensy.launch"/>
-<node name="gantry_planner" pkg="gantry" type="gantry_planner.py"></node>
+<node name="gantry_planner" pkg="gantry" type="gantry_planner_basel.py"></node>
 
 </launch>
