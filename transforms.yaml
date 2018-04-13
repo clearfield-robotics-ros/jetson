@@ -21,13 +21,17 @@ gantry_sweep_speed: 100 #cm/s
 gantry_rot_speed: 1.5 #rad/s
 
 ### Metal Detector ###
-gantry_md_offset_loc: [373,-140,-455] # y offset is half of width
+# gantry_md_offset_loc: [373,-140,-455] # y offset is half of width
+gantry_md_offset_loc: [140,373,-455] # y offset is half of width
+gantry_sweep_angle: -1.09956 # -63 degrees
 
 ### Probe ###
-gantry_probe_offset_loc: [0.0, 289.51, 0.0]
-gantry_probe_offset_rot: [0.0, 0.0, -1.5708]
-probe_base_offset_loc: [0,100,-100]
-probe_base_offset_rot: [0,0.523599,1.5708] # start out of the way
+# gantry_probe_offset_loc: [289.51, 0.0, 0.0]
+# gantry_probe_offset_rot: [0.0, 0.0, -1.5708]
+# probe_base_offset_loc: [0,100,-100]
+# probe_base_offset_rot: [0,0.523599,1.5708] # start out of the way
+probe_base_offset_loc: [-289.51,0,-100]
+probe_base_offset_rot: [0,0.523599,0] # start out of the way
 probe_offset_distance: 350
 probe_speed: 1.5 #mm/s
 probe_safety_factor: 1

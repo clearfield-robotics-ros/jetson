@@ -23,6 +23,7 @@ probe_base_offset_rot       = rospy.get_param('probe_base_offset_rot');
 rate                        = 50;
 gantry_width                = rospy.get_param('gantry_width')
 gantry_sweep_speed          = rospy.get_param('gantry_sweep_speed')
+gantry_sweep_angle          = rospy.get_param('gantry_sweep_angle')
 gantry_trans_speed          = gantry_sweep_speed;
 gantry_rot_speed            = rospy.get_param('gantry_rot_speed');     #rad per second
 
@@ -93,7 +94,7 @@ def sweep():
     low_lim             = 0;
     high_lim            = gantry_width;
     lat_vel             = gantry_sweep_speed * 10; #cm to mm
- 
+
     #normally we will check if they are out of origin
     #move them slowly back, before we start sweeping
     #for simplicity we will just zero them instantly
@@ -101,7 +102,7 @@ def sweep():
     sensor_head[2] = 0;
     sensor_head[3] = 0;
     sensor_head[4] = 0;
-    sensor_head[5] = 0;
+    sensor_head[5] = gantry_sweep_angle; # we are no longer sweeping at zero
 
     sensor_head[1] += vel_dir * lat_vel / rate;
     if sensor_head[1] < low_lim + tolerance or sensor_head[1] > high_lim - tolerance:

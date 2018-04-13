@@ -63,11 +63,11 @@ def move_gantry(desired_probe_tip, gantry_yaw):
     trans = probe_to_gantry_transform(desired_probe_tip, gantry_yaw)
 
     gantry_desired_state = to_gantry_msg()
-    gantry_desired_state.state_desired      = 3
-    gantry_desired_state.x_desired          = trans[0]
-    gantry_desired_state.y_desired          = trans[1]
-    gantry_desired_state.yaw_desired        = gantry_yaw
-    gantry_desired_state.probe_angle_desired= 0
+    gantry_desired_state.state_desired       = 3
+    gantry_desired_state.x_desired           = trans[0]
+    gantry_desired_state.y_desired           = trans[1]
+    gantry_desired_state.yaw_desired         = gantry_yaw
+    # gantry_desired_state.probe_angle_desired = 0
     global gantry_desired_state_pub
     gantry_desired_state_pub.publish(gantry_desired_state)
 
@@ -92,7 +92,7 @@ def update_gantry_state(data):
 
 def update_probe_state(data):
     global probe_current_state
-    probe_current_state = data#.data
+    probe_current_state = data
 
 
 def update_probe_contact(data):
