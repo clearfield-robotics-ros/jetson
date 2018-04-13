@@ -55,7 +55,7 @@ def update_md_cmd(data):
         md_cmd.sweep_speed_desired  = gantry_sweep_speed;
         md_cmd.x_desired            = data.x - gantry_md_offset_loc[0];
         md_cmd.y_desired            = data.y - gantry_md_offset_loc[1];
-        md_cmd.yaw_desired          = data.z;
+        md_cmd.yaw_desired          = -1.09956#data.z;
         md_cmd.probe_angle_desired  = probe_yaw_angle;
 
 def update_probe_cmd(data):
