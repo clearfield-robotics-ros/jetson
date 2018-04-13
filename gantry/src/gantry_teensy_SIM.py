@@ -7,20 +7,7 @@ import numpy as np
 from gantry.msg import gantry_status;
 from gantry.msg import to_gantry_msg;
 
-### ----------------------------- TRANSFORMS --------------------------------------- ###
-
-#setup params
-scorpion_gantry_offset_loc  = rospy.get_param('scorpion_gantry_offset_loc');
-scorpion_gantry_offset_rot  = rospy.get_param('scorpion_gantry_offset_rot');
-gantry_md_offset_loc        = rospy.get_param('gantry_md_offset_loc');
-gantry_md_offset_rot        = rospy.get_param('gantry_md_offset_rot');
-
 ### ---------------------------- Preset parameters --------------------------------- ###
-# TODO find out the values
-scorpion_gantry_offset_loc  = [];
-scorpion_gantry_offset_rot  = [];
-probe_base_offset_loc       = rospy.get_param('probe_base_offset_loc');
-probe_base_offset_rot       = rospy.get_param('probe_base_offset_rot');
 rate                        = 50;
 gantry_width                = rospy.get_param('gantry_width')
 gantry_sweep_speed          = rospy.get_param('gantry_sweep_speed')
@@ -32,7 +19,6 @@ gantry_rot_speed            = rospy.get_param('gantry_rot_speed');     #rad per 
 
 gantry_cmd                  = to_gantry_msg();
 sensor_head                 = [0]*6;
-probe_yaw_angle             = probe_base_offset_rot[2];
 vel_dir                     = 1;
 desired_state_reached       = False;
 
@@ -46,12 +32,7 @@ def update_gantry_cmd(data):
 
 def publish_transforms():
     global br;
-    global scorpion_gantry_offset_loc;
-    global scorpion_gantry_offset_rot;
-    global probe_base_offset_loc;
-    global probe_base_offset_rot;
     global sensor_head;
-    global probe_yaw_angle;
 
     # sent by teensy/sim
     br.sendTransform((sensor_head[0],sensor_head[1],sensor_head[2]),
@@ -59,26 +40,6 @@ def publish_transforms():
         rospy.Time.now(),
         "sensor_head",
         "gantry")
-
-    # sent by teensy/sim
-    br.sendTransform((gantry_md_offset_loc[0],
-        gantry_md_offset_loc[1],
-        gantry_md_offset_loc[2]),
-        tf.transformations.quaternion_from_euler(gantry_md_offset_rot[0],gantry_md_offset_rot[1],gantry_md_offset_rot[2]),
-        rospy.Time.now(),
-        "md",
-        "sensor_head")
-
-    # sent by teensy/sim
-    br.sendTransform((probe_base_offset_loc[0],
-        probe_base_offset_loc[1],
-        probe_base_offset_loc[2]),
-        tf.transformations.quaternion_from_euler(probe_base_offset_rot[0],
-            probe_base_offset_rot[1],
-            probe_yaw_angle),
-        rospy.Time.now(),
-        "probe_base",
-        "sensor_head")
 
 ### ------------------------------ Actuating ------------------------------------- ###
 
@@ -112,7 +73,6 @@ def sweep():
 
 def actuate_to_desired():
     global sensor_head;
-    global probe_yaw_angle;         #probe base to sensor_head
     global rate;
     global gantry_cmd;
     global sensor_head;
@@ -155,16 +115,8 @@ def actuate_to_desired():
     else:
         sensor_head[5] += yaw_dir * rot_rad_per_loop;
 
-    # probe yaw
-    probe_yaw_diff  = gantry_cmd.probe_angle_desired - probe_yaw_angle;
-    probe_yaw_dir   = np.sign(probe_yaw_diff);
-    if (abs(probe_yaw_diff) <= rot_rad_per_loop):
-        probe_yaw_angle = gantry_cmd.probe_angle_desired;
-        desired_state_reached_flag += 1;
-    else:
-        probe_yaw_angle+= probe_yaw_dir * rot_rad_per_loop;
-
-    if (desired_state_reached_flag == 4):
+    # check if 3 DOFs reached position
+    if (desired_state_reached_flag == 3):
         desired_state_reached   = True;
     else:
         desired_state_reached   = False;
@@ -174,7 +126,6 @@ def actuate_to_desired():
 def main():
     global gantry_cmd;
     global sensor_head;
-    global probe_yaw_angle;
     global desired_state_reached;
 
     rospy.init_node('gantry_teensy_SIM')
@@ -219,7 +170,6 @@ def main():
         gantry_current_state_msg.x = sensor_head[0]
         gantry_current_state_msg.y = sensor_head[1]
         gantry_current_state_msg.yaw = sensor_head[5]            # rad
-        gantry_current_state_msg.probe_angle = probe_yaw_angle   # rad
         gantry_current_state_msg.position_reached = desired_state_reached
 
         # publish the messages
