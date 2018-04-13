@@ -92,8 +92,8 @@ def sweep():
 
     low_lim             = 0;
     high_lim            = gantry_width;
-    lat_vel             = gantry_sweep_speed;
-
+    lat_vel             = gantry_sweep_speed * 10; #cm to mm
+ 
     #normally we will check if they are out of origin
     #move them slowly back, before we start sweeping
     #for simplicity we will just zero them instantly
@@ -118,7 +118,7 @@ def actuate_to_desired():
     global gantry_rot_speed;
     global desired_state_reached;
 
-    lat_vel = gantry_sweep_speed;
+    lat_vel = gantry_sweep_speed * 10; #cm to mm
     diff    = np.zeros(4);
 
     trans_mm_per_loop   = gantry_trans_speed / float(rate);
