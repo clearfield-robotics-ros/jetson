@@ -35,7 +35,7 @@ def update_md_cmd(data):
     global gantry_sweep_speed;
     global sensorhead_md_offset_loc;
 
-    if (data.x <= -1000):
+    if (data.x <= -1e6):
         #sweep
         md_cmd.state_desired        = 2;
         md_cmd.sweep_speed_desired  = gantry_sweep_speed;
