@@ -17,7 +17,6 @@
 <node name="gantry_teensy_SIM" pkg="gantry" type="gantry_teensy_SIM.py" output="screen"></node>
 
 <node name="md_acquisition_SIM" pkg="md" type="acquisition_SIM.py"></node>
-<!-- <node name="md_gradient_ascent" pkg="md" type="gradient_ascent.py"></node> -->
 <node name="twoaxes_ascent" pkg="md" type="twoaxes_ascent.py"></node>
 
 <node name="probe_planner" pkg="probe" type="probe_planner.py" output="screen"></node>

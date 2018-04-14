@@ -258,7 +258,7 @@ def main():
             probe_sequence += 1
             print "PROBE #", probe_sequence
 
-            raw_input("\nPress Enter to Probe...\n")
+            raw_input("\nPress Enter to continue...\n")
 
             probe_cmd_pub.publish(2) # start probing
             rospy.sleep(0.5) # give time for handshake
