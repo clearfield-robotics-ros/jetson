@@ -104,7 +104,7 @@ def main():
     gantry_desired_state    = rospy.Subscriber("/cmd_from_probe", to_gantry_msg, update_probe_cmd);
 
     gantry_send_msg = to_gantry_msg()
-    gantry_cmd_pub = rospy.Publisher("gantry_cmd_send", to_gantry_msg, queue_size=10)
+    gantry_cmd_pub = rospy.Publisher("gantry_cmd", to_gantry_msg, queue_size=10)
 
     global gantry_bounds_viz_pub
     gantry_bounds_viz_pub = rospy.Publisher('gantry_bounds_viz', Marker, queue_size=10)
@@ -126,9 +126,10 @@ def main():
 
         # sweeping
         elif current_state == 2:
-            gantry_send_msg.state_desired = current_state
-            gantry_send_msg.sweep_speed_desired = 0         # TODO
-            gantry_cmd_pub.publish(gantry_send_msg)
+            # gantry_send_msg.state_desired = current_state
+            # gantry_send_msg.sweep_speed_desired = 0         # TODO
+            # gantry_cmd_pub.publish(gantry_send_msg)
+            gantry_cmd_pub.publish(md_cmd)
             print ("Sweeping!");
 
         # pin pointing, listening to MD

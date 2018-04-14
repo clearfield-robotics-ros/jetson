@@ -224,6 +224,9 @@ def main():
                                   -scorpion_gantry_offset_loc[2], [1,0,0])
 
             print "TIME TO PROBE AT:", max_sig
+
+            raw_input("\nPress Enter to continue...\n")
+
             jetson_desired_state.publish(4)
 
             return

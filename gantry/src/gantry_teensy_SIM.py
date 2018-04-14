@@ -136,7 +136,7 @@ def main():
     br = tf.TransformBroadcaster()
 
     # update mode
-    gantry_cmd_sub           = rospy.Subscriber("gantry_cmd_send", to_gantry_msg, update_gantry_cmd);
+    gantry_cmd_sub           = rospy.Subscriber("gantry_cmd", to_gantry_msg, update_gantry_cmd);
     # from gantry
     gantry_current_status_pub = rospy.Publisher("/gantry_current_status", gantry_status, queue_size=1);
 
