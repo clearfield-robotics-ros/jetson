@@ -9,6 +9,7 @@ from visualization_msgs.msg import Marker
 import tf
 import math
 from probe.msg import probe_data
+from gantry.msg import gantry_status;
 
 def updateLocation(loc, rot):
 
@@ -78,12 +79,20 @@ def update_probe_state(data):
     probe_current_state = data
 
 
+def update_gantry_state(data):
+    global current_state
+    if data.calibration_flag == False:
+        print("gantry calibration dropped out, what's going on!")
+        current_state = 0
+
+
 ### pub / sub ###
 pub = rospy.Publisher('scorpion', Marker, queue_size=10)
 jetson_current_state = rospy.Publisher('current_state', Int16, queue_size=10)
 jetson_desired_state = rospy.Subscriber('desired_state', Int16, update_state)
 gui_jetson_desired_state = rospy.Subscriber('/minebot_gui/minebot_gui/desired_state', Int16, update_state)
 braking_desired_state = rospy.Publisher('braking_desired_state', Int16, queue_size=10)
+
 
 def main():
     rospy.init_node('scorpion')
@@ -105,6 +114,8 @@ def main():
     global probe_current_state
     probe_current_state = probe_data()
     probe_cmd_pub = rospy.Publisher("/probe_teensy/probe_cmd_send", Int16, queue_size=10)
+
+    rospy.Subscriber("/gantry_current_state", gantry_status, update_gantry_state);
 
     r = rospy.Rate(10)  # 10 Hz
     while not rospy.is_shutdown():
@@ -159,7 +170,7 @@ def main():
         else:
             print ("jetson is in an invalid state: see scorpion.py")
 
-        r.sleep()  # indent less when going back to regular gantry_lib
+        r.sleep()
 
 if __name__ == "__main__":
     main()

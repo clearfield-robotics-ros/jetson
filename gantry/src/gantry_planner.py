@@ -6,6 +6,7 @@ import math;
 import numpy as np
 from geometry_msgs.msg import Point
 from geometry_msgs.msg import Twist
+from visualization_msgs.msg import Marker
 from std_msgs.msg import Int16
 from gantry.msg import gantry_status;
 from gantry.msg import to_gantry_msg;
@@ -46,13 +47,47 @@ def update_md_cmd(data):
         #pin pointing
         md_cmd.state_desired        = 3;
         md_cmd.sweep_speed_desired  = gantry_sweep_speed;
-        md_cmd.x_desired            = data.x # - sensorhead_md_offset_loc[0];
-        md_cmd.y_desired            = data.y # - sensorhead_md_offset_loc[1];
+        md_cmd.x_desired            = data.x;
+        md_cmd.y_desired            = data.y;
         md_cmd.yaw_desired          = data.z;
 
 def update_probe_cmd(data):
     global probe_cmd;
     probe_cmd = data;
+
+### ---------------------------------------------------------- ###
+
+def draw_bounds(x_max,y_max):
+
+    global gantry_bounds_viz_pub
+    msg = Marker()
+    msg.header.frame_id = "gantry"
+    msg.id = 1
+    msg.header.seq = 1
+    msg.header.stamp = rospy.Time.now()
+    msg.ns = "gantry_bounds_viz"
+    msg.type = msg.LINE_STRIP  # line strip
+    msg.action = msg.ADD  # add
+
+    msg.pose.orientation.w = 1
+    msg.scale.x = 2.
+    msg.scale.y = 2.
+    msg.scale.z = 2.
+    msg.color.a = 1.
+    msg.color.r = 1.
+    msg.color.g = 0.
+    msg.color.b = 0.
+
+    msg.points = []
+    msg.points.append(Point(0,0,0))
+    msg.points.append(Point(x_max,0,0))
+    msg.points.append(Point(x_max,y_max,0))
+    msg.points.append(Point(0,y_max,0))
+    msg.points.append(Point(0,0,0))
+
+    gantry_bounds_viz_pub.publish(msg)
+
+### ---------------------------------------------------------- ###
 
 def main():
     global current_state;
@@ -72,8 +107,13 @@ def main():
     gantry_send_msg = to_gantry_msg()
     gantry_cmd_pub = rospy.Publisher("gantry_cmd_send", to_gantry_msg, queue_size=10)
 
+    global gantry_bounds_viz_pub
+    gantry_bounds_viz_pub = rospy.Publisher('gantry_bounds_viz', Marker, queue_size=10)
+
     r = rospy.Rate(50)
     while not rospy.is_shutdown():
+
+        draw_bounds(500,500)
 
         # idle
         if current_state == 0:
