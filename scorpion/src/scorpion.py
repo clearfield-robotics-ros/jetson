@@ -9,6 +9,8 @@ from visualization_msgs.msg import Marker
 import tf
 import math
 from probe.msg import probe_data
+from gantry.msg import gantry_status;
+from gantry.msg import to_gantry_msg;
 
 def updateLocation(loc, rot):
 
@@ -78,12 +80,24 @@ def update_probe_state(data):
     probe_current_state = data
 
 
+def update_gantry_state(data):
+    global gantry_current_status
+    gantry_current_status = data
+
+    ### SAFETY WHILE DEMOING IF TEENSY POWERS OFF ###
+    # global current_state
+    # if data.calibration_flag == False and current_state > 1: # for all other states than idle and calib
+    #     print("gantry calibration dropped out, what's going on!")
+    #     current_state = 0
+
+
 ### pub / sub ###
-pub = rospy.Publisher('scorpion', Marker, queue_size=10)
-jetson_current_state = rospy.Publisher('current_state', Int16, queue_size=10)
-jetson_desired_state = rospy.Subscriber('desired_state', Int16, update_state)
+pub = rospy.Publisher('/scorpion', Marker, queue_size=10)
+jetson_current_state = rospy.Publisher('/current_state', Int16, queue_size=10)
+jetson_desired_state = rospy.Subscriber('/desired_state', Int16, update_state)
 gui_jetson_desired_state = rospy.Subscriber('/minebot_gui/minebot_gui/desired_state', Int16, update_state)
-braking_desired_state = rospy.Publisher('braking_desired_state', Int16, queue_size=10)
+braking_desired_state = rospy.Publisher('/braking_desired_state', Int16, queue_size=10)
+
 
 def main():
     rospy.init_node('scorpion')
@@ -101,10 +115,19 @@ def main():
     # States
     global current_state
     current_state = 0 # initial state
-    sub = rospy.Subscriber("/probe_teensy/probe_status_reply", probe_data, update_probe_state)
+
+    rospy.Subscriber("/probe_teensy/probe_status_reply", probe_data, update_probe_state)
     global probe_current_state
     probe_current_state = probe_data()
     probe_cmd_pub = rospy.Publisher("/probe_teensy/probe_cmd_send", Int16, queue_size=10)
+
+    rospy.Subscriber("/gantry_current_status", gantry_status, update_gantry_state);
+    global gantry_current_status
+    gantry_current_status = gantry_status()
+    gantry_current_status.calibration_flag = False
+    gantry_send_msg = to_gantry_msg()
+    gantry_cmd_pub = rospy.Publisher("/gantry_cmd", to_gantry_msg, queue_size=10)
+
 
     r = rospy.Rate(10)  # 10 Hz
     while not rospy.is_shutdown():
@@ -129,16 +152,19 @@ def main():
         elif current_state == 1:
             braking_desired_state.publish(1) # brakes on while calibrating
 
+            print "Calibrating Gantry..."
+            gantry_send_msg.state_desired = 1
+            gantry_cmd_pub.publish(gantry_send_msg)
+            while not gantry_current_status.calibration_flag: # while not finished
+                pass
+            print "...Gantry Calibrated"
+
             print "Calibrating Probes..."
             probe_cmd_pub.publish(3) # start calibration
             rospy.sleep(0.5) # give time for handshake
             while not probe_current_state.init: # while not finished
                 pass
             print "...Probes Calibrated"
-
-            print "Calibrating Gantry..."
-            # TODO Add calibration for Gantry
-            print "...Gantry Calibrated"
 
             current_state = 0 # return to idle state
 
@@ -157,7 +183,7 @@ def main():
         else:
             print ("jetson is in an invalid state: see scorpion.py")
 
-        r.sleep()  # indent less when going back to regular gantry_lib
+        r.sleep()
 
 if __name__ == "__main__":
     main()

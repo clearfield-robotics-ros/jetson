@@ -3,5 +3,9 @@ float64 sweep_speed
 float64 x
 float64 y
 float64 yaw
-float64 probe_angle
+bool calibration_flag
 bool position_reached
+float64 x_min
+float64 x_max
+float64 y_min
+float64 y_max

@@ -1,13 +1,45 @@
 #!/usr/bin/env python
 
 import rospy
+import tf
 from geometry_msgs.msg import PointStamped, Point
+from visualization_msgs.msg import Marker
 from std_msgs.msg import Int16
 from std_msgs.msg import String
+from gantry.msg import gantry_status
 import numpy as np
 import math
 from copy import deepcopy
 
+
+marker_pub = rospy.Publisher('md_detection', Marker, queue_size=10)
+def visualize_final_point(x,y,z,col):
+    # Visualize probe point
+    global marker_pub
+    msg = Marker()
+    msg.header.frame_id = "gantry"
+    msg.header.seq = 0
+    msg.header.stamp = rospy.Time.now()
+    msg.ns = "md_detection"
+    msg.id = 0
+    msg.type = 0  # arrow
+    msg.action = 0  # add
+    msg.pose.position = Point(x,y,z+50)
+
+    q_rot = tf.transformations.quaternion_from_euler(0,1.5708,0)
+    msg.pose.orientation.x = q_rot[0]
+    msg.pose.orientation.y = q_rot[1]
+    msg.pose.orientation.z = q_rot[2]
+    msg.pose.orientation.w = q_rot[3]
+
+    msg.scale.x = 50
+    msg.scale.y = 10
+    msg.scale.z = 10
+    msg.color.a = 1.0
+    msg.color.r = col[0]
+    msg.color.g = col[1]
+    msg.color.b = col[2]
+    marker_pub.publish(msg)
 
 found_something = False
 at_goal = False
@@ -16,7 +48,9 @@ goal = np.array([0.0, 0.0])
 collect_data = False
 data_collected = []
 dist = 0
-
+x_lims = [0, 1000]
+y_lims = [0, 1000]
+cur_state = 0
 
 def rotate(vec, angle):
     """Rotate a vector `v` by the given angle, relative to the anchor point."""
@@ -41,7 +75,7 @@ def incoming_signal(data):
     # print "updating pos"
     # print data.point
 
-    if data.point.z > 700:
+    if data.point.z > 1200 and cur_state > 1:
         jetson_desired_state.publish(3) # start pinpointing
         found_something = True
 
@@ -61,6 +95,15 @@ def incoming_signal(data):
         dist = np.linalg.norm(cur_sig[:2] - goal)
 
 
+def update_lims(data):
+    global x_lims
+    global y_lims
+    global cur_state
+    x_lims = [data.x_min, data.x_max]
+    y_lims = [data.y_min, data.y_max]
+    cur_state = data.state
+
+
 # pubs & subs
 rospy.init_node('md_planner')
 jetson_desired_state = rospy.Publisher('/desired_state', Int16, queue_size=10)
@@ -68,22 +111,29 @@ pub = rospy.Publisher('/cmd_from_md', Point, queue_size=10)
 sendToProbe = rospy.Publisher('/set_probe_target', Point, queue_size=10)
 sub = rospy.Subscriber('md_strong_signal', PointStamped, incoming_signal)
 
+sub2 = rospy.Subscriber('gantry_current_status', gantry_status, update_lims)
+listener = tf.TransformListener()
+
 
 def set_and_wait_for_goal(my_goal, collect):
     global goal
     global at_goal
     global pub
     global collect_data
+    global gantry_sweep_angle
+    global sensorhead_md_offset_loc
 
     # print "setting!"
 
     at_goal = False
     goal = my_goal
 
+    print "my_goal",my_goal
+
     msg = Point()
     msg.x = my_goal[0]
     msg.y = my_goal[1]
-    msg.z = 0
+    msg.z = gantry_sweep_angle
 
     collect_data = collect
 
@@ -109,9 +159,15 @@ def limit_val(val, lims):
 def main():
     global pub
 
-    sweep_msg = Point(-1.0, 0, 0)
-    x_lims = np.array([0, 1000])
-    y_lims = np.array([0, 1000])
+    global gantry_sweep_angle
+    gantry_sweep_angle = rospy.get_param('gantry_sweep_angle')
+    global sensorhead_md_offset_loc
+    sensorhead_md_offset_loc = rospy.get_param('sensorhead_md_offset_loc')
+    scorpion_gantry_offset_loc = rospy.get_param('scorpion_gantry_offset_loc')
+
+    sweep_msg = Point(-1e6, 0, 0)
+    # x_lims = np.array([0, 1000])
+    # y_lims = np.array([0, 1000])
     within = 0.01  # within 10% of max
 
     r = rospy.Rate(100)  # 100 Hz
@@ -127,8 +183,8 @@ def main():
             print cur_pos
 
             # create positive and negative position goals
-            plus_val = limit_val(cur_pos[0] + 70.0, x_lims)
-            minus_val = limit_val(cur_pos[0] - 70.0, x_lims)
+            plus_val = limit_val(cur_pos[0] + 90.0, x_lims)
+            minus_val = limit_val(cur_pos[0] - 90.0, x_lims)
             # print plus_val, minus_val
             plus_pos = deepcopy(cur_pos)
             plus_pos[0] = plus_val
@@ -153,8 +209,8 @@ def main():
             print cur_pos
 
             # create positive and negative position goals
-            plus_val = limit_val(cur_pos[1] + 70.0, y_lims)
-            minus_val = limit_val(cur_pos[1] - 70.0, y_lims)
+            plus_val = limit_val(cur_pos[1] + 90.0, y_lims)
+            minus_val = limit_val(cur_pos[1] - 90.0, y_lims)
             # print plus_val, minus_val
             plus_pos = deepcopy(cur_pos)
             plus_pos[1] = plus_val
@@ -172,16 +228,32 @@ def main():
             print np.mean(filtered_collected)
             start_from = [cur_pos[0], np.mean(filtered_collected)]
 
+            # try:
+            #     (trans, rot) = listener.lookupTransform('sensor_head', 'md', rospy.Time(0))
+            # except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
+            #     trans = [0, 0]
+            #     continue
+
             # pass the batton to the probe
-            msg = Point(max_sig[0],
-                        max_sig[1],
+
+            x_offset = + math.sin(gantry_sweep_angle)*sensorhead_md_offset_loc[1] - math.cos(gantry_sweep_angle)*sensorhead_md_offset_loc[0]
+            y_offset = - math.sin(gantry_sweep_angle)*sensorhead_md_offset_loc[0] - math.cos(gantry_sweep_angle)*sensorhead_md_offset_loc[1]
+
+            msg = Point(max_sig[0] - x_offset,
+                        max_sig[1] - y_offset,
                         max_sig[2])
             sendToProbe.publish(msg)
 
-            print "TIME TO PROBE AT:", max_sig
+            visualize_final_point(max_sig[0] - x_offset,
+                                  max_sig[1] - y_offset,
+                                  -scorpion_gantry_offset_loc[2], [1,0,0])
+
+            raw_input("\nPress Enter to continue...\n")
+
             jetson_desired_state.publish(4)
 
             return
+
         r.sleep()
 
 if __name__ == "__main__":
