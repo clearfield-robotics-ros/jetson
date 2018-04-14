@@ -121,9 +121,10 @@ def main():
 
         # calibration
         elif current_state == 1:
-            gantry_send_msg.state_desired = current_state
-            gantry_cmd_pub.publish(gantry_send_msg)
-            print ("Calibrating!");
+            pass
+            # gantry_send_msg.state_desired = current_state
+            # gantry_cmd_pub.publish(gantry_send_msg)
+            # print ("Calibrating!");
 
         # sweeping
         elif current_state == 2:

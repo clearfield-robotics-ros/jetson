@@ -10,6 +10,7 @@ import tf
 import math
 from probe.msg import probe_data
 from gantry.msg import gantry_status;
+from gantry.msg import to_gantry_msg;
 
 def updateLocation(loc, rot):
 
@@ -80,10 +81,15 @@ def update_probe_state(data):
 
 
 def update_gantry_state(data):
-    global current_state
-    if data.calibration_flag == False:
-        print("gantry calibration dropped out, what's going on!")
-        current_state = 0
+    global gantry_current_state
+    gantry_current_state = data
+
+    # global current_state
+    # if data.calibration_flag == False and not current_state == 0:
+    #     print("gantry calibration dropped out, what's going on!")
+    #     current_state = 0
+    # else:
+    #     pass
 
 
 ### pub / sub ###
@@ -110,12 +116,17 @@ def main():
     # States
     global current_state
     current_state = 0 # initial state
-    sub = rospy.Subscriber("/probe_teensy/probe_status_reply", probe_data, update_probe_state)
+
+    rospy.Subscriber("/probe_teensy/probe_status_reply", probe_data, update_probe_state)
     global probe_current_state
     probe_current_state = probe_data()
     probe_cmd_pub = rospy.Publisher("/probe_teensy/probe_cmd_send", Int16, queue_size=10)
 
     rospy.Subscriber("/gantry_current_state", gantry_status, update_gantry_state);
+    global gantry_current_state
+    gantry_send_msg = to_gantry_msg()
+    gantry_cmd_pub = rospy.Publisher("gantry_cmd_send", to_gantry_msg, queue_size=10)
+
 
     r = rospy.Rate(10)  # 10 Hz
     while not rospy.is_shutdown():
@@ -141,7 +152,11 @@ def main():
             braking_desired_state.publish(1) # brakes on while calibrating
 
             print "Calibrating Gantry..."
-            # TODO Add calibration for Gantry
+            gantry_send_msg.state_desired = current_state
+            gantry_cmd_pub.publish(gantry_send_msg)
+
+            while not gantry_current_state.calibration_flag: # while not finished
+                pass
             print "...Gantry Calibrated"
 
 
@@ -151,7 +166,6 @@ def main():
             while not probe_current_state.init: # while not finished
                 pass
             print "...Probes Calibrated"
-
 
             current_state = 0 # return to idle state
 

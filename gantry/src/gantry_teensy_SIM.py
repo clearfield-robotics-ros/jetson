@@ -150,6 +150,7 @@ def main():
 
         ### calibrate ###
         elif gantry_cmd.state_desired == 1:
+            rospy.sleep(1)
             gantry_calib_flag = True;
 
         ### sweeping ###
