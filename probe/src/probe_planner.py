@@ -50,9 +50,9 @@ def probe_to_gantry_transform(loc,yaw):
                    [0,0,1,0],
                    [0,0,0,1]])
 
-    Hoffset = np.array([[1,0,0,-probe_base_offset_loc[0]],
-                       [0,1,0,-probe_base_offset_loc[1]],
-                       [0,0,1,-probe_base_offset_loc[2]],
+    Hoffset = np.array([[1,0,0,-sensorhead_probebase_offset_loc[0]],
+                       [0,1,0,-sensorhead_probebase_offset_loc[1]],
+                       [0,0,1,-sensorhead_probebase_offset_loc[2]],
                        [0,0,0,1]])
 
     H = Hprobe.dot(Hyaw).dot(Hoffset).dot(Hyrot).dot(Hd)
@@ -70,11 +70,11 @@ def move_gantry(desired_probe_tip, gantry_yaw):
     trans = probe_to_gantry_transform(desired_probe_tip, gantry_yaw)
 
     gantry_desired_state = to_gantry_msg()
-    gantry_desired_state.state_desired      = 3
-    gantry_desired_state.x_desired          = trans[0]
-    gantry_desired_state.y_desired          = trans[1]
-    gantry_desired_state.yaw_desired        = gantry_yaw
-    gantry_desired_state.probe_angle_desired= 0
+    gantry_desired_state.state_desired       = 3
+    gantry_desired_state.x_desired           = trans[0]
+    gantry_desired_state.y_desired           = trans[1]
+    gantry_desired_state.yaw_desired         = gantry_yaw
+    # gantry_desired_state.probe_angle_desired = 0
     global gantry_desired_state_pub
     gantry_desired_state_pub.publish(gantry_desired_state)
 
@@ -99,7 +99,7 @@ def update_gantry_state(data):
 
 def update_probe_state(data):
     global probe_current_state
-    probe_current_state = data#.data
+    probe_current_state = data
 
 
 def update_gantry_yaw(desired_yaw, probe_sequence, approach_angle_count): #, index_diff):
@@ -127,25 +127,23 @@ def main():
 
 
     # Parameters
-    landmine_pos = rospy.get_param('landmine_pos')
-    landmine_diameter = rospy.get_param('landmine_diameter')
-    landmine_height = rospy.get_param('landmine_height')
-    global probe_base_offset_loc
-    probe_base_offset_loc = rospy.get_param('probe_base_offset_loc')
-    probe_safety_factor = rospy.get_param('probe_safety_factor')
+    landmine_pos                    = rospy.get_param('landmine_pos')
+    landmine_diameter               = rospy.get_param('landmine_diameter')
+    landmine_height                 = rospy.get_param('landmine_height')
+    global sensorhead_probebase_offset_loc
+    sensorhead_probebase_offset_loc = rospy.get_param('sensorhead_probebase_offset_loc')
+    probe_safety_factor             = rospy.get_param('probe_safety_factor')
     global probe_angle
-    probe_angle = rospy.get_param('probe_base_offset_rot')[1]
-    scorpion_gantry_offset_loc = rospy.get_param('scorpion_gantry_offset_loc')
+    probe_angle                     = rospy.get_param('sensorhead_probebase_offset_rot')[1]
+    scorpion_gantry_offset_loc      = rospy.get_param('scorpion_gantry_offset_loc')
     global probe_length
-    probe_length = (scorpion_gantry_offset_loc[2] + probe_base_offset_loc[2]
-        + abs(landmine_pos[2])) / math.sin(probe_angle)
-    maxForwardSearch = math.cos(probe_angle)*landmine_height*(1/probe_safety_factor)
-    gantry_width = rospy.get_param('gantry_width')
-    num_contact_points = rospy.get_param('num_contact_points')
-    min_fit_error = rospy.get_param('min_fit_error')
-    gantry_x_range = rospy.get_param('gantry_x_range')
-    gantry_y_range = rospy.get_param('gantry_y_range')
-    max_probes_in_a_row = rospy.get_param('max_probes_in_a_row')
+
+    probe_length                    = (scorpion_gantry_offset_loc[2] + sensorhead_probebase_offset_loc[2]
+                                        + abs(landmine_pos[2])) / math.sin(probe_angle)
+    maxForwardSearch                = math.cos(probe_angle)*landmine_height*(1/probe_safety_factor)
+    gantry_width                    = rospy.get_param('gantry_width')
+    num_contact_points              = rospy.get_param('num_contact_points')
+    min_fit_error                   = rospy.get_param('min_fit_error')
 
 
     # Gantry Control Messages
@@ -281,9 +279,12 @@ def main():
             '''
             Execute Probing Procedure
             '''
-            probe_sequence += 1 # one sequence is defined as an extend-retract cycle
-            print "\nPROBE #", probe_sequence
-            # rospy.sleep(5)
+
+            probe_sequence += 1
+            print "PROBE #", probe_sequence
+
+            raw_input("\nPress Enter to Probe...\n")
+
             probe_cmd_pub.publish(2) # start probing
             rospy.sleep(0.5) # give time for handshake
             while not probe_current_state.probe_complete: # while not finished

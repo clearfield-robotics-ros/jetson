@@ -10,7 +10,7 @@ def main():
 
     br = tf.TransformBroadcaster()
 
-    probe_offset_distance = rospy.get_param('probe_offset_distance')
+    probe_offset_distance = rospy.get_param('probe_length')
 
     r = rospy.Rate(100) # Hz
     while not rospy.is_shutdown():

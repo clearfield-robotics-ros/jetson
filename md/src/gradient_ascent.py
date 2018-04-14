@@ -1,12 +1,44 @@
 #!/usr/bin/env python
 
 import rospy
+import tf
 from geometry_msgs.msg import PointStamped, Point
+from visualization_msgs.msg import Marker
 from std_msgs.msg import Int16
 from std_msgs.msg import String
 import numpy as np
 import math
 from copy import deepcopy
+
+
+marker_pub = rospy.Publisher('md_detection', Marker, queue_size=10)
+def visualize_final_point(x,y,z,col):
+    # Visualize probe point
+    global marker_pub
+    msg = Marker()
+    msg.header.frame_id = "gantry"
+    msg.header.seq = 0
+    msg.header.stamp = rospy.Time.now()
+    msg.ns = "md_detection"
+    msg.id = 0
+    msg.type = 0  # sphere
+    msg.action = 0  # add
+    msg.pose.position = Point(x,y,z+50)
+
+    q_rot = tf.transformations.quaternion_from_euler(0,1.5708,0)
+    msg.pose.orientation.x = q_rot[0]
+    msg.pose.orientation.y = q_rot[1]
+    msg.pose.orientation.z = q_rot[2]
+    msg.pose.orientation.w = q_rot[3]
+
+    msg.scale.x = 50
+    msg.scale.y = 10
+    msg.scale.z = 10
+    msg.color.a = 1.0
+    msg.color.r = col[0]
+    msg.color.g = col[1]
+    msg.color.b = col[2]
+    marker_pub.publish(msg)
 
 
 found_something = False
@@ -84,6 +116,7 @@ def set_and_wait_for_goal(my_goal):
 def main():
     global pub
 
+    scorpion_gantry_offset_loc = rospy.get_param('scorpion_gantry_offset_loc')
     sweep_msg = Point(-1.0, 0, 0)
 
     r = rospy.Rate(100)  # 100 Hz
@@ -149,6 +182,10 @@ def main():
                             cur_sig[1],
                             cur_sig[2])
                 sendToProbe.publish(msg)
+
+                visualize_final_point(cur_sig[0],
+                                      cur_sig[1],
+                                      -scorpion_gantry_offset_loc[2], [1,0,0])
 
                 print "TIME TO PROBE AT:", cur_sig
                 jetson_desired_state.publish(4)

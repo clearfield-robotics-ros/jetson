@@ -18,12 +18,11 @@
 
 <node name="md_acquisition_SIM" pkg="md" type="acquisition_SIM.py"></node>
 <node name="md_gradient_ascent" pkg="md" type="gradient_ascent.py"></node>
-<!-- <node name="twoaxes_ascent" pkg="md" type="twoaxes_ascent.py"></node> -->
 
 <node name="probe_planner" pkg="probe" type="probe_planner.py" output="screen"></node>
 <node name="probe_tip_tf" pkg="probe" type="probe_tip_tf.py"></node>
-<node name="probe_teensy_SIM" pkg="probe" type="probe_teensy_SIM.py" output="screen"></node>
+<node ns="probe_teensy" name="probe_teensy" pkg="rosserial_python" args="/dev/serial/by-id/usb-Teensyduino_USB_Serial_3652290-if00" type="serial_node.py" />
 
-<node name="rviz" pkg="rviz" type="rviz" args="-d $(find gantry)/../launch/sve_sim.rviz"/>/>
+<node name="rviz" pkg="rviz" type="rviz" args="-d $(find gantry)/../launch/viz_jetson.rviz"/>/>
 
 </launch>
