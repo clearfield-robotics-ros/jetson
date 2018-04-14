@@ -86,9 +86,11 @@ def plan_path(start, end):
             plt.pause(0.01)
     for i in range(len(visited_points)):
         print visited_points[i].xy
-    for i in range(len(path)-1):
-        pt1 = visited_points[path[i]]
-        pt2 = visited_points[path[i+1]]
+    for i in range(len(shorter_path)):
+        print shorter_path[i].xy
+    for i in range(len(shorter_path)-1):
+        pt1 = shorter_path[i]
+        pt2 = shorter_path[i+1]
         ax.plot([pt1.x, pt2.x],[pt1.y, pt2.y], c='k')
     plt.show()
 
@@ -99,13 +101,13 @@ def shorten_path(path, timeout=0.5):
     num_sample_edges = 2
     iteration = 0
 
-    # print path
-
     while (time.time()-start_time)<timeout: # until timeout expires
         path_length_old = 0
         num_edges_old = len(path)-1
         for v in range(num_edges_old): # calculate original path length
             path_length_old += path[v].distance(path[v+1])
+        print path_length_old
+        # raw_input()
         sample_pt_array = [] # np.zeros(np.arange(num_sample_edges))
         sample_edge = np.random.choice(np.arange(num_edges_old),2,replace=False)
         for edge in range(num_sample_edges): # for each pair of points
@@ -126,15 +128,18 @@ def shorten_path(path, timeout=0.5):
             else:
                 new_pair = [interp_pt2, interp_pt1]
                 rows_to_delete = range(second_edge+1,first_edge+1)
-            print new_pair
-            print rows_to_delete
-            path = np.delete(path,rows_to_delete,axis=0) # delete redundant rows
-            path = np.insert(path,np.min(rows_to_delete),new_pair,axis=0) # replace with shortened path rows
-
+            # print path
+            path = [x for i,x in enumerate(path) if i not in rows_to_delete]
+            # print path
+            # raw_input()
+            path.insert(np.min(rows_to_delete),new_pair[0]) # replace with shortened path rows
+            path.insert(np.min(rows_to_delete)+1,new_pair[1]) # replace with shortened path rows
+            print path
             path_length_new = 0
             num_edges_new = len(path)-1
             for v in range(num_edges_new): 
                 path_length_new += path[v].distance(path[v+1])
+    print '%f path shortening' % (1-path_length_new/path_length_old)*100
     return path
 
 
