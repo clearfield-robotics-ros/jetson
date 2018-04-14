@@ -129,6 +129,11 @@ def main():
         elif current_state == 1:
             braking_desired_state.publish(1) # brakes on while calibrating
 
+            print "Calibrating Gantry..."
+            # TODO Add calibration for Gantry
+            print "...Gantry Calibrated"
+
+
             print "Calibrating Probes..."
             probe_cmd_pub.publish(3) # start calibration
             rospy.sleep(0.5) # give time for handshake
@@ -136,9 +141,6 @@ def main():
                 pass
             print "...Probes Calibrated"
 
-            print "Calibrating Gantry..."
-            # TODO Add calibration for Gantry
-            print "...Gantry Calibrated"
 
             current_state = 0 # return to idle state
 

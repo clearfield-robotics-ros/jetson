@@ -21,7 +21,7 @@ def visualize_final_point(x,y,z,col):
     msg.header.stamp = rospy.Time.now()
     msg.ns = "md_detection"
     msg.id = 0
-    msg.type = 0  # sphere
+    msg.type = 0  # arrow
     msg.action = 0  # add
     msg.pose.position = Point(x,y,z+50)
 

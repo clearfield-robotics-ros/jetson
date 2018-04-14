@@ -74,16 +74,20 @@ def set_and_wait_for_goal(my_goal, collect):
     global at_goal
     global pub
     global collect_data
+    global gantry_sweep_angle
+    global sensorhead_md_offset_loc
 
     # print "setting!"
 
     at_goal = False
     goal = my_goal
 
+    print "my_goal",my_goal
+
     msg = Point()
-    msg.x = my_goal[0]
-    msg.y = my_goal[1]
-    msg.z = 0
+    msg.x = my_goal[0] + math.sin(gantry_sweep_angle)*sensorhead_md_offset_loc[1] - math.cos(gantry_sweep_angle)*sensorhead_md_offset_loc[0]
+    msg.y = my_goal[1] - math.sin(gantry_sweep_angle)*sensorhead_md_offset_loc[0] - math.cos(gantry_sweep_angle)*sensorhead_md_offset_loc[1]
+    msg.z = gantry_sweep_angle
 
     collect_data = collect
 
@@ -108,6 +112,11 @@ def limit_val(val, lims):
 
 def main():
     global pub
+
+    global gantry_sweep_angle
+    gantry_sweep_angle = rospy.get_param('gantry_sweep_angle')
+    global sensorhead_md_offset_loc
+    sensorhead_md_offset_loc = rospy.get_param('sensorhead_md_offset_loc')
 
     sweep_msg = Point(-1.0, 0, 0)
     x_lims = np.array([0, 1000])

@@ -46,8 +46,8 @@ def update_md_cmd(data):
         #pin pointing
         md_cmd.state_desired        = 3;
         md_cmd.sweep_speed_desired  = gantry_sweep_speed;
-        md_cmd.x_desired            = data.x - sensorhead_md_offset_loc[0];
-        md_cmd.y_desired            = data.y - sensorhead_md_offset_loc[1];
+        md_cmd.x_desired            = data.x;
+        md_cmd.y_desired            = data.y;
         md_cmd.yaw_desired          = data.z;
 
 def update_probe_cmd(data):
