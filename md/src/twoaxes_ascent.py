@@ -111,6 +111,7 @@ pub = rospy.Publisher('/cmd_from_md', Point, queue_size=10)
 sendToProbe = rospy.Publisher('/set_probe_target', Point, queue_size=10)
 sub = rospy.Subscriber('md_strong_signal', PointStamped, incoming_signal)
 sub2 = rospy.Subscriber('gantry_current_state', gantry_status, update_lims)
+listener = tf.TransformListener()
 
 
 def set_and_wait_for_goal(my_goal, collect):
@@ -226,14 +227,20 @@ def main():
             print np.mean(filtered_collected)
             start_from = [cur_pos[0], np.mean(filtered_collected)]
 
+            try:
+                (trans, rot) = listener.lookupTransform('sensor_head', 'md', rospy.Time(0))
+            except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
+                trans = [0, 0]
+                continue
+
             # pass the batton to the probe
-            msg = Point(max_sig[0],
-                        max_sig[1],
+            msg = Point(max_sig[0] + trans[0],
+                        max_sig[1] + trans[1],
                         max_sig[2])
             sendToProbe.publish(msg)
 
-            visualize_final_point(max_sig[0],
-                                  max_sig[1],
+            visualize_final_point(max_sig[0] + trans[0],
+                                  max_sig[1] + trans[1],
                                   -scorpion_gantry_offset_loc[2], [1,0,0])
 
             print "TIME TO PROBE AT:", max_sig
