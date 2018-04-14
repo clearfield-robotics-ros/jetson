@@ -12,6 +12,7 @@ from std_msgs.msg import Int16
 from probe.msg import probe_data
 from gantry.msg import gantry_status
 from gantry.msg import to_gantry_msg;
+from constraints import Probe_Motion_Planner
 
 ### monitor current state ###
 current_state = 0 # if we don't get msgs
@@ -60,6 +61,8 @@ def probe_to_gantry_transform(loc,yaw):
     print trans
     return trans
 
+def generate_probe_plan(desired_probe_tip, gantry_yaw):
+    
 
 def move_gantry(desired_probe_tip, gantry_yaw):
 

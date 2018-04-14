@@ -29,7 +29,7 @@ class Probe_Motion_Planner:
         self.off_limits = [[(gantry_y_mean+.220, np.deg2rad(-45)), (self.gantry_y_limits[1], np.deg2rad(-45)), (self.gantry_y_limits[1], np.deg2rad(30)), (gantry_y_mean+.220, np.deg2rad(30))],
                           [(gantry_y_mean+.270, np.deg2rad(80)), (self.gantry_y_limits[1], np.deg2rad(80)), (self.gantry_y_limits[1], np.deg2rad(90)), (gantry_y_mean+.270, np.deg2rad(90))],
                           [(gantry_y_mean-.270, np.deg2rad(-90)), (self.gantry_y_limits[0], np.deg2rad(-90)), (self.gantry_y_limits[0], np.deg2rad(-75)), (gantry_y_mean-.270, np.deg2rad(-75))]]
-        self.max_extend_dist = 0.5 # max radius to extend each node from
+        self.max_extend_dist = 1 # max radius to extend each node from
         # start_config = [.40, .75, -1.5]
         # end_config = [.40, .750, .65]
         # config[0] (X axis) not a concern for any configuration
@@ -68,6 +68,7 @@ class Probe_Motion_Planner:
         G.add_node(q_new_index)
         while not goal_reached:
             q_rand = self.sample_random_point()
+            print q_new_index
             nearest_q_candidate_dist = []
             for i in range(len(visited_points)):
                 nearest_q_candidate_dist.append(q_rand.distance(visited_points[i])) # for every visited point, store the distance to the randomly sampled point
@@ -150,19 +151,3 @@ class Probe_Motion_Planner:
             else: # if it's out of reach, interpolate as far as you can go
                 current_next = LineString([current, next]) # line joining two
                 return current_next.interpolate(max_dist), False
-
-# def main():
-#     start_config = [.40, .75, -1.5]
-#     end_config = [.40, .750, .65]
-#     # config[0] (X axis) not a concern for any configuration
-#     # first check whether the end_config is
-#     start_point = Point(start_config[1], start_config[2])
-#     end_point = Point(end_config[1], end_config[2])
-
-#     if check_collision(end_point):
-#         print "Goal is out of bounds"
-#     else:
-#         plan_path(start_point, end_point)
-
-# if __name__ == "__main__":
-#     main()
