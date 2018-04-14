@@ -118,7 +118,7 @@ def main():
     global sensorhead_md_offset_loc
     sensorhead_md_offset_loc = rospy.get_param('sensorhead_md_offset_loc')
 
-    sweep_msg = Point(-1.0, 0, 0)
+    sweep_msg = Point(-1000.0, 0, 0)
     x_lims = np.array([0, 1000])
     y_lims = np.array([0, 1000])
     within = 0.01  # within 10% of max

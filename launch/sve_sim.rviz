@@ -154,21 +154,26 @@ Visualization Manager:
   Value: true
   Views:
     Current:
-      Angle: -1.56500053
-      Class: rviz/TopDownOrtho
+      Class: rviz/Orbit
+      Distance: 3158.8833
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
+      Focal Point:
+        X: 630.542114
+        Y: -222.318054
+        Z: -268.846008
+      Focal Shape Fixed Size: true
+      Focal Shape Size: 0.0500000007
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Scale: 0.348503262
+      Pitch: 0.680398345
       Target Frame: <Fixed Frame>
-      Value: TopDownOrtho (rviz)
-      X: 1721.55737
-      Y: -25.3384018
+      Value: Orbit (rviz)
+      Yaw: 0.645398617
     Saved: ~
 Window Geometry:
   Displays:
