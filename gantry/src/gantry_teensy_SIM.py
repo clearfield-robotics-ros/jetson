@@ -21,6 +21,7 @@ gantry_cmd                  = to_gantry_msg();
 sensor_head                 = [0]*6;
 vel_dir                     = 1;
 desired_state_reached       = False;
+gantry_calib_flag           = False;
 
 ### --------------------------- Updating the modes and commands -------------------- ###
 
@@ -127,6 +128,7 @@ def main():
     global gantry_cmd;
     global sensor_head;
     global desired_state_reached;
+    global gantry_calib_flag;
 
     rospy.init_node('gantry_teensy_SIM')
 
@@ -148,7 +150,7 @@ def main():
 
         ### calibrate ###
         elif gantry_cmd.state_desired == 1:
-            pass
+            gantry_calib_flag = True;
 
         ### sweeping ###
         elif gantry_cmd.state_desired == 2:
@@ -171,6 +173,7 @@ def main():
         gantry_current_state_msg.y = sensor_head[1]
         gantry_current_state_msg.yaw = sensor_head[5]            # rad
         gantry_current_state_msg.position_reached = desired_state_reached
+        gantry_current_state_msg.calibration_flag = gantry_calib_flag;
 
         # publish the messages
         gantry_current_state_pub.publish(gantry_current_state_msg);
