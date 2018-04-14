@@ -76,13 +76,16 @@ def main():
     pub = rospy.Publisher('md_strong_signal', PointStamped, queue_size=10)
     pub2 = rospy.Publisher('md_viz', Marker, queue_size=10)
 
+    global prev_world_pos
+    prev_world_pos = (0,0)
+
     listener = tf.TransformListener()
 
     r = rospy.Rate(100) # 100 Hz
     while not rospy.is_shutdown():
 
         try:
-            (trans,rot) = listener.lookupTransform('gantry', 'md', rospy.Time(0))
+            (trans,rot) = listener.lookupTransform('gantry', 'sensor_head', rospy.Time(0))
             update_local_pos(trans[0],trans[1])
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
             continue

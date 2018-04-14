@@ -153,9 +153,6 @@ def main():
             braking_desired_state.publish(1) # brakes on while calibrating
 
             print "Calibrating Gantry..."
-
-            raw_input("\nPress Enter to continue...\n")
-
             gantry_send_msg.state_desired = 1
             gantry_cmd_pub.publish(gantry_send_msg)
             while not gantry_current_status.calibration_flag: # while not finished
@@ -163,9 +160,6 @@ def main():
             print "...Gantry Calibrated"
 
             print "Calibrating Probes..."
-
-            raw_input("\nPress Enter to continue...\n")
-
             probe_cmd_pub.publish(3) # start calibration
             rospy.sleep(0.5) # give time for handshake
             while not probe_current_state.init: # while not finished

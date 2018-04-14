@@ -75,7 +75,7 @@ def incoming_signal(data):
     # print "updating pos"
     # print data.point
 
-    if data.point.z > 700 and cur_state > 1:
+    if data.point.z > 1200 and cur_state > 1:
         jetson_desired_state.publish(3) # start pinpointing
         found_something = True
 
@@ -110,7 +110,7 @@ jetson_desired_state = rospy.Publisher('/desired_state', Int16, queue_size=10)
 pub = rospy.Publisher('/cmd_from_md', Point, queue_size=10)
 sendToProbe = rospy.Publisher('/set_probe_target', Point, queue_size=10)
 sub = rospy.Subscriber('md_strong_signal', PointStamped, incoming_signal)
-sub2 = rospy.Subscriber('gantry_current_state', gantry_status, update_lims)
+sub2 = rospy.Subscriber('gantry_current_status', gantry_status, update_lims)
 
 
 def set_and_wait_for_goal(my_goal, collect):
@@ -129,8 +129,8 @@ def set_and_wait_for_goal(my_goal, collect):
     print "my_goal",my_goal
 
     msg = Point()
-    msg.x = my_goal[0] + math.sin(gantry_sweep_angle)*sensorhead_md_offset_loc[1] - math.cos(gantry_sweep_angle)*sensorhead_md_offset_loc[0]
-    msg.y = my_goal[1] - math.sin(gantry_sweep_angle)*sensorhead_md_offset_loc[0] - math.cos(gantry_sweep_angle)*sensorhead_md_offset_loc[1]
+    msg.x = my_goal[0] # + math.sin(gantry_sweep_angle)*sensorhead_md_offset_loc[1] - math.cos(gantry_sweep_angle)*sensorhead_md_offset_loc[0]
+    msg.y = my_goal[1] #- math.sin(gantry_sweep_angle)*sensorhead_md_offset_loc[0] - math.cos(gantry_sweep_angle)*sensorhead_md_offset_loc[1]
     msg.z = gantry_sweep_angle
 
     collect_data = collect
@@ -237,9 +237,9 @@ def main():
                                   -scorpion_gantry_offset_loc[2], [1,0,0])
 
             print "TIME TO PROBE AT:", max_sig
-            
+
             raw_input("\nPress Enter to continue...\n")
-            
+
             jetson_desired_state.publish(4)
 
             return
