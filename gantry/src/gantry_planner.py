@@ -57,8 +57,7 @@ def update_probe_cmd(data):
 
 ### ---------------------------------------------------------- ###
 
-def draw_bounds(x_max,y_max):
-
+def draw_bounds(x_min,x_max,y_min,y_max):
     global gantry_bounds_viz_pub
     msg = Marker()
     msg.header.frame_id = "gantry"
@@ -68,7 +67,6 @@ def draw_bounds(x_max,y_max):
     msg.ns = "gantry_bounds_viz"
     msg.type = msg.LINE_STRIP  # line strip
     msg.action = msg.ADD  # add
-
     msg.pose.orientation.w = 1
     msg.scale.x = 2.
     msg.scale.y = 2.
@@ -77,15 +75,16 @@ def draw_bounds(x_max,y_max):
     msg.color.r = 1.
     msg.color.g = 0.
     msg.color.b = 0.
-
     msg.points = []
-    msg.points.append(Point(0,0,0))
-    msg.points.append(Point(x_max,0,0))
+    msg.points.append(Point(x_min,y_min,0))
+    msg.points.append(Point(x_max,y_min,0))
     msg.points.append(Point(x_max,y_max,0))
-    msg.points.append(Point(0,y_max,0))
-    msg.points.append(Point(0,0,0))
-
+    msg.points.append(Point(x_min,y_max,0))
+    msg.points.append(Point(x_min,y_min,0))
     gantry_bounds_viz_pub.publish(msg)
+
+def update_gantry_state(data):
+    draw_bounds(data.x_min,data.x_max,data.y_min,data.y_max)
 
 ### ---------------------------------------------------------- ###
 
@@ -109,11 +108,10 @@ def main():
 
     global gantry_bounds_viz_pub
     gantry_bounds_viz_pub = rospy.Publisher('gantry_bounds_viz', Marker, queue_size=10)
+    rospy.Subscriber("/gantry_current_state", gantry_status, update_gantry_state)
 
     r = rospy.Rate(50)
     while not rospy.is_shutdown():
-
-        draw_bounds(500,500)
 
         # idle
         if current_state == 0:
