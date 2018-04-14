@@ -6,6 +6,7 @@ from geometry_msgs.msg import PointStamped, Point
 from visualization_msgs.msg import Marker
 from std_msgs.msg import Int16
 from std_msgs.msg import String
+from gantry.msg import gantry_status
 import numpy as np
 import math
 from copy import deepcopy
@@ -47,7 +48,9 @@ goal = np.array([0.0, 0.0])
 collect_data = False
 data_collected = []
 dist = 0
-
+x_lims = [0, 1000]
+y_lims = [0, 1000]
+cur_state = 0
 
 def rotate(vec, angle):
     """Rotate a vector `v` by the given angle, relative to the anchor point."""
@@ -72,7 +75,7 @@ def incoming_signal(data):
     # print "updating pos"
     # print data.point
 
-    if data.point.z > 700:
+    if data.point.z > 700 and cur_state > 1:
         jetson_desired_state.publish(3) # start pinpointing
         found_something = True
 
@@ -92,12 +95,22 @@ def incoming_signal(data):
         dist = np.linalg.norm(cur_sig[:2] - goal)
 
 
+def update_lims(data):
+    global x_lims
+    global y_lims
+    global cur_state
+    x_lims = [data.x_min, data.x_max]
+    y_lims = [data.y_min, data.y_max]
+    cur_state = data.state
+
+
 # pubs & subs
 rospy.init_node('md_planner')
 jetson_desired_state = rospy.Publisher('/desired_state', Int16, queue_size=10)
 pub = rospy.Publisher('/cmd_from_md', Point, queue_size=10)
 sendToProbe = rospy.Publisher('/set_probe_target', Point, queue_size=10)
 sub = rospy.Subscriber('md_strong_signal', PointStamped, incoming_signal)
+sub2 = rospy.Subscriber('gantry_current_state', gantry_status, update_lims)
 
 
 def set_and_wait_for_goal(my_goal, collect):
@@ -151,8 +164,8 @@ def main():
     scorpion_gantry_offset_loc = rospy.get_param('scorpion_gantry_offset_loc')
 
     sweep_msg = Point(-1e6, 0, 0)
-    x_lims = np.array([0, 1000])
-    y_lims = np.array([0, 1000])
+    # x_lims = np.array([0, 1000])
+    # y_lims = np.array([0, 1000])
     within = 0.01  # within 10% of max
 
     r = rospy.Rate(100)  # 100 Hz
@@ -168,8 +181,8 @@ def main():
             print cur_pos
 
             # create positive and negative position goals
-            plus_val = limit_val(cur_pos[0] + 70.0, x_lims)
-            minus_val = limit_val(cur_pos[0] - 70.0, x_lims)
+            plus_val = limit_val(cur_pos[0] + 90.0, x_lims)
+            minus_val = limit_val(cur_pos[0] - 90.0, x_lims)
             # print plus_val, minus_val
             plus_pos = deepcopy(cur_pos)
             plus_pos[0] = plus_val
@@ -194,8 +207,8 @@ def main():
             print cur_pos
 
             # create positive and negative position goals
-            plus_val = limit_val(cur_pos[1] + 70.0, y_lims)
-            minus_val = limit_val(cur_pos[1] - 70.0, y_lims)
+            plus_val = limit_val(cur_pos[1] + 90.0, y_lims)
+            minus_val = limit_val(cur_pos[1] - 90.0, y_lims)
             # print plus_val, minus_val
             plus_pos = deepcopy(cur_pos)
             plus_pos[1] = plus_val
@@ -224,9 +237,9 @@ def main():
                                   -scorpion_gantry_offset_loc[2], [1,0,0])
 
             print "TIME TO PROBE AT:", max_sig
-
+            
             raw_input("\nPress Enter to continue...\n")
-
+            
             jetson_desired_state.publish(4)
 
             return
