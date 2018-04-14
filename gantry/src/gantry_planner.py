@@ -108,7 +108,7 @@ def main():
 
     global gantry_bounds_viz_pub
     gantry_bounds_viz_pub = rospy.Publisher('gantry_bounds_viz', Marker, queue_size=10)
-    rospy.Subscriber("/gantry_current_state", gantry_status, update_gantry_state)
+    rospy.Subscriber("/gantry_current_status", gantry_status, update_gantry_state)
 
     r = rospy.Rate(50)
     while not rospy.is_shutdown():

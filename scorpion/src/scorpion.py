@@ -81,8 +81,8 @@ def update_probe_state(data):
 
 
 def update_gantry_state(data):
-    global gantry_current_state
-    gantry_current_state = data
+    global gantry_current_status
+    gantry_current_status = data
 
     ### SAFETY WHILE DEMOING IF TEENSY POWERS OFF ###
     # global current_state
@@ -121,10 +121,12 @@ def main():
     probe_current_state = probe_data()
     probe_cmd_pub = rospy.Publisher("/probe_teensy/probe_cmd_send", Int16, queue_size=10)
 
-    rospy.Subscriber("/gantry_current_state", gantry_status, update_gantry_state);
-    global gantry_current_state
+    rospy.Subscriber("/gantry_current_status", gantry_status, update_gantry_state);
+    global gantry_current_status
+    gantry_current_status = gantry_status()
+    gantry_current_status.calibration_flag = False
     gantry_send_msg = to_gantry_msg()
-    gantry_cmd_pub = rospy.Publisher("/gantry_cmd_send", to_gantry_msg, queue_size=10)
+    gantry_cmd_pub = rospy.Publisher("/gantry_cmd", to_gantry_msg, queue_size=10)
 
 
     r = rospy.Rate(10)  # 10 Hz
@@ -156,7 +158,7 @@ def main():
 
             gantry_send_msg.state_desired = 1
             gantry_cmd_pub.publish(gantry_send_msg)
-            while not gantry_current_state.calibration_flag: # while not finished
+            while not gantry_current_status.calibration_flag: # while not finished
                 pass
             print "...Gantry Calibrated"
 

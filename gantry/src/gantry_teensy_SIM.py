@@ -138,7 +138,7 @@ def main():
     # update mode
     gantry_cmd_sub           = rospy.Subscriber("gantry_cmd_send", to_gantry_msg, update_gantry_cmd);
     # from gantry
-    gantry_current_state_pub = rospy.Publisher("/gantry_current_state", gantry_status, queue_size=1);
+    gantry_current_status_pub = rospy.Publisher("/gantry_current_status", gantry_status, queue_size=1);
 
     gantry_x_max = rospy.get_param('gantry_x_max')
     gantry_y_max = rospy.get_param('gantry_y_max')
@@ -170,21 +170,21 @@ def main():
         ### ------------- PREPARE MESSAGES TO PUBLISH ---------------- ###
 
         #prepare the messages
-        gantry_current_state_msg = gantry_status()
-        gantry_current_state_msg.state = gantry_cmd.state_desired
-        gantry_current_state_msg.sweep_speed = 0                 # TODO
-        gantry_current_state_msg.x = sensor_head[0]
-        gantry_current_state_msg.y = sensor_head[1]
-        gantry_current_state_msg.yaw = sensor_head[5]            # rad
-        gantry_current_state_msg.position_reached = desired_state_reached
-        gantry_current_state_msg.calibration_flag = gantry_calib_flag;
-        gantry_current_state_msg.x_min = 0
-        gantry_current_state_msg.x_max = gantry_x_max
-        gantry_current_state_msg.y_min = 0
-        gantry_current_state_msg.y_max = gantry_y_max
+        gantry_current_status_msg = gantry_status()
+        gantry_current_status_msg.state = gantry_cmd.state_desired
+        gantry_current_status_msg.sweep_speed = 0                 # TODO
+        gantry_current_status_msg.x = sensor_head[0]
+        gantry_current_status_msg.y = sensor_head[1]
+        gantry_current_status_msg.yaw = sensor_head[5]            # rad
+        gantry_current_status_msg.position_reached = desired_state_reached
+        gantry_current_status_msg.calibration_flag = gantry_calib_flag;
+        gantry_current_status_msg.x_min = 0
+        gantry_current_status_msg.x_max = gantry_x_max
+        gantry_current_status_msg.y_min = 0
+        gantry_current_status_msg.y_max = gantry_y_max
 
         # publish the messages
-        gantry_current_state_pub.publish(gantry_current_state_msg);
+        gantry_current_status_pub.publish(gantry_current_status_msg);
 
         r.sleep();
 

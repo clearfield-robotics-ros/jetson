@@ -73,7 +73,7 @@ def move_gantry(desired_probe_tip, gantry_yaw):
 
     rospy.sleep(0.5) # give time for handshake
 
-    while not gantry_current_state.position_reached: # block while not finished
+    while not gantry_current_status.position_reached: # block while not finished
         pass
 
 
@@ -86,8 +86,8 @@ def set_target(data):
 
 
 def update_gantry_state(data):
-    global gantry_current_state
-    gantry_current_state = data
+    global gantry_current_status
+    gantry_current_status = data
 
 
 def update_probe_state(data):
@@ -134,7 +134,7 @@ def main():
     # Gantry Control Messages
     global gantry_desired_state_pub
     gantry_desired_state_pub = rospy.Publisher("/cmd_from_probe", to_gantry_msg, queue_size=10)
-    sub2 = rospy.Subscriber("/gantry_current_state", gantry_status, update_gantry_state)
+    sub2 = rospy.Subscriber("/gantry_current_status", gantry_status, update_gantry_state)
 
     # Probe Related Messages
     probe_cmd_pub = rospy.Publisher("/probe_teensy/probe_cmd_send", Int16, queue_size=10)
