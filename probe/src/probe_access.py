@@ -50,7 +50,8 @@ gantry_x_range = 400 # mm   FOR NOW ONLY ASSUME WE'RE IN THE PROJECTED BOUNDS OF
 gantry_y_range = 800 # mm
 probe_base_offset_loc = [0,100,-100]
 probe_length = 400
-nx, ny, nth = (5, 9, 360)
+# nx, ny, nth = (5, 9, 360)
+nx, ny, nth = (41, 81, 360)
 yaw_range = math.pi*2
 x = np.linspace(0,gantry_x_range, nx)
 y = np.linspace(0,gantry_y_range, ny)
@@ -61,7 +62,7 @@ class loc_data:
     def __init__(self):
         self.x = 0
         self.y = 0
-        self.z = -150
+        self.z = -100
 
 def main():
     xv, yv = np.meshgrid(x, y, sparse = False, indexing = 'ij')
@@ -80,6 +81,21 @@ def main():
             summ[i,j] = calc_accessible_angle_range(pose_possible)
     print "Range of approach angles\n", summ
     print "Initial approach angle\n", initial_angle
+    # initial_angle_rad = initial_angle/180*math.pi
+    # U = np.cos(initial_angle_rad)
+    # V = np.sin(initial_angle_rad)
+    # Q = plt.quiver(xv, yv, U, V, units='width')
+    # plt.show()
+    fig, ax = plt.subplots()
+    cax = ax.imshow(summ, interpolation = 'nearest')
+    ax.set_title('Range of probe access angles ')
+    cbar = fig.colorbar(cax, orientation='horizontal') # ticks=[-1, 0, 1], 
+    cbar.set_label('Degrees')
+    ax.set_xlabel('Gantry Y coordinate (cm)')
+    ax.set_ylabel('Gantry X coordinate (cm)')
+    # https://matplotlib.org/examples/pylab_examples/colorbar_tick_labelling_demo.html
+    # cbar.ax.set_xticklabels(['Low', 'Medium', 'High'])  # horizontal colorbar
+    plt.show()
 
 def calc_initial_approach_angle(possible):
     prod = 0

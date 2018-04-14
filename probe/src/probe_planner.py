@@ -57,7 +57,7 @@ def probe_to_gantry_transform(loc,yaw):
 
     H = Hprobe.dot(Hyaw).dot(Hoffset).dot(Hyrot).dot(Hd)
     trans = np.matmul(H,np.array([[0],[0],[0],[1]]))
-
+    print trans
     return trans
 
 
@@ -198,15 +198,14 @@ def main():
             Perform Planning for Probe
             '''
 
-            print "Parent probe seq: {} | Probe Seq: {}".format(parent_probe_seq, probe_sequence)
             if (probe_sequence - parent_probe_seq) >= max_probes_in_a_row:
                 one_approach_angle_finished = True
+            print est.get_est()
 
             if probe_plan_state == 0:
 
                 print "PLAN STATE 0"
                 print "-----------------------"
-
                 if probe_sequence == 0:
                     # define desired probe tip position in gantry frame
                     desired_probe_tip.x = target.x - landmine_diameter/2*probe_safety_factor
@@ -228,7 +227,7 @@ def main():
 
                 if probe_sequence == probe_sequence_prev:
                     # define desired probe tip position in gantry frame
-                    th = np.array([-math.pi/4,0.,math.pi/4]) # +/- 45deg, decide based on location
+                    th = np.array([-math.pi/4,0.,math.pi/4]) # +/- 45deg, decide based on location in gantry coords
                     x = landmine_diameter/2*np.cos(th) + est.most_recent_point().x
                     y = landmine_diameter/2*np.sin(th) + est.most_recent_point().y
                     z = np.ones(len(th))*est.most_recent_point().z
@@ -243,7 +242,7 @@ def main():
                         plan_y = y[2]
 
                     desired_probe_tip.x = plan_x - math.cos(gantry_yaw)*landmine_diameter/2*probe_safety_factor
-                    desired_probe_tip.y = plan_y - math.sin(gantry_yaw)*landmine_diameter/2*probe_safety_factor-200
+                    desired_probe_tip.y = plan_y - math.sin(gantry_yaw)*landmine_diameter/2*probe_safety_factor#-200
                     desired_probe_tip.z = -scorpion_gantry_offset_loc[2] + landmine_pos[2]
 
                     move_gantry(desired_probe_tip, gantry_yaw)
@@ -260,13 +259,14 @@ def main():
                 print "PLAN STATE 2"
                 print "-----------------------"
 
-                if probe_sequence == probe_sequence_prev:
+                if probe_sequence == probe_sequence_prev: # if this is the first for this approach angle ??
 
                     p = est.get_sparsest_point()
-
+                    print "cos yaw: ", math.cos(gantry_yaw)
                     desired_probe_tip.x = p[0] - math.cos(gantry_yaw)*landmine_diameter/2*probe_safety_factor
                     desired_probe_tip.y = p[1] - math.sin(gantry_yaw)*landmine_diameter/2*probe_safety_factor
                     desired_probe_tip.z = -scorpion_gantry_offset_loc[2] + landmine_pos[2]
+                    print "Desired probe tip: ", desired_probe_tip
                     gantry_yaw, approach_angle_count, parent_probe_seq = update_gantry_yaw(p[3], probe_sequence, approach_angle_count) # p[3]
 
                     move_gantry(desired_probe_tip, gantry_yaw)
@@ -282,8 +282,8 @@ def main():
             Execute Probing Procedure
             '''
             probe_sequence += 1 # one sequence is defined as an extend-retract cycle
-            print "PROBE #", probe_sequence
-
+            print "\nPROBE #", probe_sequence
+            # rospy.sleep(5)
             probe_cmd_pub.publish(2) # start probing
             rospy.sleep(0.5) # give time for handshake
             while not probe_current_state.probe_complete: # while not finished

@@ -24,103 +24,103 @@ class Mine_Estimator:
         self.error = 0
 
         self.contact_viz_id = 0
-        self.contact_viz_pub = rospy.Publisher('probe_contact_viz', Marker, queue_size=10)
+        # self.contact_viz_pub = rospy.Publisher('probe_contact_viz', Marker, queue_size=10)
 
         self.visualize = True
 
-        self.angle_range = rospy.get_param('third_stage_probe_angle')
+        self.angle_range = math.pi/4 # rospy.get_param('third_stage_probe_angle')
 
 
-    def draw_radius(self,col):
+    # def draw_radius(self,col):
 
-        msg = Marker()
-        msg.header.frame_id = "gantry"
-        # msg.header.frame_id = "probe_tip" # DEBUG
-        msg.id = 1
-        msg.header.seq = 1
-        msg.header.stamp = rospy.Time.now()
-        msg.ns = "probe_radius_viz"
-        msg.type = msg.LINE_STRIP  # line strip
-        msg.action = msg.ADD  # add
+    #     msg = Marker()
+    #     msg.header.frame_id = "gantry"
+    #     # msg.header.frame_id = "probe_tip" # DEBUG
+    #     msg.id = 1
+    #     msg.header.seq = 1
+    #     msg.header.stamp = rospy.Time.now()
+    #     msg.ns = "probe_radius_viz"
+    #     msg.type = msg.LINE_STRIP  # line strip
+    #     msg.action = msg.ADD  # add
 
-        msg.pose.orientation.w = 1
-        msg.scale.x = 2.
-        msg.scale.y = 2.
-        msg.scale.z = 2.
-        msg.color.a = 1.
-        msg.color.r = col[0]
-        msg.color.g = col[1]
-        msg.color.b = col[2]
+    #     msg.pose.orientation.w = 1
+    #     msg.scale.x = 2.
+    #     msg.scale.y = 2.
+    #     msg.scale.z = 2.
+    #     msg.color.a = 1.
+    #     msg.color.r = col[0]
+    #     msg.color.g = col[1]
+    #     msg.color.b = col[2]
 
-        msg.points = []
-        for i in range(0,21):
+    #     msg.points = []
+    #     for i in range(0,21):
 
-            x = self.radius*math.sin(360/20*i * math.pi/180) + self.c_x
-            y = self.radius*math.cos(360/20*i * math.pi/180) + self.c_y
-            z = self.c_z
-            msg.points.append(Point(x,y,z))
+    #         x = self.radius*math.sin(360/20*i * math.pi/180) + self.c_x
+    #         y = self.radius*math.cos(360/20*i * math.pi/180) + self.c_y
+    #         z = self.c_z
+    #         msg.points.append(Point(x,y,z))
 
-        self.contact_viz_pub.publish(msg)
-
-
-    def plot_point(self,x,y,z,col):
-        # Visualize probe point
-        global contact_viz_id
-        global contact_viz_pub
-        msg = Marker()
-        msg.header.frame_id = "gantry"
-        # msg.header.frame_id = "probe_tip" # DEBUG
-        msg.header.seq = self.contact_viz_id
-        msg.header.stamp = rospy.Time.now()
-        msg.ns = "probe_contact_viz"
-        msg.id = self.contact_viz_id
-        msg.type = 2  # cube
-        msg.action = 0  # add
-        msg.pose.position = Point(x,y,z)
-        msg.pose.orientation.w = 1
-        msg.scale.x = 10
-        msg.scale.y = 10
-        msg.scale.z = 10
-        msg.color.a = 1.0
-        msg.color.r = col[0]
-        msg.color.g = col[1]
-        msg.color.b = col[2]
-        self.contact_viz_pub.publish(msg)
-        self.contact_viz_id += 1
+    #     self.contact_viz_pub.publish(msg)
 
 
-    def plot_intersections(self, intersection):
+    # def plot_point(self,x,y,z,col):
+    #     # Visualize probe point
+    #     global contact_viz_id
+    #     global contact_viz_pub
+    #     msg = Marker()
+    #     msg.header.frame_id = "gantry"
+    #     # msg.header.frame_id = "probe_tip" # DEBUG
+    #     msg.header.seq = self.contact_viz_id
+    #     msg.header.stamp = rospy.Time.now()
+    #     msg.ns = "probe_contact_viz"
+    #     msg.id = self.contact_viz_id
+    #     msg.type = 2  # cube
+    #     msg.action = 0  # add
+    #     msg.pose.position = Point(x,y,z)
+    #     msg.pose.orientation.w = 1
+    #     msg.scale.x = 10
+    #     msg.scale.y = 10
+    #     msg.scale.z = 10
+    #     msg.color.a = 1.0
+    #     msg.color.r = col[0]
+    #     msg.color.g = col[1]
+    #     msg.color.b = col[2]
+    #     self.contact_viz_pub.publish(msg)
+    #     self.contact_viz_id += 1
 
-        # msg = Marker()
-        # msg.ns = "probe_intersection_viz"
-        # msg.action = msg.DELETEALL
-        # self.contact_viz_pub.publish(msg)
 
-        for i in range(0, len(intersection)):
+    # def plot_intersections(self, intersection):
 
-            x = intersection[i,0]
-            y = intersection[i,1]
-            z = 0
+    #     # msg = Marker()
+    #     # msg.ns = "probe_intersection_viz"
+    #     # msg.action = msg.DELETEALL
+    #     # self.contact_viz_pub.publish(msg)
 
-            msg = Marker()
-            msg.header.frame_id = "gantry"
-            # msg.header.frame_id = "probe_tip" # DEBUG
-            msg.header.seq = i
-            msg.id = i
-            msg.header.stamp = rospy.Time.now()
-            msg.ns = "probe_intersection_viz"
-            msg.type = 2  # cube
-            msg.action = 0  # add
-            msg.pose.position = Point(x,y,z)
-            msg.pose.orientation.w = 1
-            msg.scale.x = 10
-            msg.scale.y = 10
-            msg.scale.z = 10
-            msg.color.a = 1.0
-            msg.color.r = 0.
-            msg.color.g = 1.
-            msg.color.b = 0.
-            self.contact_viz_pub.publish(msg)
+    #     for i in range(0, len(intersection)):
+
+    #         x = intersection[i,0]
+    #         y = intersection[i,1]
+    #         z = 0
+
+    #         msg = Marker()
+    #         msg.header.frame_id = "gantry"
+    #         # msg.header.frame_id = "probe_tip" # DEBUG
+    #         msg.header.seq = i
+    #         msg.id = i
+    #         msg.header.stamp = rospy.Time.now()
+    #         msg.ns = "probe_intersection_viz"
+    #         msg.type = 2  # cube
+    #         msg.action = 0  # add
+    #         msg.pose.position = Point(x,y,z)
+    #         msg.pose.orientation.w = 1
+    #         msg.scale.x = 10
+    #         msg.scale.y = 10
+    #         msg.scale.z = 10
+    #         msg.color.a = 1.0
+    #         msg.color.r = 0.
+    #         msg.color.g = 1.
+    #         msg.color.b = 0.
+    #         self.contact_viz_pub.publish(msg)
 
 
     def hough(self):
@@ -209,10 +209,10 @@ class Mine_Estimator:
         # print "comptung error..."
         self.compute_error()
 
-        if self.visualize:
-            self.plot_point(x,y,z, [1,0,0])
-            self.draw_radius([1,0,0])
-            # self.plot_point(self.c_x, self.c_y, 0, [0,0,1])
+        # if self.visualize:
+        #     self.plot_point(x,y,z, [1,0,0])
+        #     self.draw_radius([1,0,0])
+        #     # self.plot_point(self.c_x, self.c_y, 0, [0,0,1])
 
 
     def most_recent_point(self):
@@ -242,9 +242,12 @@ class Mine_Estimator:
                 # call to get_est() returns the most recent center estimate
                 a = math.atan2( -(self.contact_points[i,1] - self.get_est()[1]),
                                 -(self.contact_points[i,0] - self.get_est()[0]) )
-                self.plot_point(self.contact_points[i,0],self.contact_points[i,1],self.c_z-1,[0,0,0])
-                self.plot_point(self.get_est()[0],self.get_est()[1],self.c_z-1,[0,1,.5])
+                # self.plot_point(self.contact_points[i,0],self.contact_points[i,1],self.c_z-1,[0,0,0])
+                # self.plot_point(self.get_est()[0],self.get_est()[1],self.c_z-1,[0,1,.5])
                 angle.append(a)
+            # print self.get_est()
+            print "Pre-Sorted angles: ", angle
+
             angle.sort() # 
             print "Sorted angles: ", angle
 
@@ -288,21 +291,18 @@ class Mine_Estimator:
                 probe_angle = angle[I] + dist[I]/2
                 print "MIDDLE", probe_angle*180/math.pi
 
-            # probe_angle = -math.pi/4
+            print "Current estimate of center: ", self.c_x, self.c_y, self.c_z
 
-            # self.c_x = 450
-            # self.c_y
             x = self.c_x - math.cos(probe_angle)*self.c_r
             y = self.c_y - math.sin(probe_angle)*self.c_r
             z = self.c_z
 
-            # print "Current estimate of center: ", x, y, z
 
             # self.plot_point(x,y,z-2,[1,1,1])
             # print "PROBE ANGLE:", probe_angle
-            x = self.c_x# - math.cos(probe_angle)*self.c_r
-            y = self.c_y# - math.sin(probe_angle)*self.c_r
-            z = self.c_z
+            # x = self.c_x# - math.cos(probe_angle)*self.c_r
+            # y = self.c_y# - math.sin(probe_angle)*self.c_r
+            # z = self.c_z
             return [x,y,z,probe_angle]      # seems to 
         else:
             return None
