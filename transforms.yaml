@@ -3,7 +3,7 @@
 ##############################
 
 ### Landmine ###
-landmine_pos: [2500, -50, -100]
+landmine_pos: [1800, -50, -100]
 landmine_diameter: 100
 landmine_height: 50
 metal_detector_decay: 30
@@ -25,7 +25,8 @@ gantry_x_max: 400 #mm
 gantry_y_max: 800 #mm
 
 ### Metal Detector ###
-sensorhead_md_offset_loc: [140,373,-455] # y offset is half of width
+# sensorhead_md_offset_loc: [140,373,-455] # y offset is half of width
+sensorhead_md_offset_loc: [110, 345, -455] #[140,373,-455] # y offset is half of width
 sensorhead_md_offset_rot: [0,0,1.5708] # y offset is half of width
 gantry_sweep_angle: -1.09956 # -63 degrees
 gantry_sweep_pos: [100, 400]
