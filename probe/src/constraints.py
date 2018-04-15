@@ -12,7 +12,8 @@ import rospy
 # the gantry mean is along the vehicle center axis
 
 
-do_plot = False
+do_plot = True
+do_path_shortening = False
 
 fig = plt.figure(1, figsize=(5,5), dpi=90)
 ax = fig.add_subplot(111)
@@ -64,17 +65,13 @@ class Probe_Motion_Planner:
             return False
 
     def check_ray_collision(self, line):
-        # in_collision = [] # create empty array to store collision results
-        # # print "here"
-        # for ratio in np.arange(0, 1, 0.05):
-        #     point_to_check = line.interpolate(ratio, normalized=True)
-        #     in_collision.append(self.check_collision(point_to_check))
-            # if do_plot:
-                # ax.scatter(point_to_check.x, point_to_check.y, c='r')
-                # plt.pause(0.01)
-        # in_collision = [self.check_collision(line.interpolate(ratio, normalized=True)) for ratio in np.arange(0, 1, 0.2)]
-        in_collision = [self.check_collision(line.interpolate(dist, normalized=True)) for dist in np.arange(0, 1, 0.1)]
-        # print in_collision
+        in_collision = [] # create empty array to store collision results
+        for zone in range(len(self.off_limits)): # go thorugh each off-limits zone # I KNOW THIS IS TERRIBLE PYTHON STYLE >_<
+            poly = Polygon(self.off_limits[zone]) # create a polygon for that zone
+            if do_plot:
+                x, y = poly.exterior.xy
+                ax.plot(x, y, color='#6699cc', alpha=0.7, linewidth=3, solid_capstyle='round', zorder=2)
+            in_collision.append(line.intersects(poly)) # add to the list whether or not it collided
         if np.any(in_collision):
             return True
         else: 
@@ -103,7 +100,7 @@ class Probe_Motion_Planner:
             #     print visited_points[i].xy
             q_new, goal_reached = self.extend(q_near, q_rand, self.end_point, self.max_extend_dist)
             x, y = q_new.xy
-            # if not self.check_collision(q_new):
+            # if not self.check_collision(q_new): # this prevents a point from being added which is in an obstacle
             if not self.check_ray_collision(LineString([q_near, q_new])):
                 q_new_index += 1
                 if do_plot:
@@ -117,15 +114,14 @@ class Probe_Motion_Planner:
                         ax.scatter(x, y, c='g')
                     path_sequence = nx.shortest_path(G, source=0, target=q_new_index)
                     path_points = [visited_points[i] for i in path_sequence]
-                    if len(path_points)>2:
-                        shorter_path = self.shorten_path(path_points)
-                    else:
+                    if not do_path_shortening:
                         shorter_path = path_points
+                    shorter_path = self.shorten_path(path_points)
             if self.check_collision(q_new):
                 if do_plot:
                     ax.scatter(x, y, c='r')
                     plt.pause(0.01)
-        if do_plot:
+        if do_plot: # plot the path from start to end
             for i in range(len(shorter_path)-1):
                 pt1 = shorter_path[i]
                 pt2 = shorter_path[i+1]
@@ -148,14 +144,13 @@ class Probe_Motion_Planner:
                 ratio = np.random.random_sample() # sample in [0,1)
                 pt1 = path[sample_edge[edge]] # first vertex of a given edge
                 pt2 = path[sample_edge[edge]+1] # second vertex of a given edge
-                if do_plot:
-                    ax.scatter(pt1.x, pt1.y, c='y')
-                    ax.scatter(pt2.x, pt2.y, c='r')
+                # if do_plot:
+                #     ax.scatter(pt1.x, pt1.y, c='y')
+                #     ax.scatter(pt2.x, pt2.y, c='r')
                 pt1_pt2 = LineString([pt1, pt2]) # line joining two
                 sample_pt_array.append(pt1_pt2.interpolate(ratio, normalized=True))
             interp_pt1 = sample_pt_array[0] # extract sample point 1 coordinates
             interp_pt2 = sample_pt_array[1] # extract sample point 2 coordinates
-            # print self.check_ray_collision(LineString([interp_pt1, interp_pt2]))
             if not self.check_ray_collision(LineString([interp_pt1, interp_pt2])):
                 first_edge = sample_edge[0]
                 second_edge = sample_edge[1]
@@ -179,7 +174,6 @@ class Probe_Motion_Planner:
         return Point(y, th)
 
     def extend(self, current, next, goal, max_dist):
-        # print current.x, current.y, next.x, next.y, goal.x, goal.y
         if current.distance(goal) <= max_dist: # if you're within striking distance of the goal config
             return goal, True
         else:
