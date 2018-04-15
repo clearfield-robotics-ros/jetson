@@ -120,7 +120,8 @@ Visualization Manager:
       Marker Topic: /probe_contact_viz
       Name: probe_contact
       Namespaces:
-        {}
+        probe_contact_viz: true
+        probe_radius_viz: true
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -128,7 +129,7 @@ Visualization Manager:
       Marker Topic: /md_detection
       Name: md_detection
       Namespaces:
-        {}
+        md_detection: true
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -163,7 +164,7 @@ Visualization Manager:
   Value: true
   Views:
     Current:
-      Angle: -1.56499946
+      Angle: -1.56999946
       Class: rviz/TopDownOrtho
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
@@ -173,11 +174,11 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Scale: 0.514648139
+      Scale: 0.607652485
       Target Frame: <Fixed Frame>
       Value: TopDownOrtho (rviz)
-      X: 1267.35291
-      Y: -52.3070641
+      X: 1540.84021
+      Y: -252.588745
     Saved: ~
 Window Geometry:
   Displays:
@@ -195,5 +196,5 @@ Window Geometry:
   Views:
     collapsed: true
   Width: 921
-  X: 546
-  Y: 181
+  X: 960
+  Y: 167

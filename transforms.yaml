@@ -3,7 +3,7 @@
 ##############################
 
 ### Landmine ###
-landmine_pos: [1800, -120, -100]
+landmine_pos: [1800, -50, -100]
 landmine_diameter: 100
 landmine_height: 50
 metal_detector_decay: 30
@@ -37,6 +37,7 @@ probe_length: 460 #mm
 probe_speed: 1.5 #mm/s
 probe_safety_factor: 1
 max_probe_distance: 300 #mm
+max_num_probes: 3
 
 ### Probe Planner ###
 third_stage_probe_angle: 1.3962634016
