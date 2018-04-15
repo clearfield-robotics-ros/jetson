@@ -187,7 +187,7 @@ def main():
             # while not gantry_current_status.position_reached: # block while not finished
             #     pass
 
-            raw_input("\nPress Enter to continue...\n")
+            # raw_input("\nPress Enter to continue...\n")
 
             probe_cmd_pub.publish(3) # start calibration
             rospy.sleep(0.5) # give time for handshake
@@ -203,8 +203,6 @@ def main():
             # rospy.sleep(0.3) # give time for handshake
             # while not gantry_current_status.position_reached: # block while not finished
             #     pass
-
-
 
             print "...Probes Calibrated"
 

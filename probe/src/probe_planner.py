@@ -130,6 +130,8 @@ def main():
     num_contact_points              = rospy.get_param('num_contact_points')
     min_fit_error                   = rospy.get_param('min_fit_error')
 
+    probe_limit_exceeded            = False
+
 
     # Gantry Control Messages
     global gantry_desired_state_pub
@@ -191,9 +193,14 @@ def main():
                     move_gantry(desired_probe_tip, gantry_yaw)
 
                 elif probe_sequence > 0:
-                    desired_probe_tip.x += maxForwardSearch
 
-                    move_gantry(desired_probe_tip, gantry_yaw)
+                    if probe_sequence <= 3:
+                        desired_probe_tip.x += maxForwardSearch
+                        move_gantry(desired_probe_tip, gantry_yaw)
+
+                    else:
+                        print "we took too many probes! skip this config"
+                        probe_limit_exceeded = True
 
             elif probe_plan_state == 1:
 
@@ -224,10 +231,14 @@ def main():
 
                 elif probe_sequence > probe_sequence_prev:
 
-                    desired_probe_tip.x += math.cos(gantry_yaw)*maxForwardSearch
-                    desired_probe_tip.y += math.sin(gantry_yaw)*maxForwardSearch
+                    if (probe_sequence - probe_sequence_prev) <= 3:
+                        desired_probe_tip.x += math.cos(gantry_yaw)*maxForwardSearch
+                        desired_probe_tip.y += math.sin(gantry_yaw)*maxForwardSearch
+                        move_gantry(desired_probe_tip, gantry_yaw)
 
-                    move_gantry(desired_probe_tip, gantry_yaw)
+                    else:
+                        print "we took too many probes! skip this config"
+                        probe_limit_exceeded = True
 
             elif probe_plan_state == 2:
 
@@ -247,45 +258,54 @@ def main():
 
                 elif probe_sequence > probe_sequence_prev:
 
-                    desired_probe_tip.x += math.cos(gantry_yaw)*maxForwardSearch
-                    desired_probe_tip.y += math.sin(gantry_yaw)*maxForwardSearch
+                    if (probe_sequence - probe_sequence_prev) <= 3:
+                        desired_probe_tip.x += math.cos(gantry_yaw)*maxForwardSearch
+                        desired_probe_tip.y += math.sin(gantry_yaw)*maxForwardSearch
+                        move_gantry(desired_probe_tip, gantry_yaw)
 
-                    move_gantry(desired_probe_tip, gantry_yaw)
+                    else:
+                        print "we took too many probes! skip this config"
+                        probe_limit_exceeded = True
 
             '''
             Execute Probing Procedure
             '''
-            probe_sequence += 1
-            print "PROBE #", probe_sequence
+            if not probe_limit_exceeded:
 
-            raw_input("\nPress Enter to continue...\n")
+                probe_sequence += 1
+                print "PROBE #", probe_sequence
 
-            probe_cmd_pub.publish(2) # start probing
-            rospy.sleep(0.5) # give time for handshake
-            while not probe_current_state.probe_complete: # while not finished
-                pass
+                raw_input("\nPress Enter to continue...\n")
+
+                probe_cmd_pub.publish(2) # start probing
+                rospy.sleep(0.5) # give time for handshake
+                while not probe_current_state.probe_complete: # while not finished
+                    pass
 
             '''
             Advance States
             '''
             if probe_plan_state == 0:
 
-                if est.point_count() > 0:
+                if est.point_count() > 0 or probe_limit_exceeded:
                     probe_plan_state = 1 # advance
                     probe_sequence_prev = probe_sequence
+                    probe_limit_exceeded = False
 
             elif probe_plan_state == 1:
 
-                if est.point_count() > 1:
+                if est.point_count() > 1 or probe_limit_exceeded:
                     probe_plan_state = 2 # advance
                     probe_sequence_prev = probe_sequence
                     prev_point_count = est.point_count()
+                    probe_limit_exceeded = False
 
             elif probe_plan_state == 2:
 
-                if not est.point_count() == prev_point_count:
+                if not est.point_count() == prev_point_count or probe_limit_exceeded:
                     probe_sequence_prev = probe_sequence
                     prev_point_count = est.point_count()
+                    probe_limit_exceeded = False
 
                 if (est.point_count() >= num_contact_points
                     and est.get_error() <= min_fit_error):
