@@ -248,7 +248,7 @@ def main():
             # print filtered_collected
             print np.mean(filtered_collected), np.std(filtered_collected)
             start_from = [cur_pos[0], np.mean(filtered_collected)]
-            
+
             set_and_wait_for_goal(start_from, collect=False)
 
             # pass the batton to the probe
