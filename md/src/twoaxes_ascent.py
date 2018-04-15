@@ -104,7 +104,8 @@ def update_lims(data):
     x_lims = [data.x_min+1.0, data.x_max-1.0]
     y_lims = [data.y_min+1.0, data.y_max-1.0]
     cur_state = data.state
-    lims_set = True
+    if data.calibration_flag:
+        lims_set = True
 
 
 # pubs & subs
@@ -188,6 +189,7 @@ def main():
                 # print "go to sweep pos"
                 # TODO send to sweeping position, once
                 sweep_pos = [100, cur_sig[1]]
+                print lims_set
                 set_and_wait_for_goal(sweep_pos, collect=False)
                 # print "got to sweep pos"
                 reached_sweeping_pos = True
@@ -218,7 +220,7 @@ def main():
             print max_sig
             filtered_collected = [pos[0] for pos in collected if pos[2] > (1 - within) * max_sig[2]]
             # print filtered_collected
-            print np.mean(filtered_collected)
+            print np.mean(filtered_collected), np.std(filtered_collected)
             start_from = [np.mean(filtered_collected), cur_pos[1]]
 
             # use new goal and move in y now
@@ -244,8 +246,10 @@ def main():
             print max_sig
             filtered_collected = [pos[1] for pos in collected if pos[2] > (1 - within) * max_sig[2]]
             # print filtered_collected
-            print np.mean(filtered_collected)
+            print np.mean(filtered_collected), np.std(filtered_collected)
             start_from = [cur_pos[0], np.mean(filtered_collected)]
+            
+            set_and_wait_for_goal(start_from, collect=False)
 
             # pass the batton to the probe
             x_offset = + math.sin(gantry_sweep_angle)*sensorhead_md_offset_loc[1] - math.cos(gantry_sweep_angle)*sensorhead_md_offset_loc[0]

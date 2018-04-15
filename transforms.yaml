@@ -3,7 +3,7 @@
 ##############################
 
 ### Landmine ###
-landmine_pos: [1800, -120, -100]
+landmine_pos: [2000, -120, -100]
 landmine_diameter: 100
 landmine_height: 50
 metal_detector_decay: 30
