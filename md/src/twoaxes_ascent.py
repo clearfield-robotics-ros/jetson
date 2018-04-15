@@ -251,14 +251,21 @@ def main():
             x_offset = + math.sin(gantry_sweep_angle)*sensorhead_md_offset_loc[1] - math.cos(gantry_sweep_angle)*sensorhead_md_offset_loc[0]
             y_offset = - math.sin(gantry_sweep_angle)*sensorhead_md_offset_loc[0] - math.cos(gantry_sweep_angle)*sensorhead_md_offset_loc[1]
 
-            msg = Point(max_sig[0] - x_offset,
-                        max_sig[1] - y_offset,
+            # msg = Point(max_sig[0] - x_offset,
+            #             max_sig[1] - y_offset,
+            #             max_sig[2])
+            msg = Point(cur_pos[0] - x_offset,
+                        np.mean(filtered_collected) - y_offset,
                         max_sig[2])
             sendToProbe.publish(msg)
 
-            visualize_final_point(max_sig[0] - x_offset,
-                                  max_sig[1] - y_offset,
+            visualize_final_point(cur_pos[0] - x_offset,
+                                  np.mean(filtered_collected) - y_offset,
                                   -scorpion_gantry_offset_loc[2], [1,0,0])
+
+            # visualize_final_point(max_sig[0] - x_offset,
+            #                       max_sig[1] - y_offset,
+            #                       -scorpion_gantry_offset_loc[2], [1,0,0])
 
             raw_input("\nPress Enter to continue...\n")
 
