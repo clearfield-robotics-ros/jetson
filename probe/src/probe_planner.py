@@ -13,6 +13,7 @@ from probe.msg import probe_data
 from gantry.msg import gantry_status
 from gantry.msg import to_gantry_msg;
 from constraints import Probe_Motion_Planner
+from shapely.geometry import Point as shapely_Point
 
 ### monitor current state ###
 current_state = 0 # if we don't get msgs
@@ -21,13 +22,13 @@ def update_state(data):
     current_state = data.data
 jetson_current_state = rospy.Subscriber('current_state', Int16, update_state)
 
-def within_gantry_limits(loc, yaw):
-    pose_possible = False # start by assuming it's out of bounds 
-    candidate_trans = probe_to_gantry_transform(loc, yaw) # get transform for specified loc & yaw
-    if candidate_trans[0] >= 0 and candidate_trans[0] <= gantry_x_range: # if within both x bounds
-        if candidate_trans[1] >= 0 and candidate_trans[1] <= gantry_y_range: # and y bounds
-            pose_possible = True # switch the flag
-    return pose_possible
+# def within_gantry_limits(loc, yaw):
+#     pose_possible = False # start by assuming it's out of bounds 
+#     candidate_trans = probe_to_gantry_transform(loc, yaw) # get transform for specified loc & yaw
+#     if candidate_trans[0] >= 0 and candidate_trans[0] <= gantry_x_range: # if within both x bounds
+#         if candidate_trans[1] >= 0 and candidate_trans[1] <= gantry_y_range: # and y bounds
+#             pose_possible = True # switch the flag
+#     return pose_possible
 
 def probe_to_gantry_transform(loc,yaw):
 
@@ -61,8 +62,17 @@ def probe_to_gantry_transform(loc,yaw):
     print trans
     return trans
 
-def generate_probe_plan(desired_probe_tip, gantry_yaw):
-    
+def generate_probe_plan(goal_trans, goal_rot):
+    (current_trans, current_rot) = listener.lookupTransform('gantry', 'sensor_head', rospy.Time(0))
+    current_rot_euler = tf.transformations.euler_from_quaternion(current_rot)[2]/180*math.pi
+    # print "ct", current_trans, "cr", current_rot_euler
+    # print "gt", goal_trans, "gr", goal_rot
+    start_config = [current_trans[0], current_trans[1], current_rot_euler]
+    end_config = [goal_trans[0], goal_trans[1], goal_rot]
+    probe_motion_planner = Probe_Motion_Planner(start_config, end_config)
+    path = probe_motion_planner.plan_path()
+    plan_arrays = [[step.x, step.y] for step in path] # reconfigure into an array of arrays
+    return plan_arrays
 
 def move_gantry(desired_probe_tip, gantry_yaw):
 
@@ -72,19 +82,21 @@ def move_gantry(desired_probe_tip, gantry_yaw):
     # work out gantry carriage position
     trans = probe_to_gantry_transform(desired_probe_tip, gantry_yaw)
 
-    gantry_desired_state = to_gantry_msg()
-    gantry_desired_state.state_desired       = 3
-    gantry_desired_state.x_desired           = trans[0]
-    gantry_desired_state.y_desired           = trans[1]
-    gantry_desired_state.yaw_desired         = gantry_yaw
-    # gantry_desired_state.probe_angle_desired = 0
-    global gantry_desired_state_pub
-    gantry_desired_state_pub.publish(gantry_desired_state)
+    plan = generate_probe_plan(trans, gantry_yaw) # only receives goal
+    for i in range(len(plan)): # go through each step of plan
+        gantry_desired_state = to_gantry_msg()
+        gantry_desired_state.state_desired       = 3
+        gantry_desired_state.x_desired           = trans[0]
+        gantry_desired_state.y_desired           = plan[i][0] * 1000.0
+        gantry_desired_state.yaw_desired         = plan[i][1]
+        # gantry_desired_state.probe_angle_desired = 0
+        global gantry_desired_state_pub
+        gantry_desired_state_pub.publish(gantry_desired_state)
 
-    rospy.sleep(0.5) # give time for handshake
+        rospy.sleep(0.5) # give time for handshake
 
-    while not gantry_current_status.position_reached: # block while not finished
-        pass
+        while not gantry_current_status.position_reached: # block while not finished
+            pass
 
 
 def set_target(data):
@@ -147,6 +159,7 @@ def main():
     gantry_width                    = rospy.get_param('gantry_width')
     num_contact_points              = rospy.get_param('num_contact_points')
     min_fit_error                   = rospy.get_param('min_fit_error')
+    max_probes_in_a_row             = rospy.get_param('max_probes_in_a_row')
 
 
     # Gantry Control Messages
@@ -199,8 +212,8 @@ def main():
             Perform Planning for Probe
             '''
 
-            if (probe_sequence - parent_probe_seq) >= max_probes_in_a_row:
-                one_approach_angle_finished = True
+            # if (probe_sequence - parent_probe_seq) >= max_probes_in_a_row:
+            #     one_approach_angle_finished = True
             print est.get_est()
 
             if probe_plan_state == 0:
@@ -212,11 +225,11 @@ def main():
                     desired_probe_tip.x = target.x - landmine_diameter/2*probe_safety_factor
                     desired_probe_tip.y = target.y
                     desired_probe_tip.z = -scorpion_gantry_offset_loc[2] + landmine_pos[2]
-                    gantry_yaw, approach_angle_count, parent_probe_seq = update_gantry_yaw(0, probe_sequence, approach_angle_count) # 0
+                    # gantry_yaw, approach_angle_count, parent_probe_seq = update_gantry_yaw(0, probe_sequence, approach_angle_count) # 0
 
                     move_gantry(desired_probe_tip, gantry_yaw)
 
-                elif probe_sequence > 0 and not one_approach_angle_finished: # if you want to keep advancing along the same apch angle
+                elif probe_sequence > 0:# and not one_approach_angle_finished: # if you want to keep advancing along the same apch angle
                     desired_probe_tip.x += maxForwardSearch
 
                     move_gantry(desired_probe_tip, gantry_yaw)
@@ -234,11 +247,11 @@ def main():
                     z = np.ones(len(th))*est.most_recent_point().z
 
                     if target.y > gantry_width/2:
-                        gantry_yaw, approach_angle_count, parent_probe_seq = update_gantry_yaw(th[2], probe_sequence, approach_angle_count) # th[2] # get desired yaw
+                        # gantry_yaw, approach_angle_count, parent_probe_seq = update_gantry_yaw(th[2], probe_sequence, approach_angle_count) # th[2] # get desired yaw
                         plan_x = x[0]
                         plan_y = y[0]
                     else:
-                        gantry_yaw, approach_angle_count, parent_probe_seq = update_gantry_yaw(th[0], probe_sequence, approach_angle_count) # th[0] # get desired yaw
+                        # gantry_yaw, approach_angle_count, parent_probe_seq = update_gantry_yaw(th[0], probe_sequence, approach_angle_count) # th[0] # get desired yaw
                         plan_x = x[2]
                         plan_y = y[2]
 
@@ -248,7 +261,7 @@ def main():
 
                     move_gantry(desired_probe_tip, gantry_yaw)
 
-                elif probe_sequence > probe_sequence_prev and not one_approach_angle_finished: # if you want to keep advancing along the same apch angle
+                elif probe_sequence > probe_sequence_prev:# and not one_approach_angle_finished: # if you want to keep advancing along the same apch angle
                     
                     desired_probe_tip.x += math.cos(gantry_yaw)*maxForwardSearch
                     desired_probe_tip.y += math.sin(gantry_yaw)*maxForwardSearch
@@ -263,16 +276,16 @@ def main():
                 if probe_sequence == probe_sequence_prev: # if this is the first for this approach angle ??
 
                     p = est.get_sparsest_point()
-                    print "cos yaw: ", math.cos(gantry_yaw)
+                    # print "cos yaw: ", math.cos(gantry_yaw)
                     desired_probe_tip.x = p[0] - math.cos(gantry_yaw)*landmine_diameter/2*probe_safety_factor
                     desired_probe_tip.y = p[1] - math.sin(gantry_yaw)*landmine_diameter/2*probe_safety_factor
                     desired_probe_tip.z = -scorpion_gantry_offset_loc[2] + landmine_pos[2]
-                    print "Desired probe tip: ", desired_probe_tip
+                    # print "Desired probe tip: ", desired_probe_tip
                     gantry_yaw, approach_angle_count, parent_probe_seq = update_gantry_yaw(p[3], probe_sequence, approach_angle_count) # p[3]
 
                     move_gantry(desired_probe_tip, gantry_yaw)
 
-                elif probe_sequence > probe_sequence_prev and not one_approach_angle_finished:  # if you want to keep advancing along the same apch angle
+                elif probe_sequence > probe_sequence_prev:# and not one_approach_angle_finished:  # if you want to keep advancing along the same apch angle
 
                     desired_probe_tip.x += math.cos(gantry_yaw)*maxForwardSearch
                     desired_probe_tip.y += math.sin(gantry_yaw)*maxForwardSearch
@@ -298,20 +311,20 @@ def main():
             '''
             if probe_plan_state == 0: # initial approach
 
-                if est.point_count() > 0 or one_approach_angle_finished == True: # if you've got one contact point 
+                if est.point_count() > 0:# or one_approach_angle_finished == True: # if you've got one contact point 
                     probe_plan_state = 1 # advance
                     probe_sequence_prev = probe_sequence
 
             elif probe_plan_state == 1: # 45 deg on one side of initial approach
 
-                if est.point_count() > 1 or one_approach_angle_finished == True: # if you've got two contact points
+                if est.point_count() > 1:# or one_approach_angle_finished == True: # if you've got two contact points
                     probe_plan_state = 2 # advance
                     probe_sequence_prev = probe_sequence
                     prev_point_count = est.point_count() # update point count
 
             elif probe_plan_state == 2: # sparsest point exploration
 
-                if not est.point_count() == prev_point_count or one_approach_angle_finished == True: # if you haven't made contact yet (??)
+                if not est.point_count() == prev_point_count:# or one_approach_angle_finished == True: # if you haven't made contact yet (??)
                     probe_sequence_prev = probe_sequence
                     prev_point_count = est.point_count()
 

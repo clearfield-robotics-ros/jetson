@@ -12,30 +12,26 @@ import rospy
 # the gantry mean is along the vehicle center axis
 
 
-# do_plot = False
+do_plot = True
 
-# fig = plt.figure(1, figsize=(5,5), dpi=90)
-# ax = fig.add_subplot(111)
+fig = plt.figure(1, figsize=(5,5), dpi=90)
+ax = fig.add_subplot(111)
 
 class Probe_Motion_Planner:
     def __init__(self, start, end):
-        gantry_y_min                    = rospy.get_param('gantry_y_min')/1000 # mm to m
-        gantry_y_max                    = rospy.get_param('gantry_y_max')/1000 # mm to m
+        gantry_y_min                    = rospy.get_param('gantry_y_min')/1000.0 # mm to m
+        gantry_y_max                    = rospy.get_param('gantry_y_max')/1000.0 # mm to m
         gantry_th_min                   = rospy.get_param('gantry_th_min')
         gantry_th_max                   = rospy.get_param('gantry_th_max')
         self.gantry_y_limits = [gantry_y_min, gantry_y_max] # in m so that the scales of y and th are similar
         self.gantry_th_limits = [gantry_th_min, gantry_th_max]
         gantry_y_mean = (self.gantry_y_limits[0] + self.gantry_y_limits[1])/2
         self.off_limits = [[(gantry_y_mean+.220, np.deg2rad(-45)), (self.gantry_y_limits[1], np.deg2rad(-45)), (self.gantry_y_limits[1], np.deg2rad(30)), (gantry_y_mean+.220, np.deg2rad(30))],
-                          [(gantry_y_mean+.270, np.deg2rad(80)), (self.gantry_y_limits[1], np.deg2rad(80)), (self.gantry_y_limits[1], np.deg2rad(90)), (gantry_y_mean+.270, np.deg2rad(90))],
-                          [(gantry_y_mean-.270, np.deg2rad(-90)), (self.gantry_y_limits[0], np.deg2rad(-90)), (self.gantry_y_limits[0], np.deg2rad(-75)), (gantry_y_mean-.270, np.deg2rad(-75))]]
+                           [(gantry_y_mean+.270, np.deg2rad(80)), (self.gantry_y_limits[1], np.deg2rad(80)), (self.gantry_y_limits[1], np.deg2rad(90)), (gantry_y_mean+.270, np.deg2rad(90))],
+                           [(gantry_y_mean-.270, np.deg2rad(-90)), (self.gantry_y_limits[0], np.deg2rad(-90)), (self.gantry_y_limits[0], np.deg2rad(-75)), (gantry_y_mean-.270, np.deg2rad(-75))]]
         self.max_extend_dist = 1 # max radius to extend each node from
-        # start_config = [.40, .75, -1.5]
-        # end_config = [.40, .750, .65]
-        # config[0] (X axis) not a concern for any configuration
-        # first check whether the end_config is
-        self.start_point = Point(start[1], start[2])
-        self.end_point = Point(end[1], end[2])
+        self.start_point = Point(start[1]/1000.0, start[2])
+        self.end_point = Point(end[1]/1000.0, end[2])
 
     def check_collision(self, point):
         in_collision = [] # create empty array to store collision results
@@ -58,48 +54,48 @@ class Probe_Motion_Planner:
             return False
 
     def plan_path(self):
-        start = self.start_point
-        end = self.end_point
         goal_reached = False # start by assuming you're not at the goal, DUH!
-        max_dist = self.max_extend_dist 
-        visited_points = [start]
+        visited_points = [self.start_point]
         G = nx.Graph() # nx is a great way to represent graph connections
         q_new_index = 0
         G.add_node(q_new_index)
         while not goal_reached:
             q_rand = self.sample_random_point()
-            print q_new_index
             nearest_q_candidate_dist = []
             for i in range(len(visited_points)):
                 nearest_q_candidate_dist.append(q_rand.distance(visited_points[i])) # for every visited point, store the distance to the randomly sampled point
             q_near_index = np.argmin(nearest_q_candidate_dist) # choose the point with the lowest distance among those visited
             q_near = visited_points[q_near_index] # get the actual point (not index)
-            q_new, goal_reached = self.extend(q_near, q_rand, end, max_dist)
-            # x, y = q_new.xy
+            for i in range(len(visited_points)):
+                print visited_points[i].xy
+            q_new, goal_reached = self.extend(q_near, q_rand, self.end_point, self.max_extend_dist)
+            x, y = q_new.xy
             if not self.check_collision(q_new):
                 q_new_index += 1
-                # if do_plot:
-                #     ax.scatter(x, y, c='k')
-                #     plt.pause(0.01)
+                if do_plot:
+                    ax.scatter(x, y, c='k')
+                    plt.pause(0.01)
                 visited_points.append(q_new)
                 G.add_node(q_new_index)
                 G.add_edge(q_near_index, q_new_index)
                 if goal_reached:
-                    # if do_plot:
-                    #     ax.scatter(x, y, c='g')
+                    if do_plot:
+                        ax.scatter(x, y, c='g')
                     path_sequence = nx.shortest_path(G, source=0, target=q_new_index)
                     path_points = [visited_points[i] for i in path_sequence]
-                    shorter_path = self.shorten_path(path_points)
-            # if self.check_collision(q_new):
-            #     if do_plot:
-            #         ax.scatter(x, y, c='r')
-            #         plt.pause(0.01)
-        # if do_plot:
-        #     for i in range(len(shorter_path)-1):
-        #         pt1 = shorter_path[i]
-        #         pt2 = shorter_path[i+1]
-        #         ax.plot([pt1.x, pt2.x],[pt1.y, pt2.y], c='k')
-        #     plt.show()
+                    if len(path_points)>2:
+                        shorter_path = self.shorten_path(path_points)
+                    shorter_path = path_points
+            if self.check_collision(q_new):
+                if do_plot:
+                    ax.scatter(x, y, c='r')
+                    plt.pause(0.01)
+        if do_plot:
+            for i in range(len(shorter_path)-1):
+                pt1 = shorter_path[i]
+                pt2 = shorter_path[i+1]
+                ax.plot([pt1.x, pt2.x],[pt1.y, pt2.y], c='k')
+            plt.show()
         return shorter_path
 
 
@@ -143,6 +139,7 @@ class Probe_Motion_Planner:
         return Point(y, th)
 
     def extend(self, current, next, goal, max_dist):
+        print current.x, current.y, next.x, next.y, goal.x, goal.y
         if current.distance(goal) <= max_dist: # if you're within striking distance of the goal config
             return goal, True
         else:
