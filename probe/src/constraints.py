@@ -12,39 +12,60 @@ import rospy
 # the gantry mean is along the vehicle center axis
 
 
-do_plot = False
+do_plot = True
 
 fig = plt.figure(1, figsize=(5,5), dpi=90)
 ax = fig.add_subplot(111)
 
 class Probe_Motion_Planner:
     def __init__(self, start, end):
-        gantry_y_min                    = rospy.get_param('gantry_y_min')/1000.0 # mm to m
-        gantry_y_max                    = rospy.get_param('gantry_y_max')/1000.0 # mm to m
-        gantry_th_min                   = rospy.get_param('gantry_th_min')
-        gantry_th_max                   = rospy.get_param('gantry_th_max')
-        self.gantry_y_limits = [gantry_y_min, gantry_y_max] # in m so that the scales of y and th are similar
-        self.gantry_th_limits = [gantry_th_min, gantry_th_max]
+        self.gantry_y_min                    = rospy.get_param('gantry_y_min')/1000.0 # mm to m
+        self.gantry_y_max                    = rospy.get_param('gantry_y_max')/1000.0 # mm to m
+        self.gantry_th_min                   = rospy.get_param('gantry_th_min')
+        self.gantry_th_max                   = rospy.get_param('gantry_th_max')
+        self.gantry_y_limits = [self.gantry_y_min, self.gantry_y_max] # in m so that the scales of y and th are similar
+        self.gantry_th_limits = [self.gantry_th_min, self.gantry_th_max]
         gantry_y_mean = (self.gantry_y_limits[0] + self.gantry_y_limits[1])/2
-        self.off_limits = [[(gantry_y_mean+.220, np.deg2rad(-45)), (self.gantry_y_limits[1], np.deg2rad(-45)), (self.gantry_y_limits[1], np.deg2rad(30)), (gantry_y_mean+.220, np.deg2rad(30))],
-                           [(gantry_y_mean+.270, np.deg2rad(80)), (self.gantry_y_limits[1], np.deg2rad(80)), (self.gantry_y_limits[1], np.deg2rad(90)), (gantry_y_mean+.270, np.deg2rad(90))],
-                           [(gantry_y_mean-.270, np.deg2rad(-90)), (self.gantry_y_limits[0], np.deg2rad(-90)), (self.gantry_y_limits[0], np.deg2rad(-75)), (gantry_y_mean-.270, np.deg2rad(-75))]]
+        self.off_limits = [[(gantry_y_mean+.220, np.deg2rad(45)), (self.gantry_y_limits[1], np.deg2rad(45)), (self.gantry_y_limits[1], np.deg2rad(-30)), (gantry_y_mean+.220, np.deg2rad(-30))],
+                           [(gantry_y_mean+.270, np.deg2rad(-80)), (self.gantry_y_limits[1], np.deg2rad(-80)), (self.gantry_y_limits[1], np.deg2rad(-90)), (gantry_y_mean+.270, np.deg2rad(-90))],
+                           [(gantry_y_mean-.270, np.deg2rad(90)), (self.gantry_y_limits[0], np.deg2rad(90)), (self.gantry_y_limits[0], np.deg2rad(75)), (gantry_y_mean-.270, np.deg2rad(75))]]
         self.max_extend_dist = 1 # max radius to extend each node from
-        self.start_point = Point(start[1]/1000.0, start[2]) # [m, rad]
-        self.end_point = Point(end[1]/1000.0, end[2]) # [m, rad]
+        self.start_point = self.config_mm_to_point_m(start) # Point(start[1]/1000.0, start[2]) # [m, rad]
+        self.end_point = self.config_mm_to_point_m(end) # Point(end[1]/1000.0, end[2]) # [m, rad]
 
-    def check_collision(self, point):
+    def check_collision(self, point): # see whether a point is within a POLYGON
         in_collision = [] # create empty array to store collision results
         for zone in range(len(self.off_limits)): # go thorugh each off-limits zone # I KNOW THIS IS TERRIBLE PYTHON STYLE >_<
             poly = Polygon(self.off_limits[zone]) # create a polygon for that zone
+            x, y = poly.exterior.xy
+            ax.plot(x, y, color='#6699cc', alpha=0.7, linewidth=3, solid_capstyle='round', zorder=2)
             in_collision.append(point.within(poly)) # add to the list whether or not it collided
         if np.any(in_collision):
             return True
         else: 
             return False
 
+    def out_of_bounds(self, point): # see whether a point is within a REGION
+        test_point_y = point.x # first element
+        test_point_th = point.y # second element
+        if test_point_y >= self.gantry_y_max or test_point_y <= self.gantry_y_min \
+            or test_point_th >= self.gantry_th_max or test_point_th <= self.gantry_th_min:
+            return True
+        else:
+            return False
+
+    def config_mm_to_point_m(self, config): # converts a point in the form [x (mm), y (mm), th (rad)] to Point(y (m), th (rad))
+        return Point(config[1]/1000.0, config[2])
+
+    def end_point_valid(self): # if the end point isn't allowed, don't even bother
+        if not self.check_collision(self.end_point) and not self.out_of_bounds(self.end_point):
+            return True
+        else:
+            return False
+
     def check_ray_collision(self, line):
         in_collision = [] # create empty array to store collision results
+        self.check_collision(pt1_pt2.interpolate(ratio, normalized=True))
         for zone in range(len(self.off_limits)): # go thorugh each off-limits zone # I KNOW THIS IS TERRIBLE PYTHON STYLE >_<
             poly = Polygon(self.off_limits[zone]) # create a polygon for that zone
             in_collision.append(line.intersects(poly)) # add to the list whether or not it collided
@@ -56,6 +77,10 @@ class Probe_Motion_Planner:
     def plan_path(self):
         goal_reached = False # start by assuming you're not at the goal, DUH!
         visited_points = [self.start_point]
+        if do_plot:
+            x, y = self.start_point.xy
+            ax.scatter(x, y, c='m')
+            plt.pause(0.01)
         G = nx.Graph() # nx is a great way to represent graph connections
         q_new_index = 0
         G.add_node(q_new_index)
@@ -85,7 +110,8 @@ class Probe_Motion_Planner:
                     path_points = [visited_points[i] for i in path_sequence]
                     if len(path_points)>2:
                         shorter_path = self.shorten_path(path_points)
-                    shorter_path = path_points
+                    else:
+                        shorter_path = path_points
             if self.check_collision(q_new):
                 if do_plot:
                     ax.scatter(x, y, c='r')
@@ -117,6 +143,7 @@ class Probe_Motion_Planner:
                 sample_pt_array.append(pt1_pt2.interpolate(ratio, normalized=True))
             interp_pt1 = sample_pt_array[0] # extract sample point 1 coordinates
             interp_pt2 = sample_pt_array[1] # extract sample point 2 coordinates
+            print self.check_ray_collision(LineString([interp_pt1, interp_pt2]))
             if not self.check_ray_collision(LineString([interp_pt1, interp_pt2])):
                 first_edge = sample_edge[0]
                 second_edge = sample_edge[1]
