@@ -112,7 +112,7 @@ Visualization Manager:
       Marker Topic: /mine_marker
       Name: Mine
       Namespaces:
-        mine: true
+        {}
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -120,7 +120,8 @@ Visualization Manager:
       Marker Topic: /probe_contact_viz
       Name: probe_contact
       Namespaces:
-        {}
+        probe_contact_viz: true
+        probe_radius_viz: true
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -163,7 +164,7 @@ Visualization Manager:
   Value: true
   Views:
     Current:
-      Angle: -1.51499927
+      Angle: -1.56499946
       Class: rviz/TopDownOrtho
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
@@ -173,11 +174,11 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Scale: 0.509054601
+      Scale: 0.514648139
       Target Frame: <Fixed Frame>
       Value: TopDownOrtho (rviz)
-      X: 1768.27759
-      Y: -110.100967
+      X: 1267.35291
+      Y: -52.3070641
     Saved: ~
 Window Geometry:
   Displays:
@@ -195,5 +196,5 @@ Window Geometry:
   Views:
     collapsed: true
   Width: 921
-  X: 557
-  Y: 190
+  X: 951
+  Y: 144

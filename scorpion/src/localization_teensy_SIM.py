@@ -21,7 +21,7 @@ jetson_current_state = rospy.Subscriber('current_state', Int16, update_state)
 def updateLocation(loc, rot):
 
     if current_state == 2:
-        loc[0] += 1.5 # advance!
+        # loc[0] += 1.5 # advance!
         pass
 
 	# send transform

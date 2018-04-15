@@ -99,8 +99,8 @@ def update_lims(data):
     global x_lims
     global y_lims
     global cur_state
-    x_lims = [data.x_min, data.x_max]
-    y_lims = [data.y_min, data.y_max]
+    x_lims = [data.x_min+1.0, data.x_max-1.0]
+    y_lims = [data.y_min+1.0, data.y_max-1.0]
     cur_state = data.state
 
 
@@ -228,14 +228,7 @@ def main():
             print np.mean(filtered_collected)
             start_from = [cur_pos[0], np.mean(filtered_collected)]
 
-            # try:
-            #     (trans, rot) = listener.lookupTransform('sensor_head', 'md', rospy.Time(0))
-            # except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
-            #     trans = [0, 0]
-            #     continue
-
             # pass the batton to the probe
-
             x_offset = + math.sin(gantry_sweep_angle)*sensorhead_md_offset_loc[1] - math.cos(gantry_sweep_angle)*sensorhead_md_offset_loc[0]
             y_offset = - math.sin(gantry_sweep_angle)*sensorhead_md_offset_loc[0] - math.cos(gantry_sweep_angle)*sensorhead_md_offset_loc[1]
 
