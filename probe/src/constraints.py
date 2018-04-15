@@ -66,8 +66,8 @@ class Probe_Motion_Planner:
                 nearest_q_candidate_dist.append(q_rand.distance(visited_points[i])) # for every visited point, store the distance to the randomly sampled point
             q_near_index = np.argmin(nearest_q_candidate_dist) # choose the point with the lowest distance among those visited
             q_near = visited_points[q_near_index] # get the actual point (not index)
-            for i in range(len(visited_points)):
-                print visited_points[i].xy
+            # for i in range(len(visited_points)):
+            #     print visited_points[i].xy
             q_new, goal_reached = self.extend(q_near, q_rand, self.end_point, self.max_extend_dist)
             x, y = q_new.xy
             if not self.check_collision(q_new):
@@ -139,7 +139,7 @@ class Probe_Motion_Planner:
         return Point(y, th)
 
     def extend(self, current, next, goal, max_dist):
-        print current.x, current.y, next.x, next.y, goal.x, goal.y
+        # print current.x, current.y, next.x, next.y, goal.x, goal.y
         if current.distance(goal) <= max_dist: # if you're within striking distance of the goal config
             return goal, True
         else:

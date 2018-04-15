@@ -65,8 +65,6 @@ def probe_to_gantry_transform(loc,yaw):
 def generate_probe_plan(goal_trans, goal_rot):
     (current_trans, current_rot) = listener.lookupTransform('gantry', 'sensor_head', rospy.Time(0))
     current_rot_euler = tf.transformations.euler_from_quaternion(current_rot)[2]/180*math.pi
-    # print "ct", current_trans, "cr", current_rot_euler
-    # print "gt", goal_trans, "gr", goal_rot
     start_config = [current_trans[0], current_trans[1], current_rot_euler]
     end_config = [goal_trans[0], goal_trans[1], goal_rot]
     probe_motion_planner = Probe_Motion_Planner(start_config, end_config)
@@ -117,12 +115,12 @@ def update_probe_state(data):
     probe_current_state = data
 
 
-def update_gantry_yaw(desired_yaw, probe_sequence, approach_angle_count): #, index_diff):
-    # returns the desired yaw and probe sequence directly
-    # also increments the counter for the unique approach angle
-    #   which is used for debugging the max number of probes in a row
-    approach_angle_count += 1
-    return desired_yaw, approach_angle_count, probe_sequence
+# def update_gantry_yaw(desired_yaw, probe_sequence, approach_angle_count): #, index_diff):
+#     # returns the desired yaw and probe sequence directly
+#     # also increments the counter for the unique approach angle
+#     #   which is used for debugging the max number of probes in a row
+#     approach_angle_count += 1
+#     return desired_yaw, approach_angle_count, probe_sequence
 
 
 def update_probe_contact(data):
@@ -159,7 +157,6 @@ def main():
     gantry_width                    = rospy.get_param('gantry_width')
     num_contact_points              = rospy.get_param('num_contact_points')
     min_fit_error                   = rospy.get_param('min_fit_error')
-    max_probes_in_a_row             = rospy.get_param('max_probes_in_a_row')
 
 
     # Gantry Control Messages
