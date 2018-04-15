@@ -115,7 +115,7 @@ class Probe_Motion_Planner:
                     path_sequence = nx.shortest_path(G, source=0, target=q_new_index)
                     path_points = [visited_points[i] for i in path_sequence]
                     if not do_path_shortening:
-                        shorter_path = path_points
+                        shorter_path = self.merge_close_nodes(path_points)
                     shorter_path = self.shorten_path(path_points)
             if self.check_collision(q_new):
                 if do_plot:
@@ -127,7 +127,16 @@ class Probe_Motion_Planner:
                 pt2 = shorter_path[i+1]
                 ax.plot([pt1.x, pt2.x],[pt1.y, pt2.y], c='k')
             plt.show()
-        return shorter_path
+        return self.merge_close_nodes(shorter_path)
+
+    def merge_close_nodes(self, path):
+        eps = 0.01
+        for i in range(len(path)-1):
+            if path[i].distance(path[i+1])<eps:
+                del path[i]
+            print path[i].xy
+            raw_input()
+        return path
 
 
     def shorten_path(self, path, timeout=.5):
