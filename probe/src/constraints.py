@@ -12,7 +12,7 @@ import rospy
 # the gantry mean is along the vehicle center axis
 
 
-do_plot = True
+do_plot = False
 
 fig = plt.figure(1, figsize=(5,5), dpi=90)
 ax = fig.add_subplot(111)
@@ -30,8 +30,8 @@ class Probe_Motion_Planner:
                            [(gantry_y_mean+.270, np.deg2rad(80)), (self.gantry_y_limits[1], np.deg2rad(80)), (self.gantry_y_limits[1], np.deg2rad(90)), (gantry_y_mean+.270, np.deg2rad(90))],
                            [(gantry_y_mean-.270, np.deg2rad(-90)), (self.gantry_y_limits[0], np.deg2rad(-90)), (self.gantry_y_limits[0], np.deg2rad(-75)), (gantry_y_mean-.270, np.deg2rad(-75))]]
         self.max_extend_dist = 1 # max radius to extend each node from
-        self.start_point = Point(start[1]/1000.0, start[2])
-        self.end_point = Point(end[1]/1000.0, end[2])
+        self.start_point = Point(start[1]/1000.0, start[2]) # [m, rad]
+        self.end_point = Point(end[1]/1000.0, end[2]) # [m, rad]
 
     def check_collision(self, point):
         in_collision = [] # create empty array to store collision results
