@@ -112,7 +112,7 @@ Visualization Manager:
       Marker Topic: /mine_marker
       Name: Mine
       Namespaces:
-        {}
+        mine: true
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -120,8 +120,7 @@ Visualization Manager:
       Marker Topic: /probe_contact_viz
       Name: probe_contact
       Namespaces:
-        probe_contact_viz: true
-        probe_radius_viz: true
+        {}
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -129,7 +128,7 @@ Visualization Manager:
       Marker Topic: /md_detection
       Name: md_detection
       Namespaces:
-        md_detection: true
+        {}
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -196,5 +195,5 @@ Window Geometry:
   Views:
     collapsed: true
   Width: 921
-  X: 951
-  Y: 144
+  X: 546
+  Y: 181

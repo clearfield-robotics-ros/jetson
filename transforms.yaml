@@ -11,6 +11,8 @@ metal_detector_decay: 30
 ### Scorpion Model ###
 model_scorpion_offset_loc: [-450,-425,0]
 model_scorpion_offset_rot: [1.57079632679, 0, 1.57079632679]
+### Gantry Simulation ###
+sim_walking_speed: 1.5 # set to zero when testing!
 
 ### Gantry ###
 scorpion_gantry_offset_loc: [1200,-400,493] # y offset is half of width
