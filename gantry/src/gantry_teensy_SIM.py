@@ -61,7 +61,7 @@ def sweep():
     #normally we will check if they are out of origin
     #move them slowly back, before we start sweeping
     #for simplicity we will just zero them instantly
-    sensor_head[0] = 0;
+    # sensor_head[0] = 0;
     sensor_head[2] = 0;
     sensor_head[3] = 0;
     sensor_head[4] = 0;
