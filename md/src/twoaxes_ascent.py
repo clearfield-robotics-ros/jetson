@@ -41,6 +41,7 @@ def visualize_final_point(x,y,z,col):
     msg.color.b = col[2]
     marker_pub.publish(msg)
 
+lims_set = False
 found_something = False
 at_goal = False
 cur_sig = np.array([0.0, 0.0, 0.0])
@@ -76,7 +77,7 @@ def incoming_signal(data):
     # print data.point
 
     if data.point.z > 1200 and cur_state > 1:
-        jetson_desired_state.publish(3) # start pinpointing
+        jetson_desired_state.publish(3)  # start pinpointing
         found_something = True
 
     cur_sig[0] = data.point.x
@@ -96,12 +97,14 @@ def incoming_signal(data):
 
 
 def update_lims(data):
+    global lims_set
     global x_lims
     global y_lims
     global cur_state
     x_lims = [data.x_min+1.0, data.x_max-1.0]
     y_lims = [data.y_min+1.0, data.y_max-1.0]
     cur_state = data.state
+    lims_set = True
 
 
 # pubs & subs
@@ -158,6 +161,7 @@ def limit_val(val, lims):
 
 def main():
     global pub
+    global found_something
 
     global gantry_sweep_angle
     gantry_sweep_angle = rospy.get_param('gantry_sweep_angle')
@@ -170,11 +174,26 @@ def main():
     # y_lims = np.array([0, 1000])
     within = 0.01  # within 10% of max
 
+    reached_sweeping_pos = False
+
     r = rospy.Rate(100)  # 100 Hz
     while not rospy.is_shutdown():
 
         if not found_something:
-            pub.publish(sweep_msg)
+            # print "not found"
+            if not lims_set:
+                # print "no lims"
+                pass
+            elif not reached_sweeping_pos:
+                # print "go to sweep pos"
+                # TODO send to sweeping position, once
+                sweep_pos = [100, cur_sig[1]]
+                set_and_wait_for_goal(sweep_pos, collect=False)
+                # print "got to sweep pos"
+                reached_sweeping_pos = True
+            else:
+                # print "sweep cmd"
+                pub.publish(sweep_msg)
         else:
 
             # do x check
@@ -245,7 +264,9 @@ def main():
 
             jetson_desired_state.publish(4)
 
-            return
+            # reset for next cycle
+            found_something = False
+            reached_sweeping_pos = False
 
         r.sleep()
 
