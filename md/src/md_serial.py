@@ -44,7 +44,7 @@ def main():
     rospy.init_node('metal_detector_interface')
     pub = rospy.Publisher("md_signal", Int16, queue_size=10)
 
-    ser = serial.Serial('/dev/ttyUSB0', 9600, timeout=1)
+    ser = serial.Serial('/dev/serial/by-id/usb-FTDI_Chipi-X_FT1MGPU7-if00-port0', 9600, timeout=1)
     one_off_commands = 'tone spkr off\r'
     sent_one_off = False
     regular_commands = ''
