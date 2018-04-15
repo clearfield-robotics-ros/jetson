@@ -128,6 +128,8 @@ def main():
     gantry_send_msg = to_gantry_msg()
     gantry_cmd_pub = rospy.Publisher("/gantry_cmd", to_gantry_msg, queue_size=10)
 
+    gantry_sweep_angle = rospy.get_param('gantry_sweep_angle')
+    gantry_sweep_pos = rospy.get_param('gantry_sweep_pos')
 
     r = rospy.Rate(10)  # 10 Hz
     while not rospy.is_shutdown():
@@ -155,8 +157,22 @@ def main():
             print "Calibrating Gantry..."
             gantry_send_msg.state_desired = 1
             gantry_cmd_pub.publish(gantry_send_msg)
+            rospy.sleep(0.3) # give time for handshake
             while not gantry_current_status.calibration_flag: # while not finished
                 pass
+
+            print "sending to sweep position"
+            gantry_send_msg.state_desired        = 3
+            gantry_send_msg.x_desired            = gantry_sweep_pos[0]
+            gantry_send_msg.y_desired            = gantry_sweep_pos[1]
+            gantry_send_msg.yaw_desired          = gantry_sweep_angle
+            gantry_cmd_pub.publish(gantry_send_msg)
+            rospy.sleep(0.3) # give time for handshake
+            while not gantry_current_status.position_reached: # block while not finished
+                pass
+
+            gantry_send_msg.state_desired = 1 #return to idle
+            gantry_cmd_pub.publish(gantry_send_msg)
             print "...Gantry Calibrated"
 
             print "Calibrating Probes..."
@@ -165,6 +181,7 @@ def main():
             while not probe_current_state.init: # while not finished
                 pass
             print "...Probes Calibrated"
+
 
             current_state = 0 # return to idle state
 

@@ -2,34 +2,37 @@
 <launch>
 
 <param name ="/use_sim_time" value="false"/>
-
 <rosparam command="load" file="$(find scorpion)/../transforms.yaml" />
 
+<!-- GUI -->
 <include file="$(find minebot_gui)/minebot_gui.launch"/>
 
+<!-- SCORPION -->
 <node name="scorpion" pkg="scorpion" type="scorpion.py" output="screen"></node>
 <node name="localization_teensy_SIM" pkg="scorpion" type="localization_teensy_SIM.py" output="screen"></node>
 <node name="braking_teensy_SIM" pkg="scorpion" type="braking_teensy_SIM.py" output="screen"></node>
 
+<!-- GANTRY -->
 <node name="gantry_planner" pkg="gantry" type="gantry_planner.py"></node>
 <node name="gantry_tf" pkg="gantry" type="gantry_tf.py"></node>
-<!-- <node name="gantry_teensy_SIM" pkg="gantry" type="gantry_teensy_SIM.py" output="screen"></node> -->
-<include file="$(find gantry)/launch/gantry_teensy.launch"/> 
+<include file="$(find gantry)/launch/gantry_teensy.launch"/>
 
+<!-- METAL DETECTOR -->
 <node name="md_acquisition_SIM" pkg="md" type="acquisition_SIM.py"></node>
-<node name="mine_SIM" pkg="scorpion" type="mine_SIM.py" output="screen"></node>
-<node name="md_serial" pkg="md" type="md_serial.py"></node>
 <node name="twoaxes_ascent" pkg="md" type="twoaxes_ascent.py" output="screen"></node>
+<node name="md_serial" pkg="md" type="md_serial.py"></node>
 
+<!-- PROBE -->
 <node name="probe_planner" pkg="probe" type="probe_planner.py" output="screen"></node>
 <node name="probe_tip_tf" pkg="probe" type="probe_tip_tf.py"></node>
-<!-- <node name="probe_teensy_SIM" pkg="probe" type="probe_teensy_SIM.py" output="screen"></node> -->
 <!-- <node ns="probe_teensy" name="probe_teensy" pkg="rosserial_python" args="/dev/serial/by-id/usb-Teensyduino_USB_Serial_3652290-if00" type="serial_node.py" /> -->
 <node ns="probe_teensy" name="probe_teensy" pkg="rosserial_python" type="serial_node.py">
 	<param name="port" value="/dev/serial/by-id/usb-Teensyduino_USB_Serial_3652290-if00"/>
  	<param name="baud" value="115200"/>
 </node>
 
-<node name="rviz" pkg="rviz" type="rviz" args="-d $(find gantry)/../launch/sve_sim_jetson.rviz"/>/>
+<!-- VISUALIZATION -->
+<node name="rviz" pkg="rviz" type="rviz" args="-d $(find gantry)/../launch/rviz/sve_sim.rviz"/>/>
+<!-- <node name="rviz" pkg="rviz" type="rviz" args="-d $(find gantry)/../launch/rviz/sve_sim_jetson.rviz"/>/> -->
 
 </launch>

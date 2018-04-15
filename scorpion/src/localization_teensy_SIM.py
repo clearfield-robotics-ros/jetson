@@ -21,7 +21,7 @@ jetson_current_state = rospy.Subscriber('current_state', Int16, update_state)
 def updateLocation(loc, rot):
 
     if current_state == 2:
-        loc[0] += 1.5 # advance!
+        loc[0] += sim_walking_speed # advance!
         pass
 
 	# send transform
@@ -36,6 +36,9 @@ def updateLocation(loc, rot):
 def main():
 
     rospy.init_node('localization_sim')
+
+    global sim_walking_speed
+    sim_walking_speed = rospy.get_param('sim_walking_speed')
 
     global br
     br = tf.TransformBroadcaster()
