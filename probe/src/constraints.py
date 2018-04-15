@@ -12,7 +12,7 @@ import rospy
 # the gantry mean is along the vehicle center axis
 
 
-do_plot = True
+do_plot = False
 
 fig = plt.figure(1, figsize=(5,5), dpi=90)
 ax = fig.add_subplot(111)
@@ -64,17 +64,25 @@ class Probe_Motion_Planner:
             return False
 
     def check_ray_collision(self, line):
-        in_collision = [] # create empty array to store collision results
-        self.check_collision(pt1_pt2.interpolate(ratio, normalized=True))
-        for zone in range(len(self.off_limits)): # go thorugh each off-limits zone # I KNOW THIS IS TERRIBLE PYTHON STYLE >_<
-            poly = Polygon(self.off_limits[zone]) # create a polygon for that zone
-            in_collision.append(line.intersects(poly)) # add to the list whether or not it collided
+        # in_collision = [] # create empty array to store collision results
+        # # print "here"
+        # for ratio in np.arange(0, 1, 0.05):
+        #     point_to_check = line.interpolate(ratio, normalized=True)
+        #     in_collision.append(self.check_collision(point_to_check))
+            # if do_plot:
+                # ax.scatter(point_to_check.x, point_to_check.y, c='r')
+                # plt.pause(0.01)
+        # in_collision = [self.check_collision(line.interpolate(ratio, normalized=True)) for ratio in np.arange(0, 1, 0.2)]
+        in_collision = [self.check_collision(line.interpolate(dist, normalized=True)) for dist in np.arange(0, 1, 0.1)]
+        # print in_collision
         if np.any(in_collision):
             return True
         else: 
             return False
 
     def plan_path(self):
+        if not self.check_ray_collision(LineString([self.start_point, self.end_point])): # if a straight line doesn't result in a collision
+            return [self.start_point, self.end_point] # just give the straight line
         goal_reached = False # start by assuming you're not at the goal, DUH!
         visited_points = [self.start_point]
         if do_plot:
@@ -95,7 +103,8 @@ class Probe_Motion_Planner:
             #     print visited_points[i].xy
             q_new, goal_reached = self.extend(q_near, q_rand, self.end_point, self.max_extend_dist)
             x, y = q_new.xy
-            if not self.check_collision(q_new):
+            # if not self.check_collision(q_new):
+            if not self.check_ray_collision(LineString([q_near, q_new])):
                 q_new_index += 1
                 if do_plot:
                     ax.scatter(x, y, c='k')
@@ -125,7 +134,7 @@ class Probe_Motion_Planner:
         return shorter_path
 
 
-    def shorten_path(self, path, timeout=0.1):
+    def shorten_path(self, path, timeout=.5):
                 
         start_time = time.time() # mark current time
         num_sample_edges = 2
@@ -139,11 +148,14 @@ class Probe_Motion_Planner:
                 ratio = np.random.random_sample() # sample in [0,1)
                 pt1 = path[sample_edge[edge]] # first vertex of a given edge
                 pt2 = path[sample_edge[edge]+1] # second vertex of a given edge
+                if do_plot:
+                    ax.scatter(pt1.x, pt1.y, c='y')
+                    ax.scatter(pt2.x, pt2.y, c='r')
                 pt1_pt2 = LineString([pt1, pt2]) # line joining two
                 sample_pt_array.append(pt1_pt2.interpolate(ratio, normalized=True))
             interp_pt1 = sample_pt_array[0] # extract sample point 1 coordinates
             interp_pt2 = sample_pt_array[1] # extract sample point 2 coordinates
-            print self.check_ray_collision(LineString([interp_pt1, interp_pt2]))
+            # print self.check_ray_collision(LineString([interp_pt1, interp_pt2]))
             if not self.check_ray_collision(LineString([interp_pt1, interp_pt2])):
                 first_edge = sample_edge[0]
                 second_edge = sample_edge[1]
@@ -157,6 +169,7 @@ class Probe_Motion_Planner:
                 path = [x for i,x in enumerate(path) if i not in rows_to_delete]
                 path.insert(np.min(rows_to_delete),new_pair[0]) # replace with shortened path rows
                 path.insert(np.min(rows_to_delete)+1,new_pair[1])
+
         return path
 
 
