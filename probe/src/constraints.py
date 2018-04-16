@@ -13,10 +13,13 @@ import rospy
 
 
 do_plot = True
-do_path_shortening = False
+do_path_shortening = True
 
-fig = plt.figure(1, figsize=(5,5), dpi=90)
+fig = plt.figure(1, figsize=(14, 11), dpi=90)
 ax = fig.add_subplot(111)
+ax.set_xlabel('Gantry Y position (m)')
+ax.set_ylabel('Yaw angle (rad)')
+ax.set_title('RRT Planner for Gantry Pos')
 
 class Probe_Motion_Planner:
     def __init__(self, start, end):
@@ -114,9 +117,11 @@ class Probe_Motion_Planner:
                         ax.scatter(x, y, c='g')
                     path_sequence = nx.shortest_path(G, source=0, target=q_new_index)
                     path_points = [visited_points[i] for i in path_sequence]
+                    shorter_path = []
                     if not do_path_shortening:
-                        shorter_path = self.merge_close_nodes(path_points)
-                    shorter_path = self.shorten_path(path_points)
+                        shorter_path = path_points
+                    else:
+                        shorter_path = self.shorten_path(path_points)
             if self.check_collision(q_new):
                 if do_plot:
                     ax.scatter(x, y, c='r')
@@ -126,16 +131,21 @@ class Probe_Motion_Planner:
                 pt1 = shorter_path[i]
                 pt2 = shorter_path[i+1]
                 ax.plot([pt1.x, pt2.x],[pt1.y, pt2.y], c='k')
+                plt.pause(0.01)
             plt.show()
-        return self.merge_close_nodes(shorter_path)
+        return shorter_path
+        # return self.merge_close_nodes(shorter_path)
 
     def merge_close_nodes(self, path):
-        eps = 0.01
+        eps = 0.1
+        print len(path)
         for i in range(len(path)-1):
+            print i
+            print [path[i].xy for i in path]
             if path[i].distance(path[i+1])<eps:
                 del path[i]
+        for i in range(len(path)-1):    
             print path[i].xy
-            raw_input()
         return path
 
 
