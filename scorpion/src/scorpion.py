@@ -111,6 +111,7 @@ def main():
     global model_scorpion_offset_loc, model_scorpion_offset_rot
     model_scorpion_offset_loc = rospy.get_param('model_scorpion_offset_loc')
     model_scorpion_offset_rot = rospy.get_param('model_scorpion_offset_rot')
+    calibrate_probe = rospy.get_param('calibrate_probe')
 
     # States
     global current_state
@@ -157,55 +158,20 @@ def main():
             print "Calibrating Gantry..."
             gantry_send_msg.state_desired = 1
             gantry_cmd_pub.publish(gantry_send_msg)
-            rospy.sleep(0.3) # give time for handshake
+            rospy.sleep(0.5) # give time for handshake
             while not gantry_current_status.calibration_flag: # while not finished
                 pass
-
-            print "sending to sweep position"
-            gantry_send_msg.state_desired        = 3
-            gantry_send_msg.x_desired            = gantry_sweep_pos[0]
-            gantry_send_msg.y_desired            = gantry_sweep_pos[1]
-            gantry_send_msg.yaw_desired          = gantry_sweep_angle
-            gantry_cmd_pub.publish(gantry_send_msg)
-            rospy.sleep(0.3) # give time for handshake
-            while not gantry_current_status.position_reached: # block while not finished
-                pass
-
             gantry_send_msg.state_desired = 1 #return to idle
             gantry_cmd_pub.publish(gantry_send_msg)
             print "...Gantry Calibrated"
 
-            print "Calibrating Probes..."
-
-            # print "sending to probe calib position"
-            # gantry_send_msg.state_desired        = 3
-            # gantry_send_msg.x_desired            = gantry_sweep_pos[0]
-            # gantry_send_msg.y_desired            = gantry_sweep_pos[1]
-            # gantry_send_msg.yaw_desired          = 0
-            # gantry_cmd_pub.publish(gantry_send_msg)
-            # rospy.sleep(0.3) # give time for handshake
-            # while not gantry_current_status.position_reached: # block while not finished
-            #     pass
-
-            # raw_input("\nPress Enter to continue...\n")
-
-            probe_cmd_pub.publish(3) # start calibration
-            rospy.sleep(0.5) # give time for handshake
-            while not probe_current_state.init and not probe_current_state.probe_complete: # while not finished
-                pass
-
-            # print "sending back to sweep position"
-            # gantry_send_msg.state_desired        = 3
-            # gantry_send_msg.x_desired            = gantry_sweep_pos[0]
-            # gantry_send_msg.y_desired            = gantry_sweep_pos[1]
-            # gantry_send_msg.yaw_desired          = gantry_sweep_angle
-            # gantry_cmd_pub.publish(gantry_send_msg)
-            # rospy.sleep(0.3) # give time for handshake
-            # while not gantry_current_status.position_reached: # block while not finished
-            #     pass
-
-            print "...Probes Calibrated"
-
+            if calibrate_probe:
+                print "Calibrating Probes..."
+                probe_cmd_pub.publish(3) # start calibration
+                rospy.sleep(0.5) # give time for handshake
+                while not probe_current_state.init and not probe_current_state.probe_complete: # while not finished
+                    pass
+                print "...Probes Calibrated"
 
             current_state = 0 # return to idle state
 

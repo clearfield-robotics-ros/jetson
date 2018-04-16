@@ -133,22 +133,21 @@ def main():
     probe_limit_exceeded            = False
     prev_point_count                = 0
 
-
     # Gantry Control Messages
     global gantry_desired_state_pub
     gantry_desired_state_pub = rospy.Publisher("/cmd_from_probe", to_gantry_msg, queue_size=10)
-    sub2 = rospy.Subscriber("/gantry_current_status", gantry_status, update_gantry_state)
+    rospy.Subscriber("/gantry_current_status", gantry_status, update_gantry_state)
 
     # Probe Related Messages
     probe_cmd_pub = rospy.Publisher("/probe_teensy/probe_cmd_send", Int16, queue_size=10)
     desired_probe_tip = Point()
     gantry_yaw = 0
     probe_sequence = 0
-    sub3 = rospy.Subscriber("/probe_teensy/probe_status_reply", probe_data, update_probe_state)
-    sub4 = rospy.Subscriber("/probe_teensy/probe_contact_reply", probe_data, update_probe_contact)
+    rospy.Subscriber("/probe_teensy/probe_status_reply", probe_data, update_probe_state)
+    rospy.Subscriber("/probe_teensy/probe_contact_reply", probe_data, update_probe_contact)
 
     # Recieving Target from Metal Detector
-    sub = rospy.Subscriber("/set_probe_target", Point, set_target)
+    rospy.Subscriber("/set_probe_target", Point, set_target)
     null_target = Point()
     global target
     target = null_target

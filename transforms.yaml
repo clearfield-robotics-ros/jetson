@@ -25,11 +25,10 @@ gantry_x_max: 400 #mm
 gantry_y_max: 800 #mm
 
 ### Metal Detector ###
-# sensorhead_md_offset_loc: [140,373,-455] # y offset is half of width
 sensorhead_md_offset_loc: [110, 345, -455] #[140,373,-455] # y offset is half of width
 sensorhead_md_offset_rot: [0,0,1.5708] # y offset is half of width
 gantry_sweep_angle: -1.09956 # -63 degrees
-gantry_sweep_pos: [100, 400]
+gantry_sweep_x_pos: 50
 
 ### Probe ###
 sensorhead_probebase_offset_loc: [-289.51,0,-223.9]
@@ -39,6 +38,7 @@ probe_speed: 1.5 #mm/s
 probe_safety_factor: 1
 max_probe_distance: 300 #mm
 max_num_probes: 3
+calibrate_probe: False
 
 ### Probe Planner ###
 third_stage_probe_angle: 1.3962634016

@@ -160,6 +160,10 @@ def limit_val(val, lims):
         return val
 
 
+def update_gantry_state(data):
+    global gantry_state
+    gantry_state = data
+
 def main():
     global pub
     global found_something
@@ -169,6 +173,10 @@ def main():
     global sensorhead_md_offset_loc
     sensorhead_md_offset_loc = rospy.get_param('sensorhead_md_offset_loc')
     scorpion_gantry_offset_loc = rospy.get_param('scorpion_gantry_offset_loc')
+
+    global gantry_state
+    rospy.Subscriber("/gantry_current_status", gantry_status, update_gantry_state)
+    gantry_sweep_x_pos = rospy.get_param('gantry_sweep_x_pos')
 
     sweep_msg = Point(-1e6, 0, 0)
     # x_lims = np.array([0, 1000])
@@ -187,8 +195,11 @@ def main():
                 pass
             elif not reached_sweeping_pos:
                 # print "go to sweep pos"
+
                 # TODO send to sweeping position, once
-                sweep_pos = [100, cur_sig[1]]
+                # sweep_pos = [100, cur_sig[1]]
+                sweep_pos = [gantry_sweep_x_pos+gantry_state.x_min, gantry_state.y]
+
                 print lims_set
                 set_and_wait_for_goal(sweep_pos, collect=False)
                 # print "got to sweep pos"
