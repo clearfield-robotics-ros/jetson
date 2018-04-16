@@ -129,9 +129,6 @@ def main():
     gantry_send_msg = to_gantry_msg()
     gantry_cmd_pub = rospy.Publisher("/gantry_cmd", to_gantry_msg, queue_size=10)
 
-    gantry_sweep_angle = rospy.get_param('gantry_sweep_angle')
-    gantry_sweep_pos = rospy.get_param('gantry_sweep_pos')
-
     r = rospy.Rate(10)  # 10 Hz
     while not rospy.is_shutdown():
 

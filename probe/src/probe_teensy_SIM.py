@@ -44,12 +44,12 @@ def probeCmdClbk(data):
 
 def probe_contact(data):
 
-    global found_object
     global finished_probing
     global contact_pub
 
+    global found_object
     found_object = True
-    
+
     if not finished_probing:
         probe_contact_reply = probe_data()
         probe_contact_reply.state            = probe_state

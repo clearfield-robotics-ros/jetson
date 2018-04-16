@@ -93,12 +93,26 @@ def update_probe_state(data):
     global probe_current_state
     probe_current_state = data
 
+    global contact_block_flag
+    if not data.probe_complete and data.contact_made and not contact_block_flag:
 
-def update_probe_contact(data):
-    if data.contact_made:
+        print "NEW CONTACT POINT!"
+
         (trans,rot) = listener.lookupTransform('/gantry', '/probe_tip', rospy.Time(0))
         global est
         est.add_point(trans[0], trans[1], trans[2])
+        contact_block_flag = True
+
+    elif data.probe_complete:
+        contact_block_flag = False
+
+
+def update_probe_contact(data):
+    pass
+    # if data.contact_made:
+    #     (trans,rot) = listener.lookupTransform('/gantry', '/probe_tip', rospy.Time(0))
+    #     global est
+    #     est.add_point(trans[0], trans[1], trans[2])
 
 
 def main():
@@ -134,6 +148,7 @@ def main():
     probe_limit_exceeded            = False
     prev_point_count                = 0
 
+
     # Gantry Control Messages
     global gantry_desired_state_pub
     gantry_desired_state_pub = rospy.Publisher("/cmd_from_probe", to_gantry_msg, queue_size=10)
@@ -146,6 +161,8 @@ def main():
     probe_sequence = 0
     rospy.Subscriber("/probe_teensy/probe_status_reply", probe_data, update_probe_state)
     rospy.Subscriber("/probe_teensy/probe_contact_reply", probe_data, update_probe_contact)
+    global contact_block_flag
+    contact_block_flag = False
 
     # Recieving Target from Metal Detector
     rospy.Subscriber("/set_probe_target", Point, set_target)
