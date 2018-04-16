@@ -95,9 +95,10 @@ def update_probe_state(data):
 
 
 def update_probe_contact(data):
-    (trans,rot) = listener.lookupTransform('/gantry', '/probe_tip', rospy.Time(0))
-    global est
-    est.add_point(trans[0], trans[1], trans[2])
+    if data.contact_made:
+        (trans,rot) = listener.lookupTransform('/gantry', '/probe_tip', rospy.Time(0))
+        global est
+        est.add_point(trans[0], trans[1], trans[2])
 
 
 def main():
@@ -307,23 +308,27 @@ def main():
                     prev_point_count = est.point_count()
                     probe_limit_exceeded = False
 
-            elif probe_plan_state == 3:
+            if probe_plan_state == 3:
+                while True:
+                    pass
 
-                if not est.point_count() == prev_point_count or probe_limit_exceeded:
-                    probe_sequence_prev = probe_sequence
-                    prev_point_count = est.point_count()
-                    probe_limit_exceeded = False
-
-                if (est.point_count() >= num_contact_points
-                    and est.get_error() <= min_fit_error):
-
-                    print est.print_results()
-
-                    ### TODO: Change State in Jetson
-
-                    target = null_target
-                    probe_plan_state = -1
-                    probe_sequence = 0 # reset
+            # elif probe_plan_state == 3:
+            #
+            #     if not est.point_count() == prev_point_count or probe_limit_exceeded:
+            #         probe_sequence_prev = probe_sequence
+            #         prev_point_count = est.point_count()
+            #         probe_limit_exceeded = False
+            #
+            #     if (est.point_count() >= num_contact_points
+            #         and est.get_error() <= min_fit_error):
+            #
+            #         print est.print_results()
+            #
+            #         ### TODO: Change State in Jetson
+            #
+            #         target = null_target
+            #         probe_plan_state = -1
+            #         probe_sequence = 0 # reset
 
         r.sleep()
 

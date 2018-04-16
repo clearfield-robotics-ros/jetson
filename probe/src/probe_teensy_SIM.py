@@ -48,6 +48,8 @@ def probe_contact(data):
     global finished_probing
     global contact_pub
 
+    found_object = True
+    
     if not finished_probing:
         probe_contact_reply = probe_data()
         probe_contact_reply.state            = probe_state
@@ -57,7 +59,6 @@ def probe_contact(data):
         probe_contact_reply.contact_made     = found_object
         contact_pub.publish(probe_contact_reply)
 
-    found_object = True
     finished_probing = True
 
 
