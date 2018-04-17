@@ -9,7 +9,9 @@ from shapely.geometry.polygon import Polygon
 import rospy
 
 do_plot = True
-do_path_shortening = False
+do_path_shortening = True
+
+np.random.seed(42)
 
 fig = plt.figure(1, figsize=(6, 6), dpi=90)
 ax = fig.add_subplot(111)
@@ -27,15 +29,22 @@ class Probe_Motion_Planner:
         self.gantry_y_max                    = rospy.get_param('gantry_y_max')/1000.0 # mm to m
         self.gantry_th_min                   = rospy.get_param('gantry_th_min') # (rad) CCW positive, 0 is probe facing forward
         self.gantry_th_max                   = rospy.get_param('gantry_th_max') # (rad)
+        self.gantry_ticks_per_mm             = rospy.get_param('gantry_ticks_per_mm') # (rad)
+
+        ticks_from_max = 1250
+        ticks_from_min = 1000
+
+        m_from_max = ticks_from_max/self.gantry_ticks_per_mm/1000.0
+        m_from_min = ticks_from_min/self.gantry_ticks_per_mm/1000.0
 
         gantry_y_mean = (self.gantry_y_min + self.gantry_y_max)/2
 
         # Obstacle definitions within gantry limits
-        self.off_limits = [[(gantry_y_mean+.220, np.deg2rad(45)), (self.gantry_y_max, np.deg2rad(45)), (self.gantry_y_max, np.deg2rad(-30)), (gantry_y_mean+.220, np.deg2rad(-30))],
-                           [(gantry_y_mean+.270, np.deg2rad(-80)), (self.gantry_y_max, np.deg2rad(-80)), (self.gantry_y_max, np.deg2rad(-90)), (gantry_y_mean+.270, np.deg2rad(-90))],
-                           [(gantry_y_mean-.270, np.deg2rad(90)), (self.gantry_y_min, np.deg2rad(90)), (self.gantry_y_min, np.deg2rad(75)), (gantry_y_mean-.270, np.deg2rad(75))]]
+        self.off_limits = [[(self.gantry_y_max-m_from_max, np.deg2rad(45)), (self.gantry_y_max, np.deg2rad(45)), (self.gantry_y_max, np.deg2rad(-22.5)), (self.gantry_y_max-m_from_max, np.deg2rad(-22.5))],
+                           [(self.gantry_y_max-m_from_max, np.deg2rad(-67.5)), (self.gantry_y_max, np.deg2rad(-67.5)), (self.gantry_y_max, np.deg2rad(-90)), (self.gantry_y_max-m_from_max, np.deg2rad(-90))],
+                           [(self.gantry_y_min+m_from_min, np.deg2rad(90)), (self.gantry_y_min, np.deg2rad(90)), (self.gantry_y_min, np.deg2rad(67.5)), (self.gantry_y_min+m_from_min, np.deg2rad(67.5))]]
 
-        self.max_extend_dist = 1 # max radius to extend each node
+        self.max_extend_dist = .5 # max radius to extend each node
 
         # Convert start and end points to local Point format
         self.start_point = self.config_mm_to_point_m(start)
@@ -55,7 +64,7 @@ class Probe_Motion_Planner:
             if do_plot:
                 x, y = poly.exterior.xy
                 ax.plot(x, y, color='#6699cc', alpha=0.7, linewidth=3, solid_capstyle='round', zorder=2)
-                plt.pause(0.01)
+                #plt.pause(0.01)
 
         test_point_y = point.x # create test points for boundary checking
         test_point_th = point.y
@@ -65,7 +74,7 @@ class Probe_Motion_Planner:
             in_collision.append(True)
             if do_plot:
                 ax.scatter(x, y, c='r')
-                plt.pause(0.01)
+                #plt.pause(0.01)
 
         if np.any(in_collision):
             return False # if it IS in collision with anything, it is NOT collision free
@@ -84,10 +93,10 @@ class Probe_Motion_Planner:
         in_collision = [] # create empty array to store collision results
         for zone in range(len(self.off_limits)): # go thorugh each off-limits zone # I KNOW THIS IS TERRIBLE PYTHON STYLE >_<
             poly = Polygon(self.off_limits[zone]) # create a polygon for that zone
-            if do_plot:
-                x, y = poly.exterior.xy
-                ax.plot(x, y, color='#6699cc', alpha=0.7, linewidth=3, solid_capstyle='round', zorder=2)
-                plt.pause(0.01)
+            # if do_plot:
+            #     x, y = poly.exterior.xy
+            #     ax.plot(x, y, color='#6699cc', alpha=0.7, linewidth=3, solid_capstyle='round', zorder=2)
+            #     #plt.pause(0.01)
             in_collision.append(line.intersects(poly)) # add to the list whether or not it collided
             # print in_collision
         if np.any(in_collision):
@@ -113,7 +122,8 @@ class Probe_Motion_Planner:
                 xe, ye = self.end_point.xy
                 ax.scatter(xs, ys, c='m')
                 ax.scatter(xe, ye, c='g')
-                plt.pause(0.01)
+                ax.plot([xs, xe], [ys, ye], c='k')
+                # #plt.pause(0.01)
                 plt.show()
             return [self.start_point, self.end_point]
 
@@ -125,34 +135,33 @@ class Probe_Motion_Planner:
         if do_plot:
             x, y = self.start_point.xy
             ax.scatter(x, y, c='m')
-            plt.pause(0.01)
+            #plt.pause(0.01)
         G = nx.Graph() # nx is a great way to represent graph connections
         q_new_index = 0
         G.add_node(q_new_index)
         while not goal_reached:
             q_rand = self.sample_random_point()
+
             nearest_q_candidate_dist = []
             for i in range(len(valid_visited_points)):
                 nearest_q_candidate_dist.append(q_rand.distance(valid_visited_points[i])) # for every valid visited point, store the distance to the randomly sampled point
             q_near_index = np.argmin(nearest_q_candidate_dist) # choose the point with the lowest distance among those visited
             q_near = valid_visited_points[q_near_index] # get the actual point (not index)
-            q_new, goal_reached = self.extend(q_near, q_rand, self.end_point, self.max_extend_dist)
-            if goal_reached and not self.line_collision_free(LineString([q_near, q_new])): # if to get to the goal you have to collide
-                goal_reached = False # forget about ever having gotten to the goal
-            x, y = q_new.xy
-            if self.line_collision_free(LineString([q_near, q_new])): # if the line joining the existing point and new candidate point is collision-free, add it to the tree
+            q_new, goal_reached, valid_point = self.extend(q_near, q_rand, self.end_point, self.max_extend_dist)
+            if valid_point:
+                x, y = q_new.xy
                 q_new_index += 1
                 if do_plot:
                     ax.scatter(x, y, c='k')
-                    plt.pause(0.01)
+                    #plt.pause(0.01)
                 valid_visited_points.append(q_new)
                 G.add_node(q_new_index)
                 G.add_edge(q_near_index, q_new_index)
-                if do_plot:
-                    ax.scatter(x, y, c='g')
                 if goal_reached:
                     path_sequence = nx.shortest_path(G, source=0, target=q_new_index) # find shortest path using nx utility
                     path_points = [valid_visited_points[i] for i in path_sequence]
+                    if do_plot:
+                        ax.scatter(x, y, c='g')
             else:
                 if do_plot:
                     ax.scatter(x, y, c='r')
@@ -163,11 +172,11 @@ class Probe_Motion_Planner:
                 pt1 = path_points[i]
                 pt2 = path_points[i+1]
                 ax.plot([pt1.x, pt2.x],[pt1.y, pt2.y], c='k')
-                plt.pause(0.01)
+                #plt.pause(0.01)
             plt.show()
         return path_points
 
-    def shorten_path(self, path, timeout=0.5):
+    def shorten_path(self, path, timeout=.5):
         start_time = time.time() # mark current time
         num_sample_edges = 2
         iteration = 0
@@ -224,19 +233,38 @@ class Probe_Motion_Planner:
         :return goal_reached: returns True if the next point is the goal, False otherwise
         """
 
-        if current.distance(goal) <= max_dist: # if you're within striking distance of the goal config
-            next_point = goal
-            goal_reached = True
+        if current.distance(goal) <= max_dist : # if you're within striking distance of the goal config
+            if self.line_collision_free(LineString([current, goal])): # if no collisions
+                next_point = goal
+                goal_reached = True
+                valid_point = True
+            else: 
+                next_point = current
+                goal_reached = False
+                valid_point = False
         else:
             if current.distance(next) <= max_dist: # if next node is right next to you
-                next_point = next
-                goal_reached = False
+                if self.line_collision_free(LineString([current, next])): # if no collisions
+                    next_point = next
+                    goal_reached = False
+                    valid_point = True
+                else:
+                    next_point = current
+                    goal_reached = False
+                    valid_point = False                    
             else: # if it's out of reach, interpolate as far as you can go
                 current_next = LineString([current, next]) # make a line joining two
-                next_point = current_next.interpolate(max_dist)
-                goal_reached = False
+                next_trial = current_next.interpolate(max_dist)
+                if self.line_collision_free(LineString([current, next_trial])): # if no collisions
+                    next_point = next_trial
+                    goal_reached = False
+                    valid_point = True  
+                else:
+                    next_point = current
+                    goal_reached = False
+                    valid_point = False  
 
-        return next_point, goal_reached
+        return next_point, goal_reached, valid_point
 
     def config_mm_to_point_m(self, config):
         """

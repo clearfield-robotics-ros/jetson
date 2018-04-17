@@ -50,3 +50,4 @@ gantry_y_min: 0
 gantry_y_max: 800
 gantry_th_min: -1.57079632679
 gantry_th_max: 1.57079632679
+gantry_ticks_per_mm: 5.61121
