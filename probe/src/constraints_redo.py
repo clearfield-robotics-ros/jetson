@@ -45,7 +45,7 @@ class Probe_Motion_Planner:
                            [(self.gantry_y_max-m_from_max, np.deg2rad(-67.5)), (self.gantry_y_max, np.deg2rad(-67.5)), (self.gantry_y_max, np.deg2rad(-90)), (self.gantry_y_max-m_from_max, np.deg2rad(-90))],
                            [(self.gantry_y_min+m_from_min, np.deg2rad(90)), (self.gantry_y_min, np.deg2rad(90)), (self.gantry_y_min, np.deg2rad(67.5)), (self.gantry_y_min+m_from_min, np.deg2rad(67.5))]]
 
-        self.max_extend_dist = .5 # max radius to extend each node
+        self.max_extend_dist = gantry_y_mean # max radius to extend each node
 
         # Convert start and end points to local Point format
         self.start_point = self.config_mm_to_point_m(start)
