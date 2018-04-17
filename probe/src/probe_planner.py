@@ -65,8 +65,8 @@ def probe_to_gantry_transform(loc,yaw):
 def generate_probe_plan(goal_trans, goal_rot):
     (current_trans, current_rot) = listener.lookupTransform('gantry', 'sensor_head', rospy.Time(0))
     current_rot_euler = tf.transformations.euler_from_quaternion(current_rot)[2]/180*math.pi
-    start_config = [current_trans[0], current_trans[1], -current_rot_euler]
-    end_config = [goal_trans[0], goal_trans[1], -goal_rot] # MINUS SIGN HERE!!!!!! <<<<<<<<
+    start_config = [current_trans[0], current_trans[1], current_rot_euler]
+    end_config = [goal_trans[0], goal_trans[1], goal_rot] # MINUS SIGN HERE!!!!!! <<<<<<<< ???
     probe_motion_planner = Probe_Motion_Planner(start_config, end_config)
     end_config_valid = probe_motion_planner.end_point_valid()
     if end_config_valid:
