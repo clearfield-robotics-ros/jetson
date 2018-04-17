@@ -8,8 +8,9 @@ from matplotlib import pyplot as plt
 from shapely.geometry.polygon import Polygon
 import rospy
 
-do_plot = True
+do_plot = False
 do_path_shortening = True
+do_merge_close_points = True
 
 np.random.seed(42)
 
@@ -67,7 +68,7 @@ class Probe_Motion_Planner:
             if do_plot:
                 x, y = poly.exterior.xy
                 ax.plot(x, y, color='#6699cc', alpha=0.7, linewidth=3, solid_capstyle='round', zorder=2)
-                #plt.pause(0.01)
+                # plt.pause(0.01)
 
         test_point_y = point.x # create test points for boundary checking
         test_point_th = point.y
@@ -77,7 +78,7 @@ class Probe_Motion_Planner:
             in_collision.append(True)
             if do_plot:
                 ax.scatter(x, y, c='r')
-                #plt.pause(0.01)
+                plt.pause(0.01)
 
         if np.any(in_collision):
             return False # if it IS in collision with anything, it is NOT collision free
@@ -126,7 +127,7 @@ class Probe_Motion_Planner:
                 ax.scatter(xs, ys, c='m')
                 ax.scatter(xe, ye, c='g')
                 ax.plot([xs, xe], [ys, ye], c='k')
-                # #plt.pause(0.01)
+                # plt.pause(0.01)
                 plt.show()
             return [self.start_point, self.end_point]
 
@@ -139,7 +140,7 @@ class Probe_Motion_Planner:
         if do_plot:
             x, y = self.start_point.xy
             ax.scatter(x, y, c='m')
-            #plt.pause(0.01)
+            plt.pause(0.01)
         G = nx.Graph() # nx is a great way to represent graph connections
         q_new_index = 0
         G.add_node(q_new_index)
@@ -164,7 +165,7 @@ class Probe_Motion_Planner:
                 print "qni", q_new_index
                 if do_plot:
                     ax.scatter(x, y, c='k')
-                    #plt.pause(0.01)
+                    plt.pause(0.01)
                 valid_visited_points.append(q_new)
                 G.add_node(q_new_index)
                 G.add_edge(q_near_index, q_new_index)
@@ -178,14 +179,29 @@ class Probe_Motion_Planner:
                     ax.scatter(x, y, c='r')
         if do_path_shortening:
             path_points = self.shorten_path(path_points)
+        if do_merge_close_points:
+            path_points = self.merge_close_points(path_points)
         if do_plot: # plot the path from start to end
             for i in range(len(path_points)-1):
                 pt1 = path_points[i]
                 pt2 = path_points[i+1]
                 ax.plot([pt1.x, pt2.x],[pt1.y, pt2.y], c='k')
-                #plt.pause(0.01)
+                plt.pause(0.01)
             plt.show()
         return path_points
+
+    def merge_close_points(self, path):
+        eps = 0.1
+        orig_path = path
+        distances = [orig_path[i].distance(orig_path[i+1]) for i in range(len(orig_path)-1)]
+        rows_to_delete = [i+1 for i, x in enumerate(distances) if distances[i]<eps]
+        print rows_to_delete[-1], len(orig_path)-1
+        if rows_to_delete[-1] == (len(orig_path)-1):
+            rows_to_delete[-1] = len(orig_path) - 2
+        final_path = [x for i,x in enumerate(orig_path) if i not in rows_to_delete]
+        for i in range(len(final_path)):    
+            print final_path[i].xy
+        return final_path        
 
     def shorten_path(self, path, timeout=.5):
         start_time = time.time() # mark current time
