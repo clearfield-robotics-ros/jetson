@@ -89,7 +89,7 @@ class Probe_Motion_Planner:
                 ax.plot(x, y, color='#6699cc', alpha=0.7, linewidth=3, solid_capstyle='round', zorder=2)
                 plt.pause(0.01)
             in_collision.append(line.intersects(poly)) # add to the list whether or not it collided
-
+            # print in_collision
         if np.any(in_collision):
             return False # if it IS in collision with anything, it is NOT collision free
         else: 
@@ -137,6 +137,8 @@ class Probe_Motion_Planner:
             q_near_index = np.argmin(nearest_q_candidate_dist) # choose the point with the lowest distance among those visited
             q_near = valid_visited_points[q_near_index] # get the actual point (not index)
             q_new, goal_reached = self.extend(q_near, q_rand, self.end_point, self.max_extend_dist)
+            if goal_reached and not self.line_collision_free(LineString([q_near, q_new])): # if to get to the goal you have to collide
+                goal_reached = False # forget about ever having gotten to the goal
             x, y = q_new.xy
             if self.line_collision_free(LineString([q_near, q_new])): # if the line joining the existing point and new candidate point is collision-free, add it to the tree
                 q_new_index += 1
@@ -146,16 +148,14 @@ class Probe_Motion_Planner:
                 valid_visited_points.append(q_new)
                 G.add_node(q_new_index)
                 G.add_edge(q_near_index, q_new_index)
+                if do_plot:
+                    ax.scatter(x, y, c='g')
                 if goal_reached:
-                    if do_plot:
-                        ax.scatter(x, y, c='g')
                     path_sequence = nx.shortest_path(G, source=0, target=q_new_index) # find shortest path using nx utility
                     path_points = [valid_visited_points[i] for i in path_sequence]
             else:
-                goal_reached = False
                 if do_plot:
                     ax.scatter(x, y, c='r')
-        print "here"
         if do_path_shortening:
             path_points = self.shorten_path(path_points)
         if do_plot: # plot the path from start to end
