@@ -180,7 +180,7 @@ class Mine_Estimator:
 
         self.error = dist/len(self.contact_points)
 
-        print "Fit Error:", self.error
+        print "Fit Error: %0.2f" % self.error
 
 
     def get_est(self):
