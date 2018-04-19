@@ -13,7 +13,7 @@ import rospy
 
 
 do_plot = True
-do_path_shortening = True
+do_path_shortening = False
 
 fig = plt.figure(1, figsize=(14, 11), dpi=90)
 ax = fig.add_subplot(111)
@@ -33,9 +33,11 @@ class Probe_Motion_Planner:
         self.off_limits = [[(gantry_y_mean+.220, np.deg2rad(45)), (self.gantry_y_limits[1], np.deg2rad(45)), (self.gantry_y_limits[1], np.deg2rad(-30)), (gantry_y_mean+.220, np.deg2rad(-30))],
                            [(gantry_y_mean+.270, np.deg2rad(-80)), (self.gantry_y_limits[1], np.deg2rad(-80)), (self.gantry_y_limits[1], np.deg2rad(-90)), (gantry_y_mean+.270, np.deg2rad(-90))],
                            [(gantry_y_mean-.270, np.deg2rad(90)), (self.gantry_y_limits[0], np.deg2rad(90)), (self.gantry_y_limits[0], np.deg2rad(75)), (gantry_y_mean-.270, np.deg2rad(75))]]
-        self.max_extend_dist = 1 # max radius to extend each node from
+        self.max_extend_dist = 0.4 # max radius to extend each node from
         self.start_point = self.config_mm_to_point_m(start) # Point(start[1]/1000.0, start[2]) # [m, rad]
         self.end_point = self.config_mm_to_point_m(end) # Point(end[1]/1000.0, end[2]) # [m, rad]
+        print "start point", self.start_point
+        print "end point", self.end_point
 
     def check_collision(self, point): # see whether a point is within a POLYGON
         in_collision = [] # create empty array to store collision results
@@ -44,6 +46,7 @@ class Probe_Motion_Planner:
             x, y = poly.exterior.xy
             ax.plot(x, y, color='#6699cc', alpha=0.7, linewidth=3, solid_capstyle='round', zorder=2)
             in_collision.append(point.within(poly)) # add to the list whether or not it collided
+        print "in collision point list", in_collision
         if np.any(in_collision):
             return True
         else: 
@@ -74,24 +77,33 @@ class Probe_Motion_Planner:
             if do_plot:
                 x, y = poly.exterior.xy
                 ax.plot(x, y, color='#6699cc', alpha=0.7, linewidth=3, solid_capstyle='round', zorder=2)
+                x1, y1 = line.xy
+                ax.plot([x1[0], x1[1]],[y1[0], y1[1]], c='k')
             in_collision.append(line.intersects(poly)) # add to the list whether or not it collided
+        print "in collision ray list", in_collision
         if np.any(in_collision):
             return True
         else: 
             return False
 
     def plan_path(self):
+
+        # if you can take the easy way out, and just join points with a straight line, do so
         if not self.check_ray_collision(LineString([self.start_point, self.end_point])): # if a straight line doesn't result in a collision
-            return [self.start_point, self.end_point] # just give the straight line
+            return [self.start_point, self.end_point] # just give the path as a straight line
+
+
         goal_reached = False # start by assuming you're not at the goal, DUH!
         visited_points = [self.start_point]
         if do_plot:
             x, y = self.start_point.xy
             ax.scatter(x, y, c='m')
-            plt.pause(0.01)
+            plt.pause(0.1)
         G = nx.Graph() # nx is a great way to represent graph connections
         q_new_index = 0
         G.add_node(q_new_index)
+        print "here1"
+        print "gr1", goal_reached
         while not goal_reached:
             q_rand = self.sample_random_point()
             nearest_q_candidate_dist = []
@@ -104,14 +116,19 @@ class Probe_Motion_Planner:
             q_new, goal_reached = self.extend(q_near, q_rand, self.end_point, self.max_extend_dist)
             x, y = q_new.xy
             # if not self.check_collision(q_new): # this prevents a point from being added which is in an obstacle
+            print "gr2", goal_reached
+            print "here2"
+            print "line col", self.check_ray_collision(LineString([q_near, q_new]))
             if not self.check_ray_collision(LineString([q_near, q_new])):
+                print "here3"
                 q_new_index += 1
                 if do_plot:
                     ax.scatter(x, y, c='k')
-                    plt.pause(0.01)
+                    plt.pause(0.1)
                 visited_points.append(q_new)
                 G.add_node(q_new_index)
                 G.add_edge(q_near_index, q_new_index)
+                print "here4"
                 if goal_reached:
                     if do_plot:
                         ax.scatter(x, y, c='g')
@@ -119,20 +136,25 @@ class Probe_Motion_Planner:
                     path_points = [visited_points[i] for i in path_sequence]
                     shorter_path = []
                     if not do_path_shortening:
+                        print "here5"
                         shorter_path = path_points
                     else:
+                        print "here6"
                         shorter_path = self.shorten_path(path_points)
             if self.check_collision(q_new):
                 if do_plot:
                     ax.scatter(x, y, c='r')
-                    plt.pause(0.01)
+                    plt.pause(0.1)
+        raw_input()
         if do_plot: # plot the path from start to end
             for i in range(len(shorter_path)-1):
                 pt1 = shorter_path[i]
                 pt2 = shorter_path[i+1]
                 ax.plot([pt1.x, pt2.x],[pt1.y, pt2.y], c='k')
-                plt.pause(0.01)
+                plt.pause(0.1)
             plt.show()
+        print "here7"
+        # raw_input()
         return shorter_path
         # return self.merge_close_nodes(shorter_path)
 

@@ -75,6 +75,22 @@ def generate_probe_plan(goal_trans, goal_rot):
     print plan_arrays
     return plan_arrays
 
+def calc_probe_angle_range(desired_probe_tip):
+    gantry_th_min                  = rospy.get_param('gantry_th_min')
+    gantry_th_max                  = rospy.get_param('gantry_th_max')
+    possible_probe_approach_angles = np.linspace(gantry_th_min, gantry_th_max, 19)
+
+    probe_motion_planner = Probe_Motion_Planner([0,0,0], [0,0,0]) # just instantiate with dummy points
+
+    collision_free_points = []
+    for angle in possible_probe_approach_angles:
+        trans = probe_to_gantry_transform(desired_probe_tip, angle)
+        point_to_check = shapely_Point(trans[1]/1000.0, angle) # Point takes (y[mm], th[rad])
+        collision_free_points.append(probe_motion_planner.point_collision_free(point_to_check))
+    print collision_free_points
+    raw_input()
+
+
 def move_gantry(desired_probe_tip, gantry_yaw):
 
     print "GANTRY YAW:", gantry_yaw*180/math.pi
