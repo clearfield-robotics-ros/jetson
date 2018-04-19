@@ -27,8 +27,8 @@ def main():
     # start_config = [100, 400, 0.84]
     # end_config = [100, 400, -0.84]
     start_time = time.time()
-    start_config = [100, 700, -.8]
-    end_config = [100, 700, 1.13]
+    start_config = [100, 780, 0.84]
+    end_config = [100, 400, 0]
     probe_motion_planner = Probe_Motion_Planner(start_config, end_config)
     # if end_config_valid:
     path = probe_motion_planner.plan_path()

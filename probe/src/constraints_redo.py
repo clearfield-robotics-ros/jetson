@@ -8,12 +8,14 @@ from matplotlib import pyplot as plt
 from shapely.geometry.polygon import Polygon
 import rospy
 
+# Script control flags
 do_plot = False
 do_path_shortening = True
 do_merge_close_points = True
 
 np.random.seed(42)
 
+# Plotting setup
 fig = plt.figure(1, figsize=(6, 6), dpi=90)
 ax = fig.add_subplot(111)
 ax.set_xlabel('Gantry Y position (m)')
@@ -110,6 +112,12 @@ class Probe_Motion_Planner:
 
 
     def plan_path(self):
+        """
+        Generates an obstacle-free path
+
+        :return: returns an array of shapely Point objects
+        """        
+
         # print "start end in coll", self.line_collision_free(LineString([self.start_point, self.end_point]))
         # first, check if the end point is valid
         # if it is NOT valid, return the path as just start point to start point (i.e. do nothing)
@@ -191,6 +199,12 @@ class Probe_Motion_Planner:
         return path_points
 
     def merge_close_points(self, path):
+        """
+        Merges points which are closer than the specified threshold eps
+
+        :param path: original array of shapely Point objects
+        :return: an array of shapely Point objects
+        """  
         eps = 0.1
         orig_path = path
         distances = [orig_path[i].distance(orig_path[i+1]) for i in range(len(orig_path)-1)]
@@ -204,6 +218,13 @@ class Probe_Motion_Planner:
         return final_path        
 
     def shorten_path(self, path, timeout=.5):
+        """
+        Shortens a path based on the existing nodes
+
+        :param path: original array of shapely Point objects
+        :param timeout: time [s] to spend shortening the path
+        :return: an array of shapely Point objects
+        """  
         start_time = time.time() # mark current time
         num_sample_edges = 2
         iteration = 0

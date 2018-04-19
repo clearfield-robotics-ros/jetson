@@ -64,18 +64,14 @@ def probe_to_gantry_transform(loc,yaw):
 
 def generate_probe_plan(goal_trans, goal_rot):
     (current_trans, current_rot) = listener.lookupTransform('gantry', 'sensor_head', rospy.Time(0))
-    current_rot_euler = tf.transformations.euler_from_quaternion(current_rot)[2]#/180*math.pi
+    current_rot_euler = tf.transformations.euler_from_quaternion(current_rot)[2]
     start_config = [current_trans[0], current_trans[1], current_rot_euler]
     end_config = [goal_trans[0], goal_trans[1], goal_rot]
     print "start config", start_config
     print "end config", end_config
     probe_motion_planner = Probe_Motion_Planner(start_config, end_config)
-    # end_config_valid = probe_motion_planner.end_point_valid()
-    # if end_config_valid:
     path = probe_motion_planner.plan_path()
     plan_arrays = [[step.x, step.y] for step in path] # reconfigure into an array of arrays
-    # else: 
-        # plan_arrays = []
     print plan_arrays
     return plan_arrays
 
@@ -87,22 +83,21 @@ def move_gantry(desired_probe_tip, gantry_yaw):
     # work out gantry carriage position
     trans = probe_to_gantry_transform(desired_probe_tip, gantry_yaw)
 
-    plan, valid_plan = generate_probe_plan(trans, gantry_yaw) # only receives goal
-    if valid_plan:
-        for i in range(len(plan)): # go through each step of plan
-            gantry_desired_state = to_gantry_msg()
-            gantry_desired_state.state_desired       = 3
-            gantry_desired_state.x_desired           = trans[0]
-            gantry_desired_state.y_desired           = plan[i][0] * 1000.0
-            gantry_desired_state.yaw_desired         = plan[i][1]
-            # gantry_desired_state.probe_angle_desired = 0
-            global gantry_desired_state_pub
-            gantry_desired_state_pub.publish(gantry_desired_state)
+    plan = generate_probe_plan(trans, gantry_yaw) # only receives goal
+    for i in range(len(plan)): # go through each step of plan
+        gantry_desired_state = to_gantry_msg()
+        gantry_desired_state.state_desired       = 3
+        gantry_desired_state.x_desired           = trans[0]
+        gantry_desired_state.y_desired           = plan[i][0] * 1000.0
+        gantry_desired_state.yaw_desired         = plan[i][1]
+        # gantry_desired_state.probe_angle_desired = 0
+        global gantry_desired_state_pub
+        gantry_desired_state_pub.publish(gantry_desired_state)
 
-            rospy.sleep(0.5) # give time for handshake
+        rospy.sleep(0.5) # give time for handshake
 
-            while not gantry_current_status.position_reached: # block while not finished
-                pass
+        while not gantry_current_status.position_reached: # block while not finished
+            pass
 
 def move_sensor_head(pos, yaw):
     print "GANTRY YAW:", yaw*180/math.pi
