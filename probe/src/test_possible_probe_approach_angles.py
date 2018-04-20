@@ -1,6 +1,11 @@
-from constraints_redo import Probe_Motion_Planner
-from shapely.geometry import Point as shapely_Point
+#!/usr/bin/env python
 
+from constraints_redo import Probe_Motion_Planner
+import numpy as np
+import shapely
+from shapely.geometry import Point as shapely_Point
+from geometry_msgs.msg import Point
+import math
 ##############################
 ### PARAMETERS FOR MINEBOT ###
 ##############################
@@ -42,6 +47,7 @@ probe_safety_factor = 1
 max_probe_distance = 300 #mm
 max_num_probes = 3
 calibrate_probe = False
+probe_angle = math.pi/6
 
 ### Probe Planner ###
 third_stage_probe_angle = 1.57079632679 #1.3962634016
@@ -84,7 +90,7 @@ def probe_to_gantry_transform(loc,yaw):
 
     H = Hprobe.dot(Hyaw).dot(Hoffset).dot(Hyrot).dot(Hd)
     trans = np.matmul(H,np.array([[0],[0],[0],[1]]))
-    print trans
+    # print trans
     return trans
 
 def calc_probe_angle_range(desired_probe_tip):
@@ -99,13 +105,33 @@ def calc_probe_angle_range(desired_probe_tip):
         trans = probe_to_gantry_transform(desired_probe_tip, angle)
         point_to_check = shapely_Point(trans[1]/1000.0, angle) # Point takes (y[mm], th[rad])
         collision_free_points.append(probe_motion_planner.point_collision_free(point_to_check))
-    print collision_free_points
+    tog = zip(possible_probe_approach_angles, collision_free_points)
+    allowable_angles = [x[0] for x in tog if x[1]==True]
+    return [allowable_angles[0], allowable_angles[-1]]
+
+def generate_probe_angle_sequence(index):
+    num_probe_angles = 5
+    angle_range = calc_probe_angle_range(get_desired_probe_tip(index))
+    proportions = [0.5, 0.0, 1.0, 0.25, 0.75]
+    angle_sequence = [p*(angle_range[1]-angle_range[0])+angle_range[0] for p in proportions]
+    return angle_sequence
 
 def get_desired_probe_tip(index):
-
+    tip_locations = [[439.26, 50.43, -593],
+                     [482.56, 400, -593],
+                     [482.56, 278.43, -593],
+                     [444.03, 349.14, -593],
+                     [449.90, 267.70, -593]]
+    new_point = Point()
+    new_point.x = tip_locations[index][0]
+    new_point.y = tip_locations[index][1]
+    new_point.z = tip_locations[index][2]
+    return new_point
 
 def main():
-	calc_probe_angle_range()
+    for i in range(4):
+        probe_angle_sequence = generate_probe_angle_sequence(i)
+        # raw_input()
 
 if __name__ == "__main__":
     main()
