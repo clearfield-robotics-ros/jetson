@@ -12,6 +12,14 @@ import math
 from copy import deepcopy
 
 
+### monitor current state ###
+jetson_current_state = 0 # if we don't get msgs
+def update_state(data):
+    global jetson_current_state
+    jetson_current_state = data.data
+rospy.Subscriber('current_state', Int16, update_state)
+
+
 marker_pub = rospy.Publisher('md_detection', Marker, queue_size=10)
 def visualize_final_point(x,y,z,col):
     # Visualize probe point
@@ -76,7 +84,9 @@ def incoming_signal(data):
     # print "updating pos"
     # print data.point
 
-    if data.point.z > 1200 and cur_state > 1:
+    # if data.point.z > 1200 and cur_state > 1:
+    if data.point.z > 1200 and jetson_current_state > 1:
+        # print "\nChange State to 3\n"
         jetson_desired_state.publish(3)  # start pinpointing
         found_something = True
 
@@ -177,6 +187,8 @@ def main():
     global gantry_state
     rospy.Subscriber("/gantry_current_status", gantry_status, update_gantry_state)
     gantry_sweep_x_pos = rospy.get_param('gantry_sweep_x_pos')
+    pinpointing_x_offset = rospy.get_param('pinpointing_x_offset')
+    pinpointing_y_offset = rospy.get_param('pinpointing_y_offset')
 
     sweep_msg = Point(-1e6, 0, 0)
     # x_lims = np.array([0, 1000])
@@ -258,7 +270,7 @@ def main():
             filtered_collected = [pos[1] for pos in collected if pos[2] > (1 - within) * max_sig[2]]
             # print filtered_collected
             print np.mean(filtered_collected), np.std(filtered_collected)
-            start_from = [cur_pos[0], np.mean(filtered_collected)]
+            start_from = [cur_pos[0]+pinpointing_x_offset, np.mean(filtered_collected)+pinpointing_y_offset]
 
             set_and_wait_for_goal(start_from, collect=False)
 
@@ -266,21 +278,14 @@ def main():
             x_offset = + math.sin(gantry_sweep_angle)*sensorhead_md_offset_loc[1] - math.cos(gantry_sweep_angle)*sensorhead_md_offset_loc[0]
             y_offset = - math.sin(gantry_sweep_angle)*sensorhead_md_offset_loc[0] - math.cos(gantry_sweep_angle)*sensorhead_md_offset_loc[1]
 
-            # msg = Point(max_sig[0] - x_offset,
-            #             max_sig[1] - y_offset,
-            #             max_sig[2])
-            msg = Point(cur_pos[0] - x_offset,
-                        np.mean(filtered_collected) - y_offset,
+            msg = Point(start_from[0] - x_offset,
+                        start_from[1] - y_offset,
                         max_sig[2])
             sendToProbe.publish(msg)
 
-            visualize_final_point(cur_pos[0] - x_offset,
-                                  np.mean(filtered_collected) - y_offset,
+            visualize_final_point(start_from[0] - x_offset,
+                                  start_from[1] - y_offset,
                                   -scorpion_gantry_offset_loc[2], [1,0,0])
-
-            # visualize_final_point(max_sig[0] - x_offset,
-            #                       max_sig[1] - y_offset,
-            #                       -scorpion_gantry_offset_loc[2], [1,0,0])
 
             raw_input("\nPress Enter to continue...\n")
 
