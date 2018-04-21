@@ -187,6 +187,7 @@ def main():
     global gantry_state
     rospy.Subscriber("/gantry_current_status", gantry_status, update_gantry_state)
     gantry_sweep_x_pos = rospy.get_param('gantry_sweep_x_pos')
+    gantry_sweep_y_pos = rospy.get_param('gantry_sweep_y_pos')
     pinpointing_x_offset = rospy.get_param('pinpointing_x_offset')
     pinpointing_y_offset = rospy.get_param('pinpointing_y_offset')
 
@@ -210,7 +211,7 @@ def main():
 
                 # TODO send to sweeping position, once
                 # sweep_pos = [100, cur_sig[1]]
-                sweep_pos = [gantry_sweep_x_pos+gantry_state.x_min, gantry_state.y]
+                sweep_pos = [gantry_sweep_x_pos+gantry_state.x_min, gantry_sweep_y_pos]
 
                 print lims_set
                 set_and_wait_for_goal(sweep_pos, collect=False)
