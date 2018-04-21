@@ -12,12 +12,6 @@ import math
 from copy import deepcopy
 
 
-### monitor current state ###
-jetson_current_state = 0 # if we don't get msgs
-def update_state(data):
-    global jetson_current_state
-    jetson_current_state = data.data
-rospy.Subscriber('current_state', Int16, update_state)
 
 
 marker_pub = rospy.Publisher('md_detection', Marker, queue_size=10)
@@ -52,6 +46,7 @@ def visualize_final_point(x,y,z,col):
 lims_set = False
 found_something = False
 at_goal = False
+goal_set = False
 cur_sig = np.array([0.0, 0.0, 0.0])
 goal = np.array([0.0, 0.0])
 collect_data = False
@@ -60,6 +55,19 @@ dist = 0
 x_lims = [0, 1000]
 y_lims = [0, 1000]
 cur_state = 0
+gantry_state = 0
+jetson_current_state = 0
+
+
+def update_gantry_state(data):
+    global gantry_state
+    gantry_state = data
+
+
+def update_state(data):
+    global jetson_current_state
+    jetson_current_state = data.data
+
 
 def rotate(vec, angle):
     """Rotate a vector `v` by the given angle, relative to the anchor point."""
@@ -100,9 +108,10 @@ def incoming_signal(data):
         data_collected = []
 
     if np.linalg.norm(cur_sig[:2] - goal) < 1.0:
-        at_goal = True
+        # at_goal = True
+        pass
     else:
-        at_goal = False
+        # at_goal = False
         dist = np.linalg.norm(cur_sig[:2] - goal)
 
 
@@ -111,11 +120,14 @@ def update_lims(data):
     global x_lims
     global y_lims
     global cur_state
+    global at_goal
     x_lims = [data.x_min+1.0, data.x_max-1.0]
     y_lims = [data.y_min+1.0, data.y_max-1.0]
     cur_state = data.state
     if data.calibration_flag:
         lims_set = True
+    if goal_set and (jetson_current_state == 2 or jetson_current_state == 3):
+        at_goal = data.position_reached
 
 
 # pubs & subs
@@ -126,6 +138,9 @@ sendToProbe = rospy.Publisher('/set_probe_target', Point, queue_size=10)
 sub = rospy.Subscriber('md_strong_signal', PointStamped, incoming_signal)
 
 sub2 = rospy.Subscriber('gantry_current_status', gantry_status, update_lims)
+sub3 = rospy.Subscriber('current_state', Int16, update_state)
+sub4 = rospy.Subscriber("/gantry_current_status", gantry_status, update_gantry_state)
+
 listener = tf.TransformListener()
 
 
@@ -136,9 +151,11 @@ def set_and_wait_for_goal(my_goal, collect):
     global collect_data
     global gantry_sweep_angle
     global sensorhead_md_offset_loc
+    global goal_set
 
     # print "setting!"
 
+    goal_set = True
     at_goal = False
     goal = my_goal
 
@@ -158,6 +175,7 @@ def set_and_wait_for_goal(my_goal, collect):
         # print "not as goal"
         r.sleep()
     else:
+        goal_set = False
         return deepcopy(data_collected)
 
 
@@ -170,10 +188,6 @@ def limit_val(val, lims):
         return val
 
 
-def update_gantry_state(data):
-    global gantry_state
-    gantry_state = data
-
 def main():
     global pub
     global found_something
@@ -184,8 +198,6 @@ def main():
     sensorhead_md_offset_loc = rospy.get_param('sensorhead_md_offset_loc')
     scorpion_gantry_offset_loc = rospy.get_param('scorpion_gantry_offset_loc')
 
-    global gantry_state
-    rospy.Subscriber("/gantry_current_status", gantry_status, update_gantry_state)
     gantry_sweep_x_pos = rospy.get_param('gantry_sweep_x_pos')
     gantry_sweep_y_pos = rospy.get_param('gantry_sweep_y_pos')
     pinpointing_x_offset = rospy.get_param('pinpointing_x_offset')
