@@ -28,7 +28,7 @@
 <!-- <node ns="probe_teensy" name="probe_teensy" pkg="rosserial_python" args="/dev/serial/by-id/usb-Teensyduino_USB_Serial_3652290-if00" type="serial_node.py" /> -->
 <node ns="probe_teensy" name="probe_teensy" pkg="rosserial_python" type="serial_node.py">
 	<param name="port" value="/dev/serial/by-id/usb-Teensyduino_USB_Serial_3652290-if00"/>
- 	<param name="baud" value="115200"/>
+ 	<param name="baud" value="9600"/>
 </node>
 
 <!-- VISUALIZATION -->
