@@ -325,9 +325,17 @@ def main():
                     prev_point_count = est.point_count()
                     probe_limit_exceeded = False
 
-            if probe_plan_state == 3:
-                while True:
-                    pass
+            if probe_plan_state == 3: # just exit here for now
+
+                print est.print_results()
+
+                # TODO move probe tip to mine location for marking
+
+                target = null_target
+                probe_plan_state = -1
+                probe_sequence = 0 # reset
+
+                # TODO: Change State in Jetson
 
             # elif probe_plan_state == 3:
             #
@@ -340,9 +348,6 @@ def main():
             #         and est.get_error() <= min_fit_error):
             #
             #         print est.print_results()
-            #
-            #         ### TODO: Change State in Jetson
-            #
             #         target = null_target
             #         probe_plan_state = -1
             #         probe_sequence = 0 # reset
