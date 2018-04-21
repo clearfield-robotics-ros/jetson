@@ -10,7 +10,7 @@ from gantry.msg import gantry_status
 import numpy as np
 import math
 from copy import deepcopy
-
+import time
 
 
 
@@ -223,6 +223,7 @@ def main():
 
                 # TODO send to sweeping position, once
                 # sweep_pos = [100, cur_sig[1]]
+                # sweep_pos = [gantry_sweep_x_pos+gantry_state.x_min, gantry_state.y]
                 sweep_pos = [gantry_sweep_x_pos+gantry_state.x_min, gantry_sweep_y_pos]
 
                 print lims_set
@@ -307,6 +308,7 @@ def main():
             # reset for next cycle
             found_something = False
             reached_sweeping_pos = False
+            time.sleep(2)
 
         r.sleep()
 
