@@ -29,6 +29,7 @@ sensorhead_md_offset_loc: [110, 345, -455] #[140,373,-455] # y offset is half of
 sensorhead_md_offset_rot: [0,0,1.5708] # y offset is half of width
 gantry_sweep_angle: -1.09956 # -63 degrees
 gantry_sweep_x_pos: 50
+gantry_sweep_y_pos: 250
 pinpointing_x_offset: 0
 pinpointing_y_offset: 0
 
