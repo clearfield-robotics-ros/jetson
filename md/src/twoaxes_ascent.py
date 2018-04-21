@@ -12,6 +12,14 @@ import math
 from copy import deepcopy
 
 
+### monitor current state ###
+jetson_current_state = 0 # if we don't get msgs
+def update_state(data):
+    global jetson_current_state
+    jetson_current_state = data.data
+rospy.Subscriber('current_state', Int16, update_state)
+
+
 marker_pub = rospy.Publisher('md_detection', Marker, queue_size=10)
 def visualize_final_point(x,y,z,col):
     # Visualize probe point
@@ -76,7 +84,9 @@ def incoming_signal(data):
     # print "updating pos"
     # print data.point
 
-    if data.point.z > 1200 and cur_state > 1:
+    # if data.point.z > 1200 and cur_state > 1:
+    if data.point.z > 1200 and jetson_current_state > 1:
+        # print "\nChange State to 3\n"
         jetson_desired_state.publish(3)  # start pinpointing
         found_something = True
 

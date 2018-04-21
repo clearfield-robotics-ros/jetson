@@ -107,14 +107,6 @@ def update_probe_state(data):
         contact_block_flag = False
 
 
-def update_probe_contact(data):
-    pass
-    # if data.contact_made:
-    #     (trans,rot) = listener.lookupTransform('/gantry', '/probe_tip', rospy.Time(0))
-    #     global est
-    #     est.add_point(trans[0], trans[1], trans[2])
-
-
 def main():
     rospy.init_node('probe_planner')
 
@@ -148,6 +140,8 @@ def main():
     probe_limit_exceeded            = False
     prev_point_count                = 0
 
+    # Jetson Messages
+    jetson_desired_state = rospy.Publisher('/desired_state', Int16, queue_size=10)
 
     # Gantry Control Messages
     global gantry_desired_state_pub
@@ -160,7 +154,6 @@ def main():
     gantry_yaw = 0
     probe_sequence = 0
     rospy.Subscriber("/probe_teensy/probe_status_reply", probe_data, update_probe_state)
-    rospy.Subscriber("/probe_teensy/probe_contact_reply", probe_data, update_probe_contact)
     global contact_block_flag
     contact_block_flag = False
 
@@ -329,13 +322,15 @@ def main():
 
                 print est.print_results()
 
+                raw_input("\nMove Probe Tip for Marking...\n")
+
                 # TODO move probe tip to mine location for marking
 
                 target = null_target
                 probe_plan_state = -1
                 probe_sequence = 0 # reset
 
-                # TODO: Change State in Jetson
+                jetson_desired_state.publish(0) # go back to idle state
 
             # elif probe_plan_state == 3:
             #
