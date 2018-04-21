@@ -33,7 +33,7 @@ pinpointing_x_offset: 0
 pinpointing_y_offset: 0
 
 ### Probe ###
-sensorhead_probebase_offset_loc: [-289.51,0,-223.9]
+sensorhead_probebase_offset_loc: [-190.72,0,-229.7]
 sensorhead_probebase_offset_rot: [0,0.523599,0]
 probe_length: 460 #mm
 probe_speed: 1.5 #mm/s
