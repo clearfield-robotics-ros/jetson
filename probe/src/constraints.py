@@ -36,6 +36,8 @@ class Probe_Motion_Planner:
         self.gantry_th_max                   = rospy.get_param('gantry_th_max') # (rad)
         self.gantry_ticks_per_mm             = rospy.get_param('gantry_ticks_per_mm') # (rad)
 
+        rospy.Subscriber("/gantry_current_status", gantry_status, update_gantry_state)
+
         ticks_from_max_y = 1250
         ticks_from_min_y = 1000
 
@@ -57,6 +59,12 @@ class Probe_Motion_Planner:
 
         print "start point in constraints", self.start_point
         print "end point in constraints", self.end_point
+
+    def update_gantry_state(data):
+        self.gantry_x_min                    = data.x_min/1000.0 # mm to m
+        self.gantry_x_max                    = data.x_max/1000.0 # mm to m
+        self.gantry_y_min                    = data.y_min/1000.0 # mm to m
+        self.gantry_y_max                    = data.y_max/1000.0 # mm to m
 
     def point_collision_free(self, point):
         """
