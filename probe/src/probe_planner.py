@@ -130,7 +130,7 @@ def update_gantry_state(data):
     global gantry_current_status
     gantry_current_status = data
     global gantry_limits
-    gantry_limits = [data.x_min, data.x_max, data.y_min, data.x_max]
+    gantry_limits = [data.x_min, data.x_max, data.y_min, data.y_max]
 
 
 def update_probe_state(data):

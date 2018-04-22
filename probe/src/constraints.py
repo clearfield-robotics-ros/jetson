@@ -34,6 +34,13 @@ class Probe_Motion_Planner:
         self.gantry_y_min                    = gantry_limits[2]/1000.0 # mm to m
         self.gantry_y_max                    = gantry_limits[3]/1000.0 # mm to m
 
+        # print self.gantry_x_min , self.gantry_x_max , self.gantry_y_min , self.gantry_y_max
+
+        # # self.gantry_x_min                    = rospy.get_param('gantry_x_min')/1000.0 # mm to m
+        # # self.gantry_x_max                    = rospy.get_param('gantry_x_max')/1000.0 # mm to m
+        # # self.gantry_y_min                    = rospy.get_param('gantry_y_min')/1000.0 # mm to m
+        # # self.gantry_y_max                    = rospy.get_param('gantry_y_max')/1000.0 # mm to m
+
         self.gantry_th_min                   = rospy.get_param('gantry_th_min') # (rad) CCW positive, 0 is probe facing forward
         self.gantry_th_max                   = rospy.get_param('gantry_th_max') # (rad)
         self.gantry_ticks_per_mm             = rospy.get_param('gantry_ticks_per_mm') # (rad)
