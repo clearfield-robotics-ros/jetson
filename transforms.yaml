@@ -4,7 +4,7 @@
 
 ### Landmine ###
 
-landmine_pos: [1800, -50, -100]
+landmine_pos: [1800, -50, -50]
 landmine_diameter: 100
 landmine_height: 50
 metal_detector_decay: 30
@@ -28,15 +28,15 @@ gantry_rot_speed: 1.5 # 1.5 #rad/s
 sensorhead_md_offset_loc: [110, 345, -455] #[140,373,-455] # y offset is half of width
 sensorhead_md_offset_rot: [0,0,1.5708] # y offset is half of width
 gantry_sweep_angle: -1.09956 # -63 degrees
-gantry_sweep_x_pos: 50
+gantry_sweep_x_pos: 1
 gantry_sweep_y_pos: 250
 pinpointing_x_offset: 0
 pinpointing_y_offset: 0
 
 ### Probe ###
-sensorhead_probebase_offset_loc: [-190.72,0,-229.7]
+sensorhead_probebase_offset_loc: [-191.72,0,-270.7]
 sensorhead_probebase_offset_rot: [0,0.523599,0]
-probe_length: 460 #mm
+probe_length: 345 #mm
 probe_speed: 1.5 #mm/s
 probe_safety_factor: 1
 max_probe_distance: 300 #mm

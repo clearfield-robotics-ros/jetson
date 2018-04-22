@@ -116,7 +116,7 @@ def main():
     # Transforms
     global listener
     listener = tf.TransformListener()
-
+    br = tf.TransformBroadcaster()
 
     # Parameters
     landmine_pos                    = rospy.get_param('landmine_pos')
@@ -201,6 +201,12 @@ def main():
                     desired_probe_tip.x = target.x - landmine_diameter/2*probe_safety_factor
                     desired_probe_tip.y = target.y
                     desired_probe_tip.z = -scorpion_gantry_offset_loc[2] + landmine_pos[2]
+
+                    br.sendTransform((desired_probe_tip.x,desired_probe_tip.y,desired_probe_tip.z),
+                        tf.transformations.quaternion_from_euler(0,0,0),
+                        rospy.Time.now(),
+                        "target",
+                        "gantry")
 
                     move_gantry(desired_probe_tip, gantry_yaw)
 
