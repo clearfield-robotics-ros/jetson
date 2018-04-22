@@ -100,7 +100,7 @@ def update_probe_state(data):
 
         (trans,rot) = listener.lookupTransform('/gantry', '/probe_tip', rospy.Time(0))
         global est
-        est.add_point(trans[0], trans[1], trans[2])
+        est_mine_list[-1].add_point(trans[0], trans[1], trans[2])
         contact_block_flag = True
 
     elif data.probe_complete:
@@ -164,8 +164,10 @@ def main():
     global target
     target = null_target
 
-    global est
-    est = Mine_Estimator(landmine_diameter, landmine_height)
+    # mine estimator object
+    global est_mine_list
+    est_mine_list = []
+    est_mine_list.append(Mine_Estimator(landmine_diameter, landmine_height))
 
     # DEBUG
     # N = 4
@@ -174,10 +176,10 @@ def main():
     #     x = -landmine_diameter/2*math.sin( (100 + 120/(N-1)*i) * math.pi/180)+250
     #     y = landmine_diameter/2*math.cos( (100 + 120/(N-1)*i) * math.pi/180)
     #
-    #     est.add_point(x,y,0)
+    #     est_mine_list[-1].add_point(x,y,0)
     #
     # rospy.sleep(0.5) # Sleeps for 1 sec
-    # p = est.get_sparsest_point()
+    # p = est_mine_list[-1].get_sparsest_point()
     #
     # pdb.set_trace()
 
@@ -280,7 +282,7 @@ def main():
 
                 if probe_sequence == probe_sequence_prev:
 
-                    p = est.get_sparsest_point()
+                    p = est_mine_list[-1].get_sparsest_point()
 
                     desired_probe_tip.x = p[0] - math.cos(gantry_yaw)*landmine_diameter/2*probe_safety_factor
                     desired_probe_tip.y = p[1] - math.sin(gantry_yaw)*landmine_diameter/2*probe_safety_factor
@@ -317,43 +319,50 @@ def main():
             '''
             Advance States
             '''
-            # if probe_plan_state < 3:
-            #
-            #     if est.point_count() > prev_point_count or probe_limit_exceeded:
-            #         probe_plan_state += 1 # advance
-            #         probe_sequence_prev = probe_sequence
-            #         prev_point_count = est.point_count()
-            #         probe_limit_exceeded = False
+            if probe_plan_state < 3:
 
-            # if probe_plan_state == 3: # just exit here for now
+                if est_mine_list[-1].point_count() > prev_point_count or probe_limit_exceeded:
+                    probe_plan_state += 1 # advance
+                    probe_sequence_prev = probe_sequence
+                    prev_point_count = est_mine_list[-1].point_count()
+                    probe_limit_exceeded = False
 
-            print est.print_results()
+            if probe_plan_state == 3: # just exit here for now
 
-            raw_input("\nMove Probe Tip for Marking...\n")
+                print est_mine_list[-1].print_results()
 
-            # TODO move probe tip to mine location for marking
+                raw_input("\nMove Probe Tip for Marking...\n")
 
-            target = null_target
-            probe_plan_state = -1
-            probe_sequence = 0 # reset
+                # TODO move probe tip to mine location for marking
 
-            jetson_desired_state.publish(0) # go back to idle state
-            jetson_desired_mine.publish(0) # increment mine count
+                # Reset everyhting before we go go to the next mine
+                target = null_target
+                probe_plan_state = -1
+                probe_sequence = 0
+                prev_point_count = 0
+                jetson_desired_state.publish(0) # go back to idle state
+                jetson_desired_mine.publish(0) # increment mine count
+                est_mine_list.append(Mine_Estimator(landmine_diameter, landmine_height))
+
 
             # elif probe_plan_state == 3:
             #
-            #     if not est.point_count() == prev_point_count or probe_limit_exceeded:
+            #     if not est_mine_list[-1].point_count() == prev_point_count or probe_limit_exceeded:
             #         probe_sequence_prev = probe_sequence
-            #         prev_point_count = est.point_count()
+            #         prev_point_count = est_mine_list[-1].point_count()
             #         probe_limit_exceeded = False
             #
-            #     if (est.point_count() >= num_contact_points
-            #         and est.get_error() <= min_fit_error):
+            #     if (est_mine_list[-1].point_count() >= num_contact_points
+            #         and est_mine_list[-1].get_error() <= min_fit_error):
             #
-            #         print est.print_results()
-            #         target = null_target
-            #         probe_plan_state = -1
-            #         probe_sequence = 0 # reset
+            #         print est_mine_list[-1].print_results()
+                    # target = null_target
+                    # probe_plan_state = -1
+                    # probe_sequence = 0 # reset
+                    # jetson_desired_state.publish(0) # go back to idle state
+                    # jetson_desired_mine.publish(0) # increment mine count
+                    # est_mine_list.append(Mine_Estimator(landmine_diameter, landmine_height)) # looking for new mine now!
+
 
         r.sleep()
 

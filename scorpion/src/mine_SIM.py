@@ -81,10 +81,11 @@ class CylinderMineExp:
 
         return z_bounds and radius_bounds
 
+
 def update_mine(data):
     global mine_index
     mine_index = data.data
-    print "mine_index", mine_index
+
 
 def main():
     rospy.init_node('mine_sim')
@@ -119,8 +120,7 @@ def main():
 
             ret = mine_list[mine_index].query(t[0],t[1])
             pub.publish(Int16(ret))
-
-        except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
+        except:
             continue
 
         ### Get Probe Contact Points
@@ -130,8 +130,7 @@ def main():
             if mine_list[mine_index].query_probe(t[0],t[1],t[2]):
                 p = Point(t[0],t[1],t[2])
                 pub2.publish(p)
-
-        except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
+        except:
             continue
 
         r.sleep()

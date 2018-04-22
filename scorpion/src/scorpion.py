@@ -150,7 +150,6 @@ def main():
         jetson_current_state.publish(current_state) # broadcast our state
         jetson_current_mine.publish(current_mine) # broadcast which mine we're after
 
-
         try:
             (loc,rot) = listener.lookupTransform('/odom', '/base_link', rospy.Time(0))
             updateLocation(loc,rot)
