@@ -7,6 +7,7 @@ import networkx as nx
 from matplotlib import pyplot as plt
 from shapely.geometry.polygon import Polygon
 import rospy
+from gantry.msg import gantry_status;
 
 # Script control flags
 do_plot = False
@@ -36,22 +37,15 @@ class Probe_Motion_Planner:
         self.gantry_th_max                   = rospy.get_param('gantry_th_max') # (rad)
         self.gantry_ticks_per_mm             = rospy.get_param('gantry_ticks_per_mm') # (rad)
 
-        rospy.Subscriber("/gantry_current_status", gantry_status, update_gantry_state)
+        rospy.Subscriber("/gantry_current_status", gantry_status, self.update_gantry_state)
 
         ticks_from_max_y = 1250
         ticks_from_min_y = 1000
 
-        m_from_max = ticks_from_max_y/self.gantry_ticks_per_mm/1000.0
-        m_from_min = ticks_from_min_y/self.gantry_ticks_per_mm/1000.0
+        self.m_from_max = ticks_from_max_y/self.gantry_ticks_per_mm/1000.0
+        self.m_from_min = ticks_from_min_y/self.gantry_ticks_per_mm/1000.0
+        self.update_gantry_state()
 
-        gantry_y_mean = (self.gantry_y_min + self.gantry_y_max)/2
-
-        # Obstacle definitions within gantry limits
-        self.off_limits = [[(self.gantry_y_max-m_from_max, np.deg2rad(45)), (self.gantry_y_max, np.deg2rad(45)), (self.gantry_y_max, np.deg2rad(-22.5)), (self.gantry_y_max-m_from_max, np.deg2rad(-22.5))],
-                           [(self.gantry_y_max-m_from_max, np.deg2rad(-67.5)), (self.gantry_y_max, np.deg2rad(-67.5)), (self.gantry_y_max, np.deg2rad(-90)), (self.gantry_y_max-m_from_max, np.deg2rad(-90))],
-                           [(self.gantry_y_min+m_from_min, np.deg2rad(90)), (self.gantry_y_min, np.deg2rad(90)), (self.gantry_y_min, np.deg2rad(67.5)), (self.gantry_y_min+m_from_min, np.deg2rad(67.5))]]
-
-        self.max_extend_dist = gantry_y_mean # max radius to extend each node
 
         # Convert start and end points to local Point format
         self.start_point = self.config_mm_to_point_m(start)
@@ -60,11 +54,21 @@ class Probe_Motion_Planner:
         print "start point in constraints", self.start_point
         print "end point in constraints", self.end_point
 
-    def update_gantry_state(data):
+    def update_gantry_state(self, data):
         self.gantry_x_min                    = data.x_min/1000.0 # mm to m
         self.gantry_x_max                    = data.x_max/1000.0 # mm to m
         self.gantry_y_min                    = data.y_min/1000.0 # mm to m
         self.gantry_y_max                    = data.y_max/1000.0 # mm to m
+        self.update_off_limits()
+
+    def update_off_limits(self):
+        self.off_limits = [[(self.gantry_y_max-self.m_from_max, np.deg2rad(45)), (self.gantry_y_max, np.deg2rad(45)), (self.gantry_y_max, np.deg2rad(-22.5)), (self.gantry_y_max-self.m_from_max, np.deg2rad(-22.5))],
+                           [(self.gantry_y_max-self.m_from_max, np.deg2rad(-67.5)), (self.gantry_y_max, np.deg2rad(-67.5)), (self.gantry_y_max, np.deg2rad(-90)), (self.gantry_y_max-self.m_from_max, np.deg2rad(-90))],
+                           [(self.gantry_y_min+self.m_from_min, np.deg2rad(90)), (self.gantry_y_min, np.deg2rad(90)), (self.gantry_y_min, np.deg2rad(67.5)), (self.gantry_y_min+self.m_from_min, np.deg2rad(67.5))]]        
+        gantry_y_mean = (self.gantry_y_min + self.gantry_y_max)/2
+
+        # Obstacle definitions within gantry limits
+        self.max_extend_dist = gantry_y_mean # max radius to extend each node
 
     def point_collision_free(self, point):
         """
