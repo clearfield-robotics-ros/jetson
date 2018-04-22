@@ -90,8 +90,8 @@ def probe_to_gantry_transform(loc,yaw,state):
 
 def move_gantry(desired_probe_tip, gantry_yaw, state):
 
-    print "GANTRY YAW:", gantry_yaw*180/math.pi
-    print "GANTRY POSIITON:", desired_probe_tip
+    print "yaw:", gantry_yaw*180/math.pi
+    print desired_probe_tip
 
     # work out gantry carriage position
     trans = probe_to_gantry_transform(desired_probe_tip, gantry_yaw, state)
@@ -113,7 +113,7 @@ def move_gantry(desired_probe_tip, gantry_yaw, state):
 def set_target(data):
     global target
     target = data
-    print "target", target
+    print "Metal Detector Target:\n", target
     global probe_plan_state
     probe_plan_state = 0
 
@@ -130,7 +130,7 @@ def update_probe_state(data):
     global contact_block_flag
     if not data.probe_complete and data.contact_made and not contact_block_flag:
 
-        print "NEW CONTACT POINT!"
+        print "\nNEW CONTACT POINT!\n"
 
         (trans,rot) = listener.lookupTransform('/gantry', '/probe_tip', rospy.Time(0))
         global est
@@ -335,7 +335,7 @@ def main():
 
                 probe_sequence += 1
                 print "\nPROBE #", probe_sequence
-                raw_input("\nPress Enter to continue...\n")
+                raw_input("\nPress Enter to probe...\n")
 
                 probe_cmd_pub.publish(2) # start probing
                 rospy.sleep(0.5) # give time for handshake
@@ -355,7 +355,7 @@ def main():
 
             if probe_plan_state == 3: # just exit here for now
 
-                print est_mine_list[-1].print_results()
+                est_mine_list[-1].print_results()
 
                 raw_input("\nMove Probe Tip for Marking...\n")
 
@@ -385,7 +385,7 @@ def main():
             #     if (est_mine_list[-1].point_count() >= num_contact_points
             #         and est_mine_list[-1].get_error() <= min_fit_error):
             #
-            #         print est_mine_list[-1].print_results()
+            #         est_mine_list[-1].print_results()
                     # target = null_target
                     # probe_plan_state = -1
                     # probe_sequence = 0 # reset

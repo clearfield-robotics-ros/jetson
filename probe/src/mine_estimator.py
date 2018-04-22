@@ -169,17 +169,13 @@ class Mine_Estimator:
 
 
     def compute_error(self):
-
         dist = 0
         for i in range(0,len(self.contact_points)):
 
             dist += math.sqrt( (self.contact_points[i,0] - self.c_x)**2 + \
                                (self.contact_points[i,1] - self.c_y)**2 )
             dist -= self.c_r
-
-        self.error = dist/len(self.contact_points)
-
-        print "Fit Error: %0.2f" % self.error
+        self.error = abs(dist/len(self.contact_points))
 
 
     def get_est(self):
@@ -191,12 +187,14 @@ class Mine_Estimator:
 
 
     def print_results(self):
-        print "Landmine Survey Results"
+        print "\nLandmine Survey Results"
         print "-----------------------"
-        print "Centre X (mm):", self.c_x
-        print "Centre Y (mm):", self.c_y
-        print "Centre Z (mm):", self.c_z
-        print "Radius (mm):", self.c_r
+        print "Centre X: %0.1f" % self.c_x
+        print "Centre Y: %0.1f" % self.c_y
+        print "Radius: %0.1f" % self.c_r
+        print "Error: %0.3f" % self.error
+        print "# Points:", self.point_count()
+        print "-----------------------\n"
 
 
     def add_point(self,x,y,z):
