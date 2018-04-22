@@ -309,7 +309,9 @@ def main():
 
                 probe_sequence += 1
                 print "\nPROBE #", probe_sequence
-                raw_input("\nPress Enter to continue...\n")
+
+                ### Commented out for endurance testing ###
+                # raw_input("\nPress Enter to continue...\n")
 
                 probe_cmd_pub.publish(2) # start probing
                 rospy.sleep(0.5) # give time for handshake
@@ -331,7 +333,8 @@ def main():
 
                 print est_mine_list[-1].print_results()
 
-                raw_input("\nMove Probe Tip for Marking...\n")
+                ### Commented out for endurance testing ###
+                # raw_input("\nMove Probe Tip for Marking...\n")
 
                 # TODO move probe tip to mine location for marking
 

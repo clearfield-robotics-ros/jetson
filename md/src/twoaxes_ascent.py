@@ -299,7 +299,8 @@ def main():
                                   start_from[1] - y_offset,
                                   -scorpion_gantry_offset_loc[2], [1,0,0])
 
-            raw_input("\nPress Enter to continue...\n")
+            ### Commented out for Endurance testing ###
+            # raw_input("\nPress Enter to continue...\n")
 
             jetson_desired_state.publish(4)
 
