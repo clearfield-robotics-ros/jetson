@@ -75,6 +75,12 @@ def update_state(data):
         current_state = desired_state
 
 
+def update_mine(data):
+    global current_mine
+    # current_mine = data.data
+    current_mine += 1
+
+
 def update_probe_state(data):
     global probe_current_state
     probe_current_state = data
@@ -95,6 +101,10 @@ def update_gantry_state(data):
 pub = rospy.Publisher('/scorpion', Marker, queue_size=10)
 jetson_current_state = rospy.Publisher('/current_state', Int16, queue_size=10)
 jetson_desired_state = rospy.Subscriber('/desired_state', Int16, update_state)
+
+jetson_current_mine = rospy.Publisher('/current_mine', Int16, queue_size=10)
+jetson_desired_mine = rospy.Subscriber('/desired_mine', Int16, update_mine)
+
 gui_jetson_desired_state = rospy.Subscriber('/minebot_gui/minebot_gui/desired_state', Int16, update_state)
 braking_desired_state = rospy.Publisher('/braking_desired_state', Int16, queue_size=10)
 
@@ -116,6 +126,8 @@ def main():
     # States
     global current_state
     current_state = 0 # initial state
+    global current_mine
+    current_mine = 0 # initial mine
 
     rospy.Subscriber("/probe_teensy/probe_status_reply", probe_data, update_probe_state)
     global probe_current_state
@@ -136,6 +148,7 @@ def main():
         Loop Updates
         '''
         jetson_current_state.publish(current_state) # broadcast our state
+        jetson_current_mine.publish(current_mine) # broadcast which mine we're after
 
         try:
             (loc,rot) = listener.lookupTransform('/odom', '/base_link', rospy.Time(0))

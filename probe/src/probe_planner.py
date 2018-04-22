@@ -144,7 +144,7 @@ def update_probe_state(data):
 
         (trans,rot) = listener.lookupTransform('/gantry', '/probe_tip', rospy.Time(0))
         global est
-        est.add_point(trans[0], trans[1], trans[2])
+        est_mine_list[-1].add_point(trans[0], trans[1], trans[2])
         contact_block_flag = True
 
     elif data.probe_complete:
@@ -163,7 +163,7 @@ def main():
     br = tf.TransformBroadcaster()
 
     # Parameters
-    landmine_pos                    = rospy.get_param('landmine_pos')
+    landmine_burial_depth           = rospy.get_param('landmine_burial_depth')
     landmine_diameter               = rospy.get_param('landmine_diameter')
     landmine_height                 = rospy.get_param('landmine_height')
     global sensorhead_probebase_offset_loc
@@ -174,7 +174,7 @@ def main():
     scorpion_gantry_offset_loc      = rospy.get_param('scorpion_gantry_offset_loc')
     global probe_length
     probe_length                    = (scorpion_gantry_offset_loc[2] + sensorhead_probebase_offset_loc[2]
-                                        + abs(landmine_pos[2])) / math.sin(probe_angle)
+                                        + abs(landmine_burial_depth)) / math.sin(probe_angle)
     maxForwardSearch                = math.cos(probe_angle)*landmine_height
     gantry_width                    = rospy.get_param('gantry_width')
     num_contact_points              = rospy.get_param('num_contact_points')
@@ -186,6 +186,7 @@ def main():
 
     # Jetson Messages
     jetson_desired_state = rospy.Publisher('/desired_state', Int16, queue_size=10)
+    jetson_desired_mine = rospy.Publisher('/desired_mine', Int16, queue_size=10)
 
     # Gantry Control Messages
     global gantry_desired_state_pub
@@ -207,8 +208,10 @@ def main():
     global target
     target = null_target
 
-    global est
-    est = Mine_Estimator(landmine_diameter, landmine_height)
+    # mine estimator object
+    global est_mine_list
+    est_mine_list = []
+    est_mine_list.append(Mine_Estimator(landmine_diameter, landmine_height))
 
     # DEBUG
     # N = 4
@@ -217,10 +220,10 @@ def main():
     #     x = -landmine_diameter/2*math.sin( (100 + 120/(N-1)*i) * math.pi/180)+250
     #     y = landmine_diameter/2*math.cos( (100 + 120/(N-1)*i) * math.pi/180)
     #
-    #     est.add_point(x,y,0)
+    #     est_mine_list[-1].add_point(x,y,0)
     #
     # rospy.sleep(0.5) # Sleeps for 1 sec
-    # p = est.get_sparsest_point()
+    # p = est_mine_list[-1].get_sparsest_point()
     #
     # pdb.set_trace()
 
@@ -244,7 +247,7 @@ def main():
 
                     desired_probe_tip.x = target.x - landmine_diameter/2*probe_safety_factor
                     desired_probe_tip.y = target.y
-                    desired_probe_tip.z = -scorpion_gantry_offset_loc[2] + landmine_pos[2]
+                    desired_probe_tip.z = -scorpion_gantry_offset_loc[2] + landmine_burial_depth
 
                     br.sendTransform((desired_probe_tip.x,desired_probe_tip.y,desired_probe_tip.z),
                         tf.transformations.quaternion_from_euler(0,0,0),
@@ -275,7 +278,7 @@ def main():
 
                     desired_probe_tip.x = target.x - math.cos(gantry_yaw)*landmine_diameter/2*probe_safety_factor
                     desired_probe_tip.y = target.y - math.sin(gantry_yaw)*landmine_diameter/2*probe_safety_factor
-                    desired_probe_tip.z = -scorpion_gantry_offset_loc[2] + landmine_pos[2]
+                    desired_probe_tip.z = -scorpion_gantry_offset_loc[2] + landmine_burial_depth
 
                     move_gantry(desired_probe_tip, gantry_yaw)
 
@@ -301,7 +304,7 @@ def main():
 
                     desired_probe_tip.x = target.x - math.cos(gantry_yaw)*landmine_diameter/2*probe_safety_factor
                     desired_probe_tip.y = target.y - math.sin(gantry_yaw)*landmine_diameter/2*probe_safety_factor
-                    desired_probe_tip.z = -scorpion_gantry_offset_loc[2] + landmine_pos[2]
+                    desired_probe_tip.z = -scorpion_gantry_offset_loc[2] + landmine_burial_depth
 
                     move_gantry(desired_probe_tip, gantry_yaw)
 
@@ -323,11 +326,11 @@ def main():
 
                 if probe_sequence == probe_sequence_prev:
 
-                    p = est.get_sparsest_point()
+                    p = est_mine_list[-1].get_sparsest_point()
 
                     desired_probe_tip.x = p[0] - math.cos(gantry_yaw)*landmine_diameter/2*probe_safety_factor
                     desired_probe_tip.y = p[1] - math.sin(gantry_yaw)*landmine_diameter/2*probe_safety_factor
-                    desired_probe_tip.z = -scorpion_gantry_offset_loc[2] + landmine_pos[2]
+                    desired_probe_tip.z = -scorpion_gantry_offset_loc[2] + landmine_burial_depth
                     gantry_yaw = p[3]
 
                     move_gantry(desired_probe_tip, gantry_yaw)
@@ -362,40 +365,48 @@ def main():
             '''
             if probe_plan_state < 3:
 
-                if est.point_count() > prev_point_count or probe_limit_exceeded:
+                if est_mine_list[-1].point_count() > prev_point_count or probe_limit_exceeded:
                     probe_plan_state += 1 # advance
                     probe_sequence_prev = probe_sequence
-                    prev_point_count = est.point_count()
+                    prev_point_count = est_mine_list[-1].point_count()
                     probe_limit_exceeded = False
 
             if probe_plan_state == 3: # just exit here for now
 
-                print est.print_results()
+                print est_mine_list[-1].print_results()
 
                 raw_input("\nMove Probe Tip for Marking...\n")
 
                 # TODO move probe tip to mine location for marking
 
+                # Reset everyhting before we go go to the next mine
                 target = null_target
                 probe_plan_state = -1
-                probe_sequence = 0 # reset
-
+                probe_sequence = 0
+                prev_point_count = 0
                 jetson_desired_state.publish(0) # go back to idle state
+                jetson_desired_mine.publish(0) # increment mine count
+                est_mine_list.append(Mine_Estimator(landmine_diameter, landmine_height))
+
 
             # elif probe_plan_state == 3:
             #
-            #     if not est.point_count() == prev_point_count or probe_limit_exceeded:
+            #     if not est_mine_list[-1].point_count() == prev_point_count or probe_limit_exceeded:
             #         probe_sequence_prev = probe_sequence
-            #         prev_point_count = est.point_count()
+            #         prev_point_count = est_mine_list[-1].point_count()
             #         probe_limit_exceeded = False
             #
-            #     if (est.point_count() >= num_contact_points
-            #         and est.get_error() <= min_fit_error):
+            #     if (est_mine_list[-1].point_count() >= num_contact_points
+            #         and est_mine_list[-1].get_error() <= min_fit_error):
             #
-            #         print est.print_results()
-            #         target = null_target
-            #         probe_plan_state = -1
-            #         probe_sequence = 0 # reset
+            #         print est_mine_list[-1].print_results()
+                    # target = null_target
+                    # probe_plan_state = -1
+                    # probe_sequence = 0 # reset
+                    # jetson_desired_state.publish(0) # go back to idle state
+                    # jetson_desired_mine.publish(0) # increment mine count
+                    # est_mine_list.append(Mine_Estimator(landmine_diameter, landmine_height)) # looking for new mine now!
+
 
         r.sleep()
 

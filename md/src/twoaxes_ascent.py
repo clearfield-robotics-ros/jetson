@@ -93,7 +93,7 @@ def incoming_signal(data):
     # print data.point
 
     # if data.point.z > 1200 and cur_state > 1:
-    if data.point.z > 1200 and jetson_current_state > 1:
+    if data.point.z > 1200 and jetson_current_state == 2:
         # print "\nChange State to 3\n"
         jetson_desired_state.publish(3)  # start pinpointing
         found_something = True
@@ -221,8 +221,6 @@ def main():
             elif not reached_sweeping_pos:
                 # print "go to sweep pos"
 
-                # TODO send to sweeping position, once
-                # sweep_pos = [100, cur_sig[1]]
                 # sweep_pos = [gantry_sweep_x_pos+gantry_state.x_min, gantry_state.y]
                 sweep_pos = [gantry_sweep_x_pos+gantry_state.x_min, gantry_sweep_y_pos]
 
