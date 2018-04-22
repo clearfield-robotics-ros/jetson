@@ -14,6 +14,7 @@ from gantry.msg import gantry_status
 from gantry.msg import to_gantry_msg;
 from constraints import Probe_Motion_Planner
 from shapely.geometry import Point as shapely_Point
+import time
 
 ### monitor current state ###
 current_state = 0 # if we don't get msgs
@@ -22,6 +23,8 @@ def update_state(data):
     current_state = data.data
 jetson_current_state = rospy.Subscriber('current_state', Int16, update_state)
 
+global gantry_yaw_history
+gantry_yaw_history = [0, 0]
 
 def probe_to_gantry_transform(loc,yaw):
 
@@ -73,7 +76,16 @@ def move_sensor_head(pos, yaw):
 
         rospy.sleep(0.5) # give time for handshake
 
-        while not gantry_current_status.position_reached: # block while not finished
+        gantry_yaw_history.append(gantry_desired_state.yaw_desired)
+        rotation_rate = 1.5 # rad/s (about 90deg/sec)
+        gantry_yaw_delay_factor = 1 # use this for tuning
+        print "gantry_yaw_history", gantry_yaw_history
+        yaw_delta = gantry_yaw_history[-1] - gantry_yaw_history[-2] # difference of last and second last
+        yaw_timeout = abs(yaw_delta * rotation_rate * gantry_yaw_delay_factor) # seconds
+        yaw_delay_timer_start = time.time()
+        print "yaw_timeout", yaw_timeout
+        
+        while not gantry_current_status.position_reached or (time.time()-yaw_delay_timer_start)<yaw_timeout: # block while not finished
             pass
 
 def move_gantry(desired_probe_tip, gantry_yaw):
@@ -97,7 +109,16 @@ def move_gantry(desired_probe_tip, gantry_yaw):
 
         rospy.sleep(0.5) # give time for handshake
 
-        while not gantry_current_status.position_reached: # block while not finished
+        gantry_yaw_history.append(gantry_desired_state.yaw_desired)
+        rotation_rate = 1.5 # rad/s (about 90deg/sec)
+        gantry_yaw_delay_factor = 1 # use this for tuning
+        # print "gantry_yaw_history", gantry_yaw_history
+        yaw_delta = gantry_yaw_history[-1] - gantry_yaw_history[-2] # difference of last and second last
+        yaw_timeout = abs(yaw_delta * rotation_rate * gantry_yaw_delay_factor) # seconds
+        yaw_delay_timer_start = time.time()
+        # print "yaw_timeout", yaw_timeout
+
+        while not gantry_current_status.position_reached or (time.time()-yaw_delay_timer_start)<yaw_timeout: # block while not finished
             pass
 
 def generate_probe_plan(goal_trans, goal_rot):
@@ -115,8 +136,9 @@ def generate_probe_plan(goal_trans, goal_rot):
 
 def get_next_config(index):
     positions =  [[100, 400, 0],
-                  [100, 780, 0.84],
-                  [100, 700, -1.13]]
+                  [100, 600, -1.13],
+                  # [100, 780, 0.84],
+                  [100, 780, 1.0]]
     return positions[index]
 
 def calc_probe_angle_range(desired_probe_tip):
@@ -264,7 +286,7 @@ def main():
             move_sensor_head([next_config[0], next_config[1]], next_config[2])
             raw_input("\nPress Enter to move to next...\n")
             constraint_planning_test_index += 1
-            if constraint_planning_test_index = 3:
+            if constraint_planning_test_index == 3:
                 test_motion = False
 
         ### START COMMENTED OUT SECTION ###
