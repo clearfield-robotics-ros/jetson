@@ -30,7 +30,7 @@ def updateLocation(loc, rot):
          q_rot,
          rospy.Time.now(),
          "base_link", #"scorpion",
-         "odom") #"world")
+         "world") #"world")
 
 
 def main():
