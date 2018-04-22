@@ -53,6 +53,8 @@ class Probe_Motion_Planner:
         # Obstacle definitions within gantry limits
         self.max_extend_dist = gantry_y_mean # max radius to extend each node
 
+        self.end_x_coord = end[0]/1000.0 # converted to m
+
         # Convert start and end points to local Point format
         self.start_point = self.config_mm_to_point_m(start)
         self.end_point = self.config_mm_to_point_m(end) 
@@ -85,6 +87,10 @@ class Probe_Motion_Planner:
             if do_plot:
                 ax.scatter(x, y, c='r')
                 plt.pause(0.01)
+
+        ### add something to check whether x coordinate of end point is out of bounds
+        if self.end_x_coord >= self.gantry_x_max or self.end_x_coord <= self.gantry_x_min:
+            in_collision.append(True)
 
         if np.any(in_collision):
             return False # if it IS in collision with anything, it is NOT collision free
