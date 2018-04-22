@@ -25,7 +25,7 @@ class CylinderMine:
 
 class CylinderMineExp:
 
-    def __init__(self, x, y, z, diameter, height, decay):
+    def __init__(self, idx, x, y, z, diameter, height, decay):
         self.x = x
         self.y = y
         self.z = z
@@ -37,10 +37,10 @@ class CylinderMineExp:
 
         m = Marker()
         m.header.frame_id = "world"
-        m.header.seq = 0
+        m.header.seq = idx
         m.header.stamp = rospy.Time.now()
         m.ns = "mine"
-        m.id = 0
+        m.id = idx
         m.type = 3  # cylinder
         m.action = 0  # add/modify
         m.pose.position.x = x
@@ -81,53 +81,60 @@ class CylinderMineExp:
 
         return z_bounds and radius_bounds
 
-
-def query_mine_md(x,y):
-    ret = mine.query(x,y)
-    pub.publish(Int16(ret))
-
-
-def query_mine_probe(x,y,z):
-    if mine.query_probe(x,y,z):
-        p = Point()
-        p.x = x
-        p.y = y
-        p.z = z
-        pub2.publish(p)
-
+def update_mine(data):
+    global mine_index
+    mine_index = data.data
+    print "mine_index", mine_index
 
 def main():
     rospy.init_node('mine_sim')
-    global mine
-    global pub
-    global pub2
-
-    landmine_pos = rospy.get_param('landmine_pos')
-    landmine_diameter = rospy.get_param('landmine_diameter')
-    landmine_height = rospy.get_param('landmine_height')
-    metal_detector_decay = rospy.get_param('metal_detector_decay')
-    mine = CylinderMineExp(landmine_pos[0], landmine_pos[1], landmine_pos[2], landmine_diameter, landmine_height, metal_detector_decay)
 
     listener = tf.TransformListener()
     pub = rospy.Publisher("md_signal", Int16, queue_size=10)
     pub2 = rospy.Publisher("probe_contact", Point, queue_size=10)
 
-    r = rospy.Rate(100) # 100 Hz
+    landmine = rospy.get_param('landmine')
+    landmine_burial_depth = rospy.get_param('landmine_burial_depth')
+    landmine_diameter = rospy.get_param('landmine_diameter')
+    landmine_height = rospy.get_param('landmine_height')
+    metal_detector_decay = rospy.get_param('metal_detector_decay')
+
+    # create mine objects
+    mine_list = []
+    for i in range(0,len(landmine)):
+        mine = CylinderMineExp(i, landmine[i]['pos'][0], landmine[i]['pos'][1], landmine_burial_depth, landmine_diameter, landmine_height, metal_detector_decay)
+        mine_list.append(mine)
+
+    # init mine index
+    jetson_desired_mine = rospy.Subscriber('/current_mine', Int16, update_mine)
+    global mine_index
+    mine_index = 0
+
+    r = rospy.Rate(100)
     while not rospy.is_shutdown():
 
+        ### Get MD Signal from Simulated Mine
         try:
-            (trans,rot) = listener.lookupTransform('/world', '/md', rospy.Time(0))
-            query_mine_md(trans[0],trans[1])
+            (t,R) = listener.lookupTransform('/world', '/md', rospy.Time(0))
+
+            ret = mine_list[mine_index].query(t[0],t[1])
+            pub.publish(Int16(ret))
+
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
             continue
 
+        ### Get Probe Contact Points
         try:
-            (trans,rot) = listener.lookupTransform('/world', '/probe_tip', rospy.Time(0))
-            query_mine_probe(trans[0],trans[1],trans[2])
+            (t,R) = listener.lookupTransform('/world', '/probe_tip', rospy.Time(0))
+
+            if mine_list[mine_index].query_probe(t[0],t[1],t[2]):
+                p = Point(t[0],t[1],t[2])
+                pub2.publish(p)
+
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
             continue
 
-        r.sleep()  # indent less when going back to regular gantry_lib
+        r.sleep()
 
 if __name__ == "__main__":
     main()

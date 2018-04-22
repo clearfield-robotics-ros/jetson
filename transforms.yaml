@@ -4,7 +4,12 @@
 
 ### Landmine ###
 
-landmine_pos: [1800, -50, -50]
+landmine:
+- pos: [1800, -50]
+- pos: [2400, 200]
+- pos: [3000, -300]
+
+landmine_burial_depth: -50
 landmine_diameter: 100
 landmine_height: 50
 metal_detector_decay: 30

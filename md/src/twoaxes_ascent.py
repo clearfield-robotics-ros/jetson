@@ -214,24 +214,22 @@ def main():
     while not rospy.is_shutdown():
 
         if not found_something:
-            # print "not found"
+            print "not found"
             if not lims_set:
-                # print "no lims"
+                print "no lims"
                 pass
             elif not reached_sweeping_pos:
-                # print "go to sweep pos"
+                print "go to sweep pos"
 
-                # TODO send to sweeping position, once
-                # sweep_pos = [100, cur_sig[1]]
                 # sweep_pos = [gantry_sweep_x_pos+gantry_state.x_min, gantry_state.y]
                 sweep_pos = [gantry_sweep_x_pos+gantry_state.x_min, gantry_sweep_y_pos]
 
                 print lims_set
                 set_and_wait_for_goal(sweep_pos, collect=False)
-                # print "got to sweep pos"
+                print "got to sweep pos"
                 reached_sweeping_pos = True
             else:
-                # print "sweep cmd"
+                print "sweep cmd"
                 pub.publish(sweep_msg)
         else:
 
