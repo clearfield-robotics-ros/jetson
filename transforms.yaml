@@ -5,8 +5,8 @@
 ### Landmine ###
 
 landmine:
-- pos: [1800, -50]
-- pos: [2400, 200]
+- pos: [1800, 100]
+- pos: [2400, -50]
 - pos: [3000, -300]
 
 landmine_burial_depth: -50
