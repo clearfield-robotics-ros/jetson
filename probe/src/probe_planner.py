@@ -87,7 +87,7 @@ def generate_probe_plan(goal_trans, goal_rot):
     end_config = [goal_trans[0], goal_trans[1], goal_rot]
     print "start config", start_config
     print "end config", end_config
-    probe_motion_planner = Probe_Motion_Planner(start_config, end_config)
+    probe_motion_planner = Probe_Motion_Planner(start_config, end_config, gantry_limits)
     path = probe_motion_planner.plan_path()
     plan_arrays = [[step.x, step.y] for step in path] # reconfigure into an array of arrays
     print plan_arrays
@@ -98,7 +98,7 @@ def calc_probe_angle_range(desired_probe_tip):
     gantry_th_max                  = rospy.get_param('gantry_th_max')
     possible_probe_approach_angles = np.linspace(gantry_th_min, gantry_th_max, 19) # 10deg increments for 180deg 
 
-    probe_motion_planner = Probe_Motion_Planner([0,0,0], [0,0,0]) # just instantiate with dummy points to be able to access functions
+    probe_motion_planner = Probe_Motion_Planner([0,0,0], [0,0,0], gantry_limits) # just instantiate with dummy points to be able to access functions
 
     collision_free_points = []
     for angle in possible_probe_approach_angles:
@@ -129,6 +129,8 @@ def set_target(data):
 def update_gantry_state(data):
     global gantry_current_status
     gantry_current_status = data
+    global gantry_limits
+    gantry_limits = [data.x_min, data.x_max, data.y_min, data.x_max]
 
 
 def update_probe_state(data):
