@@ -12,7 +12,7 @@ from std_msgs.msg import Int16
 from probe.msg import probe_data
 from gantry.msg import gantry_status
 from gantry.msg import to_gantry_msg;
-from constraints_redo import Probe_Motion_Planner
+from constraints import Probe_Motion_Planner
 from shapely.geometry import Point as shapely_Point
 
 ### monitor current state ###
@@ -96,9 +96,9 @@ def generate_probe_plan(goal_trans, goal_rot):
 def calc_probe_angle_range(desired_probe_tip):
     gantry_th_min                  = rospy.get_param('gantry_th_min')
     gantry_th_max                  = rospy.get_param('gantry_th_max')
-    possible_probe_approach_angles = np.linspace(gantry_th_min, gantry_th_max, 19)
+    possible_probe_approach_angles = np.linspace(gantry_th_min, gantry_th_max, 19) # 10deg increments for 180deg 
 
-    probe_motion_planner = Probe_Motion_Planner([0,0,0], [0,0,0]) # just instantiate with dummy points
+    probe_motion_planner = Probe_Motion_Planner([0,0,0], [0,0,0]) # just instantiate with dummy points to be able to access functions
 
     collision_free_points = []
     for angle in possible_probe_approach_angles:
@@ -106,13 +106,14 @@ def calc_probe_angle_range(desired_probe_tip):
         point_to_check = shapely_Point(trans[1]/1000.0, angle) # Point takes (y[mm], th[rad])
         collision_free_points.append(probe_motion_planner.point_collision_free(point_to_check))
     tog = zip(possible_probe_approach_angles, collision_free_points)
-    allowable_angles = [x[0] for x in tog if x[1]==True]
+    allowable_angles = [x[0] for x in tog if x[1]==True] # only extract collision-free points
+    # assumption! contiguous collision free points i.e. if the first is at 20deg, last at 160deg, then all of 20-160deg is free
     return [allowable_angles[0], allowable_angles[-1]]
 
 def generate_probe_angle_sequence(index):
     num_probe_angles = 3
     angle_range = calc_probe_angle_range(get_desired_probe_tip(index))
-    proportions = [0.5, 0.15, 0.85]#, 0.25, 0.75]
+    proportions = [0.5, 0.15, 0.85]#, 0.25, 0.75] # proportions between the lower and upper limits
     angle_sequence = [p*(angle_range[1]-angle_range[0])+angle_range[0] for p in proportions]
     return angle_sequence
 
