@@ -5,7 +5,7 @@
 ### Landmine ###
 
 landmine:
-- pos: [1800, 100]
+- pos: [1800, 300]
 - pos: [2400, -50]
 - pos: [3000, -300]
 
@@ -56,6 +56,6 @@ gantry_x_min: 0
 gantry_x_max: 400
 gantry_y_min: 0
 gantry_y_max: 800
-gantry_th_min: -1.57079632679
-gantry_th_max: 1.57079632679
+gantry_th_min: -0.96 # 57079632679
+gantry_th_max: 0.96 # 1.57079632679
 gantry_ticks_per_mm: 5.61121
