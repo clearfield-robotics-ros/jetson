@@ -21,6 +21,8 @@ def main():
     sensorhead_probebase_offset_loc = rospy.get_param('sensorhead_probebase_offset_loc');
     sensorhead_probebase_offset_rot = rospy.get_param('sensorhead_probebase_offset_rot');
 
+    sensorhead_marker_offset_loc    = rospy.get_param('sensorhead_marker_offset_loc')
+
     r = rospy.Rate(100) # Hz
     while not rospy.is_shutdown():
 
@@ -56,6 +58,14 @@ def main():
                                                     sensorhead_probebase_offset_rot[2]),
            rospy.Time.now(),
             "probe_base",
+            "sensor_head")
+
+        br.sendTransform((sensorhead_marker_offset_loc[0],
+                          sensorhead_marker_offset_loc[1],
+                          sensorhead_marker_offset_loc[2]),
+            tf.transformations.quaternion_from_euler(0,0,0),
+           rospy.Time.now(),
+            "mine_marker",
             "sensor_head")
 
         r.sleep()

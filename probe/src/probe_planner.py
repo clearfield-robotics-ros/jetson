@@ -27,67 +27,115 @@ global gantry_yaw_history
 gantry_yaw_history = [0, 0]
 
 def probe_to_gantry_transform(loc,yaw,state):
-
     global br
 
-    Hprobe = np.array([[1,0,0,loc.x],
-                       [0,1,0,loc.y],
-                       [0,0,1,loc.z],
-                       [0,0,0,1]])
-
-    '''
-    test = Hprobe
-    br.sendTransform((test[0][3],test[1][3],test[2][3]),
-       tf.transformations.quaternion_from_euler(0,0,0),
-       rospy.Time.now(),
-       "target_probe",
-       "gantry")
-    '''
-
-    Hyaw = np.array([[math.cos(yaw),-math.sin(yaw),0,0],
-                     [math.sin(yaw),math.cos(yaw),0,0],
-                     [0,0,1,0],
-                     [0,0,0,1]])
-
-    Hyrot = np.array([[math.cos(-probe_angle),0,math.cos(-probe_angle),0],
-                      [0,1,0,0],
-                      [math.sin(-probe_angle),0,math.cos(-probe_angle),0],
-                      [0,0,0,1]])
-
     if state == 'probe':
-        probe_dist = probe_length+max_probe_distance
-    elif state == 'mark':
-        probe_dist = probe_length
 
-    Hd = np.array([[1,0,0,-probe_dist],
-                   [0,1,0,0],
-                   [0,0,1,0],
-                   [0,0,0,1]])
+        Hprobe = np.array([[1,0,0,loc.x],
+                           [0,1,0,loc.y],
+                           [0,0,1,loc.z],
+                           [0,0,0,1]])
 
-    '''
-    test = Hprobe.dot(Hyaw).dot(Hyrot).dot(Hd)
-    br.sendTransform((test[0][3],test[1][3],test[2][3]),
-      tf.transformations.quaternion_from_euler(0,0,0),
-      rospy.Time.now(),
-      "target_probe_base",
-      "gantry")
-    '''
+        '''
+        test = Hprobe
+        br.sendTransform((test[0][3],test[1][3],test[2][3]),
+           tf.transformations.quaternion_from_euler(0,0,0),
+           rospy.Time.now(),
+           "target_probe",
+           "gantry")
+        '''
 
-    Hoffset = np.array([[1,0,0,-sensorhead_probebase_offset_loc[0]],
-                       [0,1,0,-sensorhead_probebase_offset_loc[1]],
-                       [0,0,1,-sensorhead_probebase_offset_loc[2]],
+        Hyaw = np.array([[math.cos(yaw),-math.sin(yaw),0,0],
+                         [math.sin(yaw),math.cos(yaw),0,0],
+                         [0,0,1,0],
+                         [0,0,0,1]])
+
+        Hyrot = np.array([[math.cos(-probe_angle),0,math.cos(-probe_angle),0],
+                          [0,1,0,0],
+                          [math.sin(-probe_angle),0,math.cos(-probe_angle),0],
+                          [0,0,0,1]])
+
+        Hd = np.array([[1,0,0,-(probe_length+max_probe_distance)],
+                       [0,1,0,0],
+                       [0,0,1,0],
                        [0,0,0,1]])
 
-    H = Hprobe.dot(Hyaw).dot(Hoffset).dot(Hyrot).dot(Hd)
+        '''
+        test = Hprobe.dot(Hyaw).dot(Hyrot).dot(Hd)
+        br.sendTransform((test[0][3],test[1][3],test[2][3]),
+          tf.transformations.quaternion_from_euler(0,0,0),
+          rospy.Time.now(),
+          "target_probe_base",
+          "gantry")
+        '''
 
-    '''
-    test = H
-    br.sendTransform((test[0][3],test[1][3],test[2][3]),
-      tf.transformations.quaternion_from_euler(0,0,0),
-      rospy.Time.now(),
-      "target_sensor_head",
-      "gantry")
-    '''
+        Hoffset = np.array([[1,0,0,-sensorhead_probebase_offset_loc[0]],
+                           [0,1,0,-sensorhead_probebase_offset_loc[1]],
+                           [0,0,1,-sensorhead_probebase_offset_loc[2]],
+                           [0,0,0,1]])
+
+        H = Hprobe.dot(Hyaw).dot(Hoffset).dot(Hyrot).dot(Hd)
+
+        '''
+        test = H
+        br.sendTransform((test[0][3],test[1][3],test[2][3]),
+          tf.transformations.quaternion_from_euler(0,0,0),
+          rospy.Time.now(),
+          "target_sensor_head",
+          "gantry")
+        '''
+
+    elif state == 'mark':
+
+        Hprobe = np.array([[1,0,0,loc.x],
+                           [0,1,0,loc.y],
+                           [0,0,1,loc.z],
+                           [0,0,0,1]])
+
+        '''
+        test = Hprobe
+        br.sendTransform((test[0][3],test[1][3],test[2][3]),
+           tf.transformations.quaternion_from_euler(0,0,0),
+           rospy.Time.now(),
+           "target_probe",
+           "gantry")
+        '''
+
+        Hyaw = np.array([[math.cos(yaw),-math.sin(yaw),0,0],
+                         [math.sin(yaw),math.cos(yaw),0,0],
+                         [0,0,1,0],
+                         [0,0,0,1]])
+
+
+        Hd = np.array([[1,0,0,-sensorhead_marker_offset_loc[0] + sensorhead_probebase_offset_loc[0]], \
+                        [0,1,0,-sensorhead_marker_offset_loc[1] + sensorhead_probebase_offset_loc[1]], \
+                        [0,0,1,-sensorhead_marker_offset_loc[2] + sensorhead_probebase_offset_loc[2]], \
+                        [0,0,0,1]])
+
+        '''
+        test = Hprobe.dot(Hyaw).dot(Hd)
+        br.sendTransform((test[0][3],test[1][3],test[2][3]),
+          tf.transformations.quaternion_from_euler(0,0,0),
+          rospy.Time.now(),
+          "target_probe_base",
+          "gantry")
+        '''
+
+        Hoffset = np.array([[1,0,0,-sensorhead_probebase_offset_loc[0]],
+                           [0,1,0,-sensorhead_probebase_offset_loc[1]],
+                           [0,0,1,-sensorhead_probebase_offset_loc[2]],
+                           [0,0,0,1]])
+
+        H = Hprobe.dot(Hyaw).dot(Hoffset).dot(Hd)
+
+        '''
+        test = H
+        br.sendTransform((test[0][3],test[1][3],test[2][3]),
+          tf.transformations.quaternion_from_euler(0,0,0),
+          rospy.Time.now(),
+          "target_sensor_head",
+          "gantry")
+          '''
 
     trans = np.matmul(H,np.array([[0],[0],[0],[1]]))
     return trans
@@ -316,6 +364,8 @@ def main():
                                         (max_probe_distance + probe_length)
 
     maxForwardSearch                = math.cos(probe_angle)*landmine_height
+    global sensorhead_marker_offset_loc
+    sensorhead_marker_offset_loc    = rospy.get_param('sensorhead_marker_offset_loc')
     gantry_width                    = rospy.get_param('gantry_width')
     num_contact_points              = rospy.get_param('num_contact_points')
     min_fit_error                   = rospy.get_param('min_fit_error')
@@ -341,6 +391,7 @@ def main():
     rospy.Subscriber("/probe_teensy/probe_status_reply", probe_data, update_probe_state)
     global contact_block_flag
     contact_block_flag = False
+
 
     # Recieving Target from Metal Detector
     rospy.Subscriber("/set_probe_target", Point, set_target)
@@ -529,10 +580,9 @@ def main():
                 gantry_yaw = 0
                 desired_probe_tip.x = est_mine_list[-1].c_x
                 desired_probe_tip.y = est_mine_list[-1].c_y
-                desired_probe_tip.z = max_probe_depth
+                desired_probe_tip.z = sensorhead_marker_offset_loc[2] #max_probe_depth
                 move_gantry(desired_probe_tip, gantry_yaw, 'mark')
 
-                # raw_input("\nMove onto next mine...\n")
                 # Reset everyhting before we go go to the next mine
                 target = null_target
                 probe_plan_state = -1
