@@ -43,8 +43,8 @@ sensorhead_probebase_offset_loc: [-191.72,0,-270.7]
 sensorhead_probebase_offset_rot: [0,0.523599,0]
 probe_length: 285 #mm
 probe_speed: 1.5 #mm/s
-probe_safety_factor: 1
-max_probe_distance: 285 #mm
+probe_safety_factor: 1.25
+max_probe_distance: 207 #mm
 max_num_probes: 3
 calibrate_probe: False
 
