@@ -159,8 +159,8 @@ def move_sensor_head(pos, yaw):
         rospy.sleep(0.5) # give time for handshake
 
         gantry_yaw_history.append(gantry_desired_state.yaw_desired)
-        rotation_rate = 1.5 # rad/s (about 90deg/sec)
-        gantry_yaw_delay_factor = 1 # use this for tuning
+        rotation_rate = 1.0 # rad/s (about 90deg/sec)
+        gantry_yaw_delay_factor = 1.0 # use this for tuning
         # print "gantry_yaw_history", gantry_yaw_history
         yaw_delta = gantry_yaw_history[-1] - gantry_yaw_history[-2] # difference of last and second last
         yaw_timeout = abs(yaw_delta * rotation_rate * gantry_yaw_delay_factor) # seconds
@@ -194,8 +194,8 @@ def move_gantry(desired_probe_tip, gantry_yaw, state):
             rospy.sleep(0.5) # give time for handshake
 
             gantry_yaw_history.append(gantry_desired_state.yaw_desired)
-            rotation_rate = 1.5 # rad/s (about 90deg/sec)
-            gantry_yaw_delay_factor = 1 # use this for tuning
+            rotation_rate = 1.0 # rad/s (about 90deg/sec)
+            gantry_yaw_delay_factor = 1.0 # use this for tuning
             # print "gantry_yaw_history", gantry_yaw_history
             yaw_delta = gantry_yaw_history[-1] - gantry_yaw_history[-2] # difference of last and second last
             yaw_timeout = abs(yaw_delta * rotation_rate * gantry_yaw_delay_factor) # seconds
@@ -492,7 +492,7 @@ def main():
 
                 raw_input("\nMove Probe Tip for Marking...\n")
 
-                gantry_yaw = 0
+                gantry_yaw = angle_sequence[0]
                 desired_probe_tip.x = est_mine_list[-1].c_x
                 desired_probe_tip.y = est_mine_list[-1].c_y
                 desired_probe_tip.z = sensorhead_marker_offset_loc[2] #max_probe_depth
