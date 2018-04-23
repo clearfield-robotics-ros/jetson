@@ -165,24 +165,24 @@ class Probe_Motion_Planner:
         q_new_index = 0
         G.add_node(q_new_index)
         while not goal_reached:
-            print "still searching"
+            # print "still searching"
             q_rand = self.sample_random_point()
-            print "qrx, qry", q_rand.x, q_rand.y
+            # print "qrx, qry", q_rand.x, q_rand.y
             nearest_q_candidate_dist = []
             for i in range(len(valid_visited_points)):
                 nearest_q_candidate_dist.append(q_rand.distance(valid_visited_points[i])) # for every valid visited point, store the distance to the randomly sampled point
-            print "nearest_q_candidate_dist", nearest_q_candidate_dist
+            # print "nearest_q_candidate_dist", nearest_q_candidate_dist
             q_near_index = np.argmin(nearest_q_candidate_dist) # choose the point with the lowest distance among those visited
-            print "q_near_index", q_near_index
+            # print "q_near_index", q_near_index
             q_near = valid_visited_points[q_near_index] # get the actual point (not index)
             q_new, goal_reached, valid_point = self.extend(q_near, q_rand, self.end_point, self.max_extend_dist)
-            print "qnx, qny", q_new.x, q_new.y
-            print "gr", goal_reached
-            print "vp", valid_point
+            # print "qnx, qny", q_new.x, q_new.y
+            # print "gr", goal_reached
+            # print "vp", valid_point
             if valid_point:
                 x, y = q_new.xy
                 q_new_index += 1
-                print "qni", q_new_index
+                # print "qni", q_new_index
                 if do_plot:
                     ax.scatter(x, y, c='k')
                     plt.pause(0.01)
@@ -297,24 +297,24 @@ class Probe_Motion_Planner:
         print "current distance next", current.distance(next)
         if current.distance(goal) <= max_dist : # if you're within striking distance of the goal config
             if self.line_collision_free(LineString([current, goal])): # if no collisions
-                print "here1"
+                # print "here1"
                 next_point = goal
                 goal_reached = True
                 valid_point = True
             else: 
-                print "here2"
+                # print "here2"
                 next_point = current
                 goal_reached = False
                 valid_point = False
         else:
             if current.distance(next) <= max_dist: # if next node is right next to you
                 if self.line_collision_free(LineString([current, next])): # if no collisions
-                    print "here3"
+                    # print "here3"
                     next_point = next
                     goal_reached = False
                     valid_point = True
                 else:
-                    print "here4"
+                    # print "here4"
                     next_point = current
                     goal_reached = False
                     valid_point = False                    
@@ -322,12 +322,12 @@ class Probe_Motion_Planner:
                 current_next = LineString([current, next]) # make a line joining two
                 next_trial = current_next.interpolate(max_dist)
                 if self.line_collision_free(LineString([current, next_trial])): # if no collisions
-                    print "here5"
+                    # print "here5"
                     next_point = next_trial
                     goal_reached = False
                     valid_point = True  
                 else:
-                    print "here6"
+                    # print "here6"
                     next_point = current
                     goal_reached = False
                     valid_point = False  

@@ -79,7 +79,7 @@ def move_sensor_head(pos, yaw):
         gantry_yaw_history.append(gantry_desired_state.yaw_desired)
         rotation_rate = 1.5 # rad/s (about 90deg/sec)
         gantry_yaw_delay_factor = 1 # use this for tuning
-        print "gantry_yaw_history", gantry_yaw_history
+        # print "gantry_yaw_history", gantry_yaw_history
         yaw_delta = gantry_yaw_history[-1] - gantry_yaw_history[-2] # difference of last and second last
         yaw_timeout = abs(yaw_delta * rotation_rate * gantry_yaw_delay_factor) # seconds
         yaw_delay_timer_start = time.time()
@@ -144,7 +144,7 @@ def get_next_config(index):
 def calc_probe_angle_range(desired_probe_tip):
     gantry_th_min                  = rospy.get_param('gantry_th_min')
     gantry_th_max                  = rospy.get_param('gantry_th_max')
-    possible_probe_approach_angles = np.linspace(gantry_th_min, gantry_th_max, 19) # 10deg increments for 180deg 
+    possible_probe_approach_angles = np.linspace(gantry_th_min, gantry_th_max, 90) # 10deg increments for 180deg 
 
     x_mid = (gantry_limits[0] + gantry_limits[1])/2 # so that it doesn't run into boundary issues
     y_mid = (gantry_limits[2] + gantry_limits[3])/2
@@ -154,11 +154,11 @@ def calc_probe_angle_range(desired_probe_tip):
     collision_free_points = []
     for angle in possible_probe_approach_angles:
         trans = probe_to_gantry_transform(desired_probe_tip, angle)
-        print "trans", trans
+        # print "trans", trans
         point_to_check = shapely_Point(trans[1]/1000.0, angle) # Point takes (y[mm], th[rad])
         collision_free_points.append(probe_motion_planner.point_collision_free(point_to_check))
     tog = zip(possible_probe_approach_angles, collision_free_points)
-    print "tog", tog
+    # print "tog", tog
     allowable_angles = [x[0] for x in tog if x[1]==True] # only extract collision-free points
     print "allowable_angles", allowable_angles
     # assumption! contiguous collision free points i.e. if the first is at 20deg, last at 160deg, then all of 20-160deg is free
@@ -169,12 +169,12 @@ def calc_probe_angle_range(desired_probe_tip):
 
 def generate_probe_angle_sequence(target):
 # def generate_probe_angle_sequence(index):
-    num_probe_angles = 3
+    num_unique_probe_angles = 3
     # angle_range = calc_probe_angle_range(get_desired_probe_tip(index)) # for testing with dummy gantry positions
     angle_range = calc_probe_angle_range(target)
-    proportions = [0.5, 0.15, 0.85]#, 0.25, 0.75] # proportions between the lower and upper limits
+    proportions = [0.5, 0.05, 0.95]#, 0.25, 0.75] # proportions between the lower and upper limits
     angle_sequence = [p*(angle_range[1]-angle_range[0])+angle_range[0] for p in proportions]
-    return angle_sequence
+    return angle_sequence, num_unique_probe_angles
 
 
 def set_target(data):
@@ -309,7 +309,7 @@ def main():
             Perform Planning for Probe
             '''
 
-            angle_sequence = generate_probe_angle_sequence(target)
+            angle_sequence, num_unique_probe_angles = generate_probe_angle_sequence(target)
 
             if probe_plan_state == 0:
 
@@ -397,7 +397,7 @@ def main():
                         print "we took too many probes! skip this config"
                         probe_limit_exceeded = True
 
-            elif probe_plan_state == 3:
+            elif probe_plan_state == 3: # CAUTION! ANGLE SEQUENCE CURRENTLY ONLY HAS 3 ELEMENTS!
 
                 print "\nPLAN STATE 3"
                 print "-----------------------"
