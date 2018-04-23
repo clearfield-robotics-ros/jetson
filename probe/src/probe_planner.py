@@ -116,7 +116,7 @@ def move_gantry(desired_probe_tip, gantry_yaw):
         yaw_delta = gantry_yaw_history[-1] - gantry_yaw_history[-2] # difference of last and second last
         yaw_timeout = abs(yaw_delta * rotation_rate * gantry_yaw_delay_factor) # seconds
         yaw_delay_timer_start = time.time()
-        # print "yaw_timeout", yaw_timeout
+        print "yaw_timeout", yaw_timeout
 
         while not gantry_current_status.position_reached or (time.time()-yaw_delay_timer_start)<yaw_timeout: # block while not finished
             pass
@@ -146,21 +146,32 @@ def calc_probe_angle_range(desired_probe_tip):
     gantry_th_max                  = rospy.get_param('gantry_th_max')
     possible_probe_approach_angles = np.linspace(gantry_th_min, gantry_th_max, 19) # 10deg increments for 180deg 
 
-    probe_motion_planner = Probe_Motion_Planner([0,0,0], [0,0,0], gantry_limits) # just instantiate with dummy points to be able to access functions
+    x_mid = (gantry_limits[0] + gantry_limits[1])/2 # so that it doesn't run into boundary issues
+    y_mid = (gantry_limits[2] + gantry_limits[3])/2
+
+    probe_motion_planner = Probe_Motion_Planner([x_mid,y_mid,0], [x_mid,y_mid,0], gantry_limits) # just instantiate with dummy points to be able to access functions
 
     collision_free_points = []
     for angle in possible_probe_approach_angles:
         trans = probe_to_gantry_transform(desired_probe_tip, angle)
+        print "trans", trans
         point_to_check = shapely_Point(trans[1]/1000.0, angle) # Point takes (y[mm], th[rad])
         collision_free_points.append(probe_motion_planner.point_collision_free(point_to_check))
     tog = zip(possible_probe_approach_angles, collision_free_points)
+    print "tog", tog
     allowable_angles = [x[0] for x in tog if x[1]==True] # only extract collision-free points
+    print "allowable_angles", allowable_angles
     # assumption! contiguous collision free points i.e. if the first is at 20deg, last at 160deg, then all of 20-160deg is free
-    return [allowable_angles[0], allowable_angles[-1]]
+    if len(allowable_angles) == 0:
+        return []
+    else:
+        return [allowable_angles[0], allowable_angles[-1]]
 
-def generate_probe_angle_sequence(index):
+def generate_probe_angle_sequence(target):
+# def generate_probe_angle_sequence(index):
     num_probe_angles = 3
-    angle_range = calc_probe_angle_range(get_desired_probe_tip(index))
+    # angle_range = calc_probe_angle_range(get_desired_probe_tip(index)) # for testing with dummy gantry positions
+    angle_range = calc_probe_angle_range(target)
     proportions = [0.5, 0.15, 0.85]#, 0.25, 0.75] # proportions between the lower and upper limits
     angle_sequence = [p*(angle_range[1]-angle_range[0])+angle_range[0] for p in proportions]
     return angle_sequence
@@ -281,188 +292,198 @@ def main():
     while not rospy.is_shutdown():
 
         # check we're in the right state and have a Target
-        if current_state == 4 and not target == null_target and test_motion:
-            next_config = get_next_config(constraint_planning_test_index)
-            move_sensor_head([next_config[0], next_config[1]], next_config[2])
-            raw_input("\nPress Enter to move to next...\n")
-            constraint_planning_test_index += 1
-            if constraint_planning_test_index == 3:
-                test_motion = False
+        if current_state == 4 and not target == null_target:
+
+        ### START COMMENTED OUT SECTION FOR CONSTRAINTS SIMULATION ###    
+        # if current_state == 4 and not target == null_target and test_motion:
+        #     next_config = get_next_config(constraint_planning_test_index)
+        #     move_sensor_head([next_config[0], next_config[1]], next_config[2])
+        #     raw_input("\nPress Enter to move to next...\n")
+        #     constraint_planning_test_index += 1
+        #     if constraint_planning_test_index == 3:
+        #         test_motion = False
+        ### END COMMENTED OUT SECTION FOR CONSTRAINTS SIMULATION ###    
 
         ### START COMMENTED OUT SECTION ###
-            # '''
-            # Perform Planning for Probe
-            # '''
-            # if probe_plan_state == 0:
+            '''
+            Perform Planning for Probe
+            '''
 
-            #     print "\nPLAN STATE 0"
-            #     print "-----------------------"
+            angle_sequence = generate_probe_angle_sequence(target)
 
-            #     if probe_sequence == 0:
+            if probe_plan_state == 0:
 
-            #         gantry_yaw = 0
+                print "\nPLAN STATE 0"
+                print "-----------------------"
 
-            #         desired_probe_tip.x = target.x - landmine_diameter/2*probe_safety_factor
-            #         desired_probe_tip.y = target.y
-            #         desired_probe_tip.z = -scorpion_gantry_offset_loc[2] + landmine_burial_depth
+                if probe_sequence == 0:
 
-            #         br.sendTransform((desired_probe_tip.x,desired_probe_tip.y,desired_probe_tip.z),
-            #             tf.transformations.quaternion_from_euler(0,0,0),
-            #             rospy.Time.now(),
-            #             "target",
-            #             "gantry")
+                    # gantry_yaw = 0
+                    gantry_yaw = angle_sequence[0]
 
-            #         move_gantry(desired_probe_tip, gantry_yaw)
+                    desired_probe_tip.x = target.x - landmine_diameter/2*probe_safety_factor
+                    desired_probe_tip.y = target.y
+                    desired_probe_tip.z = -scorpion_gantry_offset_loc[2] + landmine_burial_depth
 
-            #     elif probe_sequence > 0:
+                    br.sendTransform((desired_probe_tip.x,desired_probe_tip.y,desired_probe_tip.z),
+                        tf.transformations.quaternion_from_euler(0,0,0),
+                        rospy.Time.now(),
+                        "target",
+                        "gantry")
 
-            #         if probe_sequence < max_num_probes:
-            #             desired_probe_tip.x += maxForwardSearch
-            #             move_gantry(desired_probe_tip, gantry_yaw)
+                    move_gantry(desired_probe_tip, gantry_yaw)
 
-            #         else:
-            #             print "we took too many probes! skip this config"
-            #             probe_limit_exceeded = True
+                elif probe_sequence > 0:
 
-            # elif probe_plan_state == 1:
+                    if probe_sequence < max_num_probes:
+                        desired_probe_tip.x += maxForwardSearch
+                        move_gantry(desired_probe_tip, gantry_yaw)
 
-            #     print "\nPLAN STATE 1"
-            #     print "-----------------------"
+                    else:
+                        print "we took too many probes! skip this config"
+                        probe_limit_exceeded = True
 
-            #     if probe_sequence == probe_sequence_prev:
+            elif probe_plan_state == 1:
 
-            #         gantry_yaw = +0.785398
+                print "\nPLAN STATE 1"
+                print "-----------------------"
 
-            #         desired_probe_tip.x = target.x - math.cos(gantry_yaw)*landmine_diameter/2*probe_safety_factor
-            #         desired_probe_tip.y = target.y - math.sin(gantry_yaw)*landmine_diameter/2*probe_safety_factor
-            #         desired_probe_tip.z = -scorpion_gantry_offset_loc[2] + landmine_burial_depth
+                if probe_sequence == probe_sequence_prev:
 
-            #         move_gantry(desired_probe_tip, gantry_yaw)
+                    # gantry_yaw = +0.785398
+                    gantry_yaw = angle_sequence[1]
 
-            #     elif probe_sequence > probe_sequence_prev:
+                    desired_probe_tip.x = target.x - math.cos(gantry_yaw)*landmine_diameter/2*probe_safety_factor
+                    desired_probe_tip.y = target.y - math.sin(gantry_yaw)*landmine_diameter/2*probe_safety_factor
+                    desired_probe_tip.z = -scorpion_gantry_offset_loc[2] + landmine_burial_depth
 
-            #         if (probe_sequence - probe_sequence_prev) < max_num_probes:
-            #             desired_probe_tip.x += math.cos(gantry_yaw)*maxForwardSearch
-            #             desired_probe_tip.y += math.sin(gantry_yaw)*maxForwardSearch
-            #             move_gantry(desired_probe_tip, gantry_yaw)
+                    move_gantry(desired_probe_tip, gantry_yaw)
 
-            #         else:
-            #             print "we took too many probes! skip this config"
-            #             probe_limit_exceeded = True
+                elif probe_sequence > probe_sequence_prev:
 
-            # elif probe_plan_state == 2:
+                    if (probe_sequence - probe_sequence_prev) < max_num_probes:
+                        desired_probe_tip.x += math.cos(gantry_yaw)*maxForwardSearch
+                        desired_probe_tip.y += math.sin(gantry_yaw)*maxForwardSearch
+                        move_gantry(desired_probe_tip, gantry_yaw)
 
-            #     print "\nPLAN STATE 2"
-            #     print "-----------------------"
+                    else:
+                        print "we took too many probes! skip this config"
+                        probe_limit_exceeded = True
 
-            #     if probe_sequence == probe_sequence_prev:
+            elif probe_plan_state == 2:
 
-            #         gantry_yaw = -0.785398
+                print "\nPLAN STATE 2"
+                print "-----------------------"
 
-            #         desired_probe_tip.x = target.x - math.cos(gantry_yaw)*landmine_diameter/2*probe_safety_factor
-            #         desired_probe_tip.y = target.y - math.sin(gantry_yaw)*landmine_diameter/2*probe_safety_factor
-            #         desired_probe_tip.z = -scorpion_gantry_offset_loc[2] + landmine_burial_depth
+                if probe_sequence == probe_sequence_prev:
 
-            #         move_gantry(desired_probe_tip, gantry_yaw)
+                    # gantry_yaw = -0.785398
+                    gantry_yaw = angle_sequence[2]
 
-            #     elif probe_sequence > probe_sequence_prev:
+                    desired_probe_tip.x = target.x - math.cos(gantry_yaw)*landmine_diameter/2*probe_safety_factor
+                    desired_probe_tip.y = target.y - math.sin(gantry_yaw)*landmine_diameter/2*probe_safety_factor
+                    desired_probe_tip.z = -scorpion_gantry_offset_loc[2] + landmine_burial_depth
 
-            #         if (probe_sequence - probe_sequence_prev) < max_num_probes:
-            #             desired_probe_tip.x += math.cos(gantry_yaw)*maxForwardSearch
-            #             desired_probe_tip.y += math.sin(gantry_yaw)*maxForwardSearch
-            #             move_gantry(desired_probe_tip, gantry_yaw)
+                    move_gantry(desired_probe_tip, gantry_yaw)
 
-            #         else:
-            #             print "we took too many probes! skip this config"
-            #             probe_limit_exceeded = True
+                elif probe_sequence > probe_sequence_prev:
+
+                    if (probe_sequence - probe_sequence_prev) < max_num_probes:
+                        desired_probe_tip.x += math.cos(gantry_yaw)*maxForwardSearch
+                        desired_probe_tip.y += math.sin(gantry_yaw)*maxForwardSearch
+                        move_gantry(desired_probe_tip, gantry_yaw)
+
+                    else:
+                        print "we took too many probes! skip this config"
+                        probe_limit_exceeded = True
+
+            elif probe_plan_state == 3:
+
+                print "\nPLAN STATE 3"
+                print "-----------------------"
+
+                if probe_sequence == probe_sequence_prev:
+
+                    p = est_mine_list[-1].get_sparsest_point()
+
+                    desired_probe_tip.x = p[0] - math.cos(gantry_yaw)*landmine_diameter/2*probe_safety_factor
+                    desired_probe_tip.y = p[1] - math.sin(gantry_yaw)*landmine_diameter/2*probe_safety_factor
+                    desired_probe_tip.z = -scorpion_gantry_offset_loc[2] + landmine_burial_depth
+                    gantry_yaw = p[3]
+
+                    move_gantry(desired_probe_tip, gantry_yaw)
+
+                elif probe_sequence > probe_sequence_prev:
+
+                    if (probe_sequence - probe_sequence_prev) < max_num_probes:
+                        desired_probe_tip.x += math.cos(gantry_yaw)*maxForwardSearch
+                        desired_probe_tip.y += math.sin(gantry_yaw)*maxForwardSearch
+                        move_gantry(desired_probe_tip, gantry_yaw)
+
+                    else:
+                        print "we took too many probes! skip this config"
+                        probe_limit_exceeded = True
+
+            '''
+            Execute Probing Procedure
+            '''
+            if not probe_limit_exceeded:
+
+                probe_sequence += 1
+                print "\nPROBE #", probe_sequence
+                raw_input("\nPress Enter to continue...\n")
+
+                probe_cmd_pub.publish(2) # start probing
+                rospy.sleep(0.5) # give time for handshake
+                while not probe_current_state.probe_complete: # while not finished
+                    pass
+
+            '''
+            Advance States
+            '''
+            if probe_plan_state < 3:
+
+                if est_mine_list[-1].point_count() > prev_point_count or probe_limit_exceeded:
+                    probe_plan_state += 1 # advance
+                    probe_sequence_prev = probe_sequence
+                    prev_point_count = est_mine_list[-1].point_count()
+                    probe_limit_exceeded = False
+
+            if probe_plan_state == 3: # just exit here for now
+
+                print est_mine_list[-1].print_results()
+
+                raw_input("\nMove Probe Tip for Marking...\n")
+
+                # TODO move probe tip to mine location for marking
+
+                # Reset everyhting before we go go to the next mine
+                target = null_target
+                probe_plan_state = -1
+                probe_sequence = 0
+                prev_point_count = 0
+                jetson_desired_state.publish(0) # go back to idle state
+                jetson_desired_mine.publish(0) # increment mine count
+                est_mine_list.append(Mine_Estimator(landmine_diameter, landmine_height))
+
 
             # elif probe_plan_state == 3:
-
-            #     print "\nPLAN STATE 3"
-            #     print "-----------------------"
-
-            #     if probe_sequence == probe_sequence_prev:
-
-            #         p = est_mine_list[-1].get_sparsest_point()
-
-            #         desired_probe_tip.x = p[0] - math.cos(gantry_yaw)*landmine_diameter/2*probe_safety_factor
-            #         desired_probe_tip.y = p[1] - math.sin(gantry_yaw)*landmine_diameter/2*probe_safety_factor
-            #         desired_probe_tip.z = -scorpion_gantry_offset_loc[2] + landmine_burial_depth
-            #         gantry_yaw = p[3]
-
-            #         move_gantry(desired_probe_tip, gantry_yaw)
-
-            #     elif probe_sequence > probe_sequence_prev:
-
-            #         if (probe_sequence - probe_sequence_prev) < max_num_probes:
-            #             desired_probe_tip.x += math.cos(gantry_yaw)*maxForwardSearch
-            #             desired_probe_tip.y += math.sin(gantry_yaw)*maxForwardSearch
-            #             move_gantry(desired_probe_tip, gantry_yaw)
-
-            #         else:
-            #             print "we took too many probes! skip this config"
-            #             probe_limit_exceeded = True
-
-            # '''
-            # Execute Probing Procedure
-            # '''
-            # if not probe_limit_exceeded:
-
-            #     probe_sequence += 1
-            #     print "\nPROBE #", probe_sequence
-            #     raw_input("\nPress Enter to continue...\n")
-
-            #     probe_cmd_pub.publish(2) # start probing
-            #     rospy.sleep(0.5) # give time for handshake
-            #     while not probe_current_state.probe_complete: # while not finished
-            #         pass
-
-            # '''
-            # Advance States
-            # '''
-            # if probe_plan_state < 3:
-
-            #     if est_mine_list[-1].point_count() > prev_point_count or probe_limit_exceeded:
-            #         probe_plan_state += 1 # advance
+            #
+            #     if not est_mine_list[-1].point_count() == prev_point_count or probe_limit_exceeded:
             #         probe_sequence_prev = probe_sequence
             #         prev_point_count = est_mine_list[-1].point_count()
             #         probe_limit_exceeded = False
-
-            # if probe_plan_state == 3: # just exit here for now
-
-            #     print est_mine_list[-1].print_results()
-
-            #     raw_input("\nMove Probe Tip for Marking...\n")
-
-            #     # TODO move probe tip to mine location for marking
-
-            #     # Reset everyhting before we go go to the next mine
-            #     target = null_target
-            #     probe_plan_state = -1
-            #     probe_sequence = 0
-            #     prev_point_count = 0
-            #     jetson_desired_state.publish(0) # go back to idle state
-            #     jetson_desired_mine.publish(0) # increment mine count
-            #     est_mine_list.append(Mine_Estimator(landmine_diameter, landmine_height))
-
-
-            # # elif probe_plan_state == 3:
-            # #
-            # #     if not est_mine_list[-1].point_count() == prev_point_count or probe_limit_exceeded:
-            # #         probe_sequence_prev = probe_sequence
-            # #         prev_point_count = est_mine_list[-1].point_count()
-            # #         probe_limit_exceeded = False
-            # #
-            # #     if (est_mine_list[-1].point_count() >= num_contact_points
-            # #         and est_mine_list[-1].get_error() <= min_fit_error):
-            # #
-            # #         print est_mine_list[-1].print_results()
-            #         # target = null_target
-            #         # probe_plan_state = -1
-            #         # probe_sequence = 0 # reset
-            #         # jetson_desired_state.publish(0) # go back to idle state
-            #         # jetson_desired_mine.publish(0) # increment mine count
-            #         # est_mine_list.append(Mine_Estimator(landmine_diameter, landmine_height)) # looking for new mine now!
+            #
+            #     if (est_mine_list[-1].point_count() >= num_contact_points
+            #         and est_mine_list[-1].get_error() <= min_fit_error):
+            #
+            #         print est_mine_list[-1].print_results()
+                    # target = null_target
+                    # probe_plan_state = -1
+                    # probe_sequence = 0 # reset
+                    # jetson_desired_state.publish(0) # go back to idle state
+                    # jetson_desired_mine.publish(0) # increment mine count
+                    # est_mine_list.append(Mine_Estimator(landmine_diameter, landmine_height)) # looking for new mine now!
 
         ### END COMMENTED OUT SECTION #
 

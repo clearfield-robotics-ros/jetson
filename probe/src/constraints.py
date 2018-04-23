@@ -38,7 +38,7 @@ class Probe_Motion_Planner:
         self.gantry_th_max                   = rospy.get_param('gantry_th_max') # (rad)
         self.gantry_ticks_per_mm             = rospy.get_param('gantry_ticks_per_mm') # (rad)
 
-        ticks_from_max_y = 1550 # was 1250, add 600 ticks to be safe for testing
+        ticks_from_max_y = 1250 # was 1250, add 600 ticks to be safe for testing
         ticks_from_min_y = 1000
 
         self.m_from_max = ticks_from_max_y/self.gantry_ticks_per_mm/1000.0
