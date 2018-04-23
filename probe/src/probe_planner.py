@@ -500,6 +500,11 @@ def main():
                 desired_probe_tip.z = sensorhead_marker_offset_loc[2] #max_probe_depth
                 valid = move_gantry(desired_probe_tip, gantry_yaw, 'mark')
 
+                # construct msg to tell gantry to go to idle
+                gantry_desired_state = to_gantry_msg()
+                gantry_desired_state.state_desired       = 0
+                gantry_desired_state_pub.publish(gantry_desired_state)
+
                 # Reset everything before we go go to the next mine
                 target = null_target
                 probe_plan_state = -1
