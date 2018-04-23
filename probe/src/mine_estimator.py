@@ -197,7 +197,8 @@ class Mine_Estimator:
             return False
 
     def print_results(self):
-        print "\nLandmine Survey Results"
+        print "\n-----------------------"
+        print "Landmine Survey Results"
         print "-----------------------"
         print "Centre X: %0.1f" % self.c_x
         print "Centre Y: %0.1f" % self.c_y
@@ -205,7 +206,10 @@ class Mine_Estimator:
         print "Error: %0.3f" % self.error
         print "# Points:", self.point_count()
         print "Landmine?:", self.get_result()
+        print "-----------------------"
+        print "points:\n", self.contact_points
         print "-----------------------\n"
+
 
 
     def add_point(self,x,y,z):

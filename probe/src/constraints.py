@@ -38,7 +38,7 @@ class Probe_Motion_Planner:
         self.gantry_th_max                   = rospy.get_param('gantry_th_max') # (rad)
         self.gantry_ticks_per_mm             = rospy.get_param('gantry_ticks_per_mm') # (rad)
 
-        ticks_from_max_y = 1250
+        ticks_from_max_y = 1500 # was 1250
         ticks_from_min_y = 1000
 
         self.m_from_max = ticks_from_max_y/self.gantry_ticks_per_mm/1000.0
@@ -48,7 +48,7 @@ class Probe_Motion_Planner:
                            [(self.gantry_y_max-self.m_from_max, np.deg2rad(-67.5)), (self.gantry_y_max, np.deg2rad(-67.5)), (self.gantry_y_max, np.deg2rad(-90)), (self.gantry_y_max-self.m_from_max, np.deg2rad(-90))],
                            [(self.gantry_y_min+self.m_from_min, np.deg2rad(90)), (self.gantry_y_min, np.deg2rad(90)), (self.gantry_y_min, np.deg2rad(67.5)), (self.gantry_y_min+self.m_from_min, np.deg2rad(67.5))]]
 
-        print "offlims", self.off_limits
+        # print "offlims", self.off_limits
 
         gantry_y_mean = (self.gantry_y_min + self.gantry_y_max)/2
 
