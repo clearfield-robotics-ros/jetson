@@ -5,7 +5,7 @@
 ### Landmine ###
 
 landmine:
-- pos: [1800, 50]
+- pos: [1800, 0]
 - pos: [2400, -50]
 - pos: [3000, -300]
 
@@ -47,7 +47,7 @@ probe_safety_factor: 1.25
 max_probe_distance: 207 #mm
 max_num_probes: 3
 calibrate_probe: False
-sensorhead_marker_offset_loc: [200,0,-400] # ESTIMATED
+sensorhead_marker_offset_loc: [230,0,-383]
 
 ### Probe Planner ###
 proportions: [0.5, 0.05, 0.95, 0.25, 0.75] # proportions between the lower and upper limits
@@ -58,6 +58,6 @@ gantry_x_min: 0
 gantry_x_max: 400
 gantry_y_min: 0
 gantry_y_max: 800
-gantry_th_min: -0.96 # 57079632679
-gantry_th_max: 0.96 # 1.57079632679
+gantry_th_min: -1.0472 # -0.96 # 57079632679
+gantry_th_max: 1.0472 # 0.96 # 1.57079632679
 gantry_ticks_per_mm: 5.61121

@@ -46,8 +46,8 @@ class Probe_Motion_Planner:
 
         self.off_limits = [[(self.gantry_y_max-self.m_from_max, np.deg2rad(45)), (self.gantry_y_max, np.deg2rad(45)), (self.gantry_y_max, np.deg2rad(-22.5)), (self.gantry_y_max-self.m_from_max, np.deg2rad(-22.5))],
                            [(self.gantry_y_max-self.m_from_max, np.deg2rad(-67.5)), (self.gantry_y_max, np.deg2rad(-67.5)), (self.gantry_y_max, np.deg2rad(-90)), (self.gantry_y_max-self.m_from_max, np.deg2rad(-90))],
-                           [(self.gantry_y_min+self.m_from_min, np.deg2rad(90)), (self.gantry_y_min, np.deg2rad(90)), (self.gantry_y_min, np.deg2rad(67.5)), (self.gantry_y_min+self.m_from_min, np.deg2rad(67.5))]]        
-        
+                           [(self.gantry_y_min+self.m_from_min, np.deg2rad(90)), (self.gantry_y_min, np.deg2rad(90)), (self.gantry_y_min, np.deg2rad(67.5)), (self.gantry_y_min+self.m_from_min, np.deg2rad(67.5))]]
+
         print "offlims", self.off_limits
 
         gantry_y_mean = (self.gantry_y_min + self.gantry_y_max)/2
@@ -59,7 +59,7 @@ class Probe_Motion_Planner:
 
         # Convert start and end points to local Point format
         self.start_point = self.config_mm_to_point_m(start)
-        self.end_point = self.config_mm_to_point_m(end) 
+        self.end_point = self.config_mm_to_point_m(end)
 
         print "start point in constraints", self.start_point
         print "end point in constraints", self.end_point
@@ -70,7 +70,7 @@ class Probe_Motion_Planner:
 
         :param line: Point object
         :return: returns True if it IS collision free, False if it is NOT collision free
-        """  
+        """
         in_collision = [] # create empty array to store collision results
         for zone in range(len(self.off_limits)): # first, go through each off-limits zone
             poly = Polygon(self.off_limits[zone]) # create a polygon for that zone
@@ -106,7 +106,7 @@ class Probe_Motion_Planner:
 
         :param line: LineString object
         :return: returns True if it IS collision free, False if it is NOT collision free
-        """        
+        """
 
         in_collision = [] # create empty array to store collision results
         for zone in range(len(self.off_limits)): # go thorugh each off-limits zone # I KNOW THIS IS TERRIBLE PYTHON STYLE >_<
@@ -119,7 +119,7 @@ class Probe_Motion_Planner:
             in_collision.append(line.intersects(poly)) # add to the list whether or not it collided
         if np.any(in_collision):
             return False # if it IS in collision with anything, it is NOT collision free
-        else: 
+        else:
             return True # if it is NOT in collision with anything, it IS collision free
 
 
@@ -128,14 +128,14 @@ class Probe_Motion_Planner:
         Generates an obstacle-free path
 
         :return: returns an array of shapely Point objects
-        """        
+        """
 
         # print "start end in coll", self.line_collision_free(LineString([self.start_point, self.end_point]))
         # first, check if the end point is valid
         # if it is NOT valid, return the path as just start point to start point (i.e. do nothing)
         if not self.point_collision_free(self.end_point):
             print "End point out of bounds"
-            return [self.start_point, self.start_point]
+            return [self.start_point, self.start_point], False # not valid
 
         # second, check if there is a straight line between start and end points
         # if there is NO collision, just return the straight line
@@ -149,9 +149,9 @@ class Probe_Motion_Planner:
                 ax.plot([xs, xe], [ys, ye], c='k')
                 # plt.pause(0.01)
                 plt.show()
-            return [self.start_point, self.end_point]
+            return [self.start_point, self.end_point], True # valid
 
-        # if you've made it this far, the end point is valid AND there is an obstacle in the 
+        # if you've made it this far, the end point is valid AND there is an obstacle in the
         #   way between the start and end points
 
         goal_reached = False # start by assuming you're not at the goal, DUH!
@@ -208,7 +208,7 @@ class Probe_Motion_Planner:
                 ax.plot([pt1.x, pt2.x],[pt1.y, pt2.y], c='k')
                 plt.pause(0.01)
             plt.show()
-        return path_points
+        return path_points, True # valid
 
     def merge_close_points(self, path):
         """
@@ -216,7 +216,7 @@ class Probe_Motion_Planner:
 
         :param path: original array of shapely Point objects
         :return: an array of shapely Point objects
-        """  
+        """
         eps = 0.1
         orig_path = path
         distances = [orig_path[i].distance(orig_path[i+1]) for i in range(len(orig_path)-1)]
@@ -225,9 +225,9 @@ class Probe_Motion_Planner:
         if rows_to_delete[-1] == (len(orig_path)-1):
             rows_to_delete[-1] = len(orig_path) - 2
         final_path = [x for i,x in enumerate(orig_path) if i not in rows_to_delete]
-        for i in range(len(final_path)):    
+        for i in range(len(final_path)):
             print final_path[i].xy
-        return final_path        
+        return final_path
 
     def shorten_path(self, path, timeout=.5):
         """
@@ -236,7 +236,7 @@ class Probe_Motion_Planner:
         :param path: original array of shapely Point objects
         :param timeout: time [s] to spend shortening the path
         :return: an array of shapely Point objects
-        """  
+        """
         start_time = time.time() # mark current time
         num_sample_edges = 2
         iteration = 0
@@ -276,7 +276,7 @@ class Probe_Motion_Planner:
         Creates a random combination of y and th
 
         :return: returns a Point(y (m), th (rad))
-        """        
+        """
         y = (self.gantry_y_max - self.gantry_y_min) * np.random.random_sample() + self.gantry_y_min
         th = (self.gantry_th_max - self.gantry_th_min) * np.random.random_sample() + self.gantry_th_min
         return Point(y, th)
@@ -301,7 +301,7 @@ class Probe_Motion_Planner:
                 next_point = goal
                 goal_reached = True
                 valid_point = True
-            else: 
+            else:
                 # print "here2"
                 next_point = current
                 goal_reached = False
@@ -317,7 +317,7 @@ class Probe_Motion_Planner:
                     # print "here4"
                     next_point = current
                     goal_reached = False
-                    valid_point = False                    
+                    valid_point = False
             else: # if it's out of reach, interpolate as far as you can go
                 current_next = LineString([current, next]) # make a line joining two
                 next_trial = current_next.interpolate(max_dist)
@@ -325,12 +325,12 @@ class Probe_Motion_Planner:
                     # print "here5"
                     next_point = next_trial
                     goal_reached = False
-                    valid_point = True  
+                    valid_point = True
                 else:
                     # print "here6"
                     next_point = current
                     goal_reached = False
-                    valid_point = False  
+                    valid_point = False
 
         return next_point, goal_reached, valid_point
 
@@ -341,4 +341,4 @@ class Probe_Motion_Planner:
         :param config: list of config [x (mm), y (mm), th (rad)]
         :return: returns a Point(y (m), th (rad))
         """
-        return Point(config[1]/1000.0, config[2])       
+        return Point(config[1]/1000.0, config[2])
