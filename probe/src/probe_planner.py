@@ -175,7 +175,7 @@ def get_next_config(index):
                   [100, 780, 1.0]]
     return positions[index]
 
-def calc_probe_angle_range(desired_probe_tip):
+def calc_probe_angle_range(desired_probe_tip, state):
     gantry_th_min                  = rospy.get_param('gantry_th_min')
     gantry_th_max                  = rospy.get_param('gantry_th_max')
     possible_probe_approach_angles = np.linspace(gantry_th_min, gantry_th_max, 90) # 10deg increments for 180deg 
@@ -187,12 +187,53 @@ def calc_probe_angle_range(desired_probe_tip):
 
     collision_free_points = []
     for angle in possible_probe_approach_angles:
-        trans = probe_to_gantry_transform(desired_probe_tip, angle)
+        trans = probe_to_gantry_transform(desired_probe_tip, angle, state)
         # print "trans", trans
         point_to_check = shapely_Point(trans[1]/1000.0, angle) # Point takes (y[mm], th[rad])
         collision_free_points.append(probe_motion_planner.point_collision_free(point_to_check))
-    tog = zip(possible_probe_approach_angles, collision_free_points)
+    # tog = zip(possible_probe_approach_angles, collision_free_points)
     # print "tog", tog
+
+    ### MAX CONTIGUOUS HACK
+    true_indices = [i for i, x in enumerate(collision_free_points) if x==1]
+    print true_indices
+
+    index_diff = [true_indices[i+1]-true_indices[i] for i in range(len(true_indices)-1)]
+    print index_diff
+
+    # indices where not 1
+    gap_indices = [i+1 for i, x in enumerate(index_diff) if x != 1]
+    print gap_indices
+
+    # add start and end indices
+    gap_indices.insert(0,0)
+    gap_indices.append(len(true_indices))
+    print gap_indices
+
+    max_range = [gap_indices[i+1]-gap_indices[i] for i in range(len(gap_indices)-1)]
+    print max_range
+
+    # get the max range
+    richest_zone_index = np.argmax(max_range)
+    print richest_zone_index
+
+    richest_zone = true_indices[gap_indices[richest_zone_index]:gap_indices[richest_zone_index+1]]
+    print richest_zone
+
+    mask = []
+    # do a mask with just the ones in question
+    for idx in range(len(possible_probe_approach_angles)):
+        if idx in richest_zone:
+            mask.append(1)
+        else:
+            mask.append(0)
+
+    print mask
+
+    tog = zip(possible_probe_approach_angles, mask)
+    print tog
+    ### 
+
     allowable_angles = [x[0] for x in tog if x[1]==True] # only extract collision-free points
     print "allowable_angles", allowable_angles
     # assumption! contiguous collision free points i.e. if the first is at 20deg, last at 160deg, then all of 20-160deg is free
@@ -201,11 +242,11 @@ def calc_probe_angle_range(desired_probe_tip):
     else:
         return [allowable_angles[0], allowable_angles[-1]]
 
-def generate_probe_angle_sequence(target):
+def generate_probe_angle_sequence(target, state):
 # def generate_probe_angle_sequence(index):
     num_unique_probe_angles = 3
     # angle_range = calc_probe_angle_range(get_desired_probe_tip(index)) # for testing with dummy gantry positions
-    angle_range = calc_probe_angle_range(target)
+    angle_range = calc_probe_angle_range(target, state)
     proportions = [0.5, 0.05, 0.95]#, 0.25, 0.75] # proportions between the lower and upper limits
     angle_sequence = [p*(angle_range[1]-angle_range[0])+angle_range[0] for p in proportions]
     return angle_sequence, num_unique_probe_angles
@@ -349,7 +390,7 @@ def main():
             Perform Planning for Probe
             '''
 
-            angle_sequence, num_unique_probe_angles = generate_probe_angle_sequence(target)
+            angle_sequence, num_unique_probe_angles = generate_probe_angle_sequence(target, 'probe')
 
             if probe_plan_state == 0:
 
