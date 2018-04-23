@@ -159,8 +159,8 @@ def move_sensor_head(pos, yaw):
         rospy.sleep(0.5) # give time for handshake
 
         gantry_yaw_history.append(gantry_desired_state.yaw_desired)
-        rotation_rate = 1.0 # rad/s (about 90deg/sec)
-        gantry_yaw_delay_factor = 1.0 # use this for tuning
+        rotation_rate = 1.5 # rad/s (about 90deg/sec)
+        gantry_yaw_delay_factor = 1 # use this for tuning
         # print "gantry_yaw_history", gantry_yaw_history
         yaw_delta = gantry_yaw_history[-1] - gantry_yaw_history[-2] # difference of last and second last
         yaw_timeout = abs(yaw_delta * rotation_rate * gantry_yaw_delay_factor) # seconds
@@ -244,29 +244,29 @@ def calc_probe_angle_range(desired_probe_tip, state):
 
     ### MAX CONTIGUOUS HACK
     true_indices = [i for i, x in enumerate(collision_free_points) if x==1]
-    # print true_indices
+    print true_indices
 
     index_diff = [true_indices[i+1]-true_indices[i] for i in range(len(true_indices)-1)]
-    # print index_diff
+    print index_diff
 
     # indices where not 1
     gap_indices = [i+1 for i, x in enumerate(index_diff) if x != 1]
-    # print gap_indices
+    print gap_indices
 
     # add start and end indices
     gap_indices.insert(0,0)
     gap_indices.append(len(true_indices))
-    # print gap_indices
+    print gap_indices
 
     max_range = [gap_indices[i+1]-gap_indices[i] for i in range(len(gap_indices)-1)]
-    # print max_range
+    print max_range
 
     # get the max range
     richest_zone_index = np.argmax(max_range)
-    # print richest_zone_index
+    print richest_zone_index
 
     richest_zone = true_indices[gap_indices[richest_zone_index]:gap_indices[richest_zone_index+1]]
-    # print richest_zone
+    print richest_zone
 
     mask = []
     # do a mask with just the ones in question
@@ -276,9 +276,11 @@ def calc_probe_angle_range(desired_probe_tip, state):
         else:
             mask.append(0)
 
-    # print mask
+    print mask
 
     tog = zip(possible_probe_approach_angles, mask)
+    print tog
+    ###
 
     allowable_angles = [x[0] for x in tog if x[1]==True] # only extract collision-free points
     print "allowable_angles", allowable_angles
@@ -290,10 +292,10 @@ def calc_probe_angle_range(desired_probe_tip, state):
 
 def generate_probe_angle_sequence(target, state):
 # def generate_probe_angle_sequence(index):
-    num_unique_probe_angles = 3
+    num_unique_probe_angles = 5
     # angle_range = calc_probe_angle_range(get_desired_probe_tip(index)) # for testing with dummy gantry positions
     angle_range = calc_probe_angle_range(target, state)
-    proportions = [0.5, 0.0, 1.0] # proportions between the lower and upper limits
+    proportions = [0.5, 0.05, 0.95]#, 0.25, 0.75] # proportions between the lower and upper limits
     angle_sequence = [p*(angle_range[1]-angle_range[0])+angle_range[0] for p in proportions]
     return angle_sequence, num_unique_probe_angles
 
@@ -451,16 +453,16 @@ def main():
                     # gantry_yaw = 0
                     gantry_yaw = angle_sequence[0]
 
-
-                    desired_probe_tip.x = target.x - landmine_diameter/2*probe_safety_factor
-                    desired_probe_tip.y = target.y
+                    desired_probe_tip.x = target.x - math.cos(gantry_yaw)*landmine_diameter/2*probe_safety_factor
+                    desired_probe_tip.y = target.y - math.sin(gantry_yaw)*landmine_diameter/2*probe_safety_factor
                     desired_probe_tip.z = max_probe_depth
                     move_gantry(desired_probe_tip, gantry_yaw, 'probe')
 
                 elif probe_sequence > 0:
 
                     if probe_sequence < max_num_probes:
-                        desired_probe_tip.x += maxForwardSearch
+                        desired_probe_tip.x += math.cos(gantry_yaw)*maxForwardSearch
+                        desired_probe_tip.y += math.sin(gantry_yaw)*maxForwardSearch
                         move_gantry(desired_probe_tip, gantry_yaw, 'probe')
 
                     else:
@@ -575,7 +577,7 @@ def main():
 
                 raw_input("\nMove Probe Tip for Marking...\n")
 
-                gantry_yaw = angle_sequence[0]
+                gantry_yaw = 0
                 desired_probe_tip.x = est_mine_list[-1].c_x
                 desired_probe_tip.y = est_mine_list[-1].c_y
                 desired_probe_tip.z = sensorhead_marker_offset_loc[2] #max_probe_depth
