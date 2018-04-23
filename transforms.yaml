@@ -47,6 +47,7 @@ probe_safety_factor: 1.25
 max_probe_distance: 207 #mm
 max_num_probes: 3
 calibrate_probe: False
+sensorhead_marker_offset_loc: [200,0,-400] # ESTIMATED
 
 ### Probe Planner ###
 third_stage_probe_angle: 1.57079632679 #1.3962634016
