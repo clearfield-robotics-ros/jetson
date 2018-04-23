@@ -166,7 +166,7 @@ def move_sensor_head(pos, yaw):
         yaw_timeout = abs(yaw_delta * rotation_rate * gantry_yaw_delay_factor) # seconds
         yaw_delay_timer_start = time.time()
         print "yaw_timeout", yaw_timeout
-        
+
         while not gantry_current_status.position_reached or (time.time()-yaw_delay_timer_start)<yaw_timeout: # block while not finished
             pass
 
@@ -226,7 +226,7 @@ def get_next_config(index):
 def calc_probe_angle_range(desired_probe_tip, state):
     gantry_th_min                  = rospy.get_param('gantry_th_min')
     gantry_th_max                  = rospy.get_param('gantry_th_max')
-    possible_probe_approach_angles = np.linspace(gantry_th_min, gantry_th_max, 90) # 10deg increments for 180deg 
+    possible_probe_approach_angles = np.linspace(gantry_th_min, gantry_th_max, 90) # 10deg increments for 180deg
 
     x_mid = (gantry_limits[0] + gantry_limits[1])/2 # so that it doesn't run into boundary issues
     y_mid = (gantry_limits[2] + gantry_limits[3])/2
@@ -280,7 +280,7 @@ def calc_probe_angle_range(desired_probe_tip, state):
 
     tog = zip(possible_probe_approach_angles, mask)
     print tog
-    ### 
+    ###
 
     allowable_angles = [x[0] for x in tog if x[1]==True] # only extract collision-free points
     print "allowable_angles", allowable_angles
@@ -426,7 +426,7 @@ def main():
         # check we're in the right state and have a Target
         if current_state == 4 and not target == null_target:
 
-        ### START COMMENTED OUT SECTION FOR CONSTRAINTS SIMULATION ###    
+        ### START COMMENTED OUT SECTION FOR CONSTRAINTS SIMULATION ###
         # if current_state == 4 and not target == null_target and test_motion:
         #     next_config = get_next_config(constraint_planning_test_index)
         #     move_sensor_head([next_config[0], next_config[1]], next_config[2])
@@ -434,7 +434,7 @@ def main():
         #     constraint_planning_test_index += 1
         #     if constraint_planning_test_index == 3:
         #         test_motion = False
-        ### END COMMENTED OUT SECTION FOR CONSTRAINTS SIMULATION ###    
+        ### END COMMENTED OUT SECTION FOR CONSTRAINTS SIMULATION ###
 
         ### START COMMENTED OUT SECTION ###
             '''

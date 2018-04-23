@@ -59,7 +59,7 @@ Visualization Manager:
           Value: true
         md:
           Value: true
-        odom:
+        mine_marker:
           Value: true
         probe_base:
           Value: true
@@ -71,12 +71,6 @@ Visualization Manager:
           Value: true
         sensor_head:
           Value: true
-        target_probe:
-          Value: true
-        target_probe_base:
-          Value: true
-        target_sensor_head:
-          Value: true
         world:
           Value: true
       Marker Scale: 500
@@ -86,21 +80,19 @@ Visualization Manager:
       Show Names: true
       Tree:
         world:
+          base_link:
+            {}
           scorpion:
             gantry:
               sensor_head:
                 md:
                   {}
+                mine_marker:
+                  {}
                 probe_base:
                   probe_car:
                     probe_tip:
                       {}
-              target_probe:
-                {}
-              target_probe_base:
-                {}
-              target_sensor_head:
-                {}
       Update Interval: 0
       Value: true
     - Class: rviz/Marker
@@ -191,10 +183,10 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Pitch: 0.284797132
+      Pitch: 1.32979727
       Target Frame: gantry
       Value: Orbit (rviz)
-      Yaw: 1.50999987
+      Yaw: 3.18999958
     Saved: ~
 Window Geometry:
   Displays:
