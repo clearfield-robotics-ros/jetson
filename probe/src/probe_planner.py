@@ -280,7 +280,6 @@ def calc_probe_angle_range(desired_probe_tip, state):
 
     tog = zip(possible_probe_approach_angles, mask)
     print tog
-    ###
 
     allowable_angles = [x[0] for x in tog if x[1]==True] # only extract collision-free points
     print "allowable_angles", allowable_angles
@@ -290,13 +289,11 @@ def calc_probe_angle_range(desired_probe_tip, state):
     else:
         return [allowable_angles[0], allowable_angles[-1]]
 
-def generate_probe_angle_sequence(target, state):
-    num_unique_probe_angles = 5
+def generate_probe_angle_sequence(target, proportions, state):
     # angle_range = calc_probe_angle_range(get_desired_probe_tip(index)) # for testing with dummy gantry positions
     angle_range = calc_probe_angle_range(target, state)
-    proportions = [0.5, 0.05, 0.95, 0.25, 0.75] # proportions between the lower and upper limits
     angle_sequence = [p*(angle_range[1]-angle_range[0])+angle_range[0] for p in proportions]
-    return angle_sequence, num_unique_probe_angles
+    return angle_sequence
 
 
 def set_target(data):
@@ -392,7 +389,6 @@ def main():
     global contact_block_flag
     contact_block_flag = False
 
-
     # Recieving Target from Metal Detector
     rospy.Subscriber("/set_probe_target", Point, set_target)
     null_target = Point()
@@ -406,19 +402,7 @@ def main():
 
     constraint_planning_test_index = 0
     test_motion = True
-    # DEBUG
-    # N = 4
-    # rospy.sleep(0.5) # Sleeps for 1 sec
-    # for i in range(0,N):
-    #     x = -landmine_diameter/2*math.sin( (100 + 120/(N-1)*i) * math.pi/180)+250
-    #     y = landmine_diameter/2*math.cos( (100 + 120/(N-1)*i) * math.pi/180)
-    #
-    #     est_mine_list[-1].add_point(x,y,0)
-    #
-    # rospy.sleep(0.5) # Sleeps for 1 sec
-    # p = est_mine_list[-1].get_sparsest_point()
-    #
-    # pdb.set_trace()
+
 
     r = rospy.Rate(100) # Hz
     while not rospy.is_shutdown():
@@ -439,20 +423,22 @@ def main():
         ### START COMMENTED OUT SECTION ###
 
             '''
+            Generate Angle Sequence
+            '''
+            # TODO check that gantry limits are set before proceeding, could cause crash
+            proportions = rospy.get_param('proportions')
+            angle_sequence = generate_probe_angle_sequence(target, proportions, 'probe')
+            # angle_sequence = [0, 0.785398, -0.785398] # original sequence
+            print "angle_sequence", angle_sequence
+
+            '''
             Perform Planning for Probe
             '''
-
-            angle_sequence, num_unique_probe_angles = generate_probe_angle_sequence(target, 'probe')
-
-            print "angle_sequence", angle_sequence
-            print "num_unique_probe_angles", num_unique_probe_angles
-
             print "\nPLANNING NEXT PROBE"
             print "-----------------------"
 
             if probe_sequence == probe_sequence_prev:
 
-                # gantry_yaw = +0.785398
                 gantry_yaw = angle_sequence[probe_plan_state]
 
                 desired_probe_tip.x = target.x - math.cos(gantry_yaw)*landmine_diameter/2*probe_safety_factor
@@ -488,7 +474,7 @@ def main():
             '''
             Advance States
             '''
-            if probe_plan_state < num_unique_probe_angles:
+            if probe_plan_state < len(angle_sequence):
 
                 if est_mine_list[-1].point_count() > prev_point_count or probe_limit_exceeded:
                     probe_plan_state += 1 # advance
@@ -496,7 +482,7 @@ def main():
                     prev_point_count = est_mine_list[-1].point_count()
                     probe_limit_exceeded = False
 
-            if probe_plan_state == num_unique_probe_angles: # just exit here for now
+            if probe_plan_state == len(angle_sequence): # just exit here for now
 
                 est_mine_list[-1].print_results()
 
@@ -508,7 +494,7 @@ def main():
                 desired_probe_tip.z = sensorhead_marker_offset_loc[2] #max_probe_depth
                 move_gantry(desired_probe_tip, gantry_yaw, 'mark')
 
-                # Reset everyhting before we go go to the next mine
+                # Reset everything before we go go to the next mine
                 target = null_target
                 probe_plan_state = -1
                 probe_sequence = 0
@@ -516,24 +502,6 @@ def main():
                 jetson_desired_state.publish(0) # go back to idle state
                 jetson_desired_mine.publish(0) # increment mine count
                 est_mine_list.append(Mine_Estimator(landmine_diameter, landmine_height))
-
-            # elif probe_plan_state == 3:
-            #
-            #     if not est_mine_list[-1].point_count() == prev_point_count or probe_limit_exceeded:
-            #         probe_sequence_prev = probe_sequence
-            #         prev_point_count = est_mine_list[-1].point_count()
-            #         probe_limit_exceeded = False
-            #
-            #     if (est_mine_list[-1].point_count() >= num_contact_points
-            #         and est_mine_list[-1].get_error() <= min_fit_error):
-            #
-            #         est_mine_list[-1].print_results()
-                    # target = null_target
-                    # probe_plan_state = -1
-                    # probe_sequence = 0 # reset
-                    # jetson_desired_state.publish(0) # go back to idle state
-                    # jetson_desired_mine.publish(0) # increment mine count
-                    # est_mine_list.append(Mine_Estimator(landmine_diameter, landmine_height)) # looking for new mine now!
 
         ### END COMMENTED OUT SECTION #
 
