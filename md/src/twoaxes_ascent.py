@@ -87,7 +87,7 @@ def incoming_signal(data):
     # print data.point
 
     # if data.point.z > 1200 and cur_state > 1:
-    if data.point.z > 1200 and jetson_current_state == 2:
+    if data.point.z > 1200 and jetson_current_state == 2 and not goal_set:
         # print "\nChange State to 3\n"
         jetson_desired_state.publish(3)  # start pinpointing
         found_something = True
@@ -120,10 +120,10 @@ def update_lims(data):
     cur_state = data.state
     if data.calibration_flag:
         lims_set = True
-    if goal_set and (jetson_current_state == 2 or jetson_current_state == 3):
+    if goal_set and (jetson_current_state == 2 or jetson_current_state == 3) and (cur_state == 2 or cur_state == 3):
         at_goal = data.position_reached
-        if at_goal:
-            print "Got to goal!"
+        # if at_goal:
+        #     print "Got to goal!"
 
 
 # pubs & subs

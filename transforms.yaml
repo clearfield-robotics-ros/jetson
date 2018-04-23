@@ -34,7 +34,7 @@ sensorhead_md_offset_loc: [110, 345, -455] #[140,373,-455] # y offset is half of
 sensorhead_md_offset_rot: [0,0,1.5708] # y offset is half of width
 gantry_sweep_angle: -1.09956 # -63 degrees
 gantry_sweep_x_pos: 1
-gantry_sweep_y_pos: 250
+gantry_sweep_y_pos: 100
 pinpointing_x_offset: 0
 pinpointing_y_offset: 0
 
@@ -58,8 +58,8 @@ gantry_x_min: 0
 gantry_x_max: 400
 gantry_y_min: 0
 gantry_y_max: 800
-gantry_th_min: -1.0472 # -0.96 # 57079632679
-gantry_th_max: 1.0472 # 0.96 # 1.57079632679
+gantry_th_min: -0.96 # 57079632679
+gantry_th_max: 0.96 # 1.57079632679
 gantry_ticks_per_mm: 5.61121
 ### Probe Planner ###
 classification_num_probes: 3

@@ -438,10 +438,11 @@ def main():
             '''
             Perform Planning for Probe
             '''
-            print "\nPLANNING NEXT PROBE"
+            print "\nPLANNING NEXT PROBE @ ANGLE #", probe_plan_state
             print "-----------------------"
 
             if probe_sequence == probe_sequence_prev:
+                print "made it back here"
 
                 gantry_yaw = angle_sequence[probe_plan_state]
 
@@ -481,6 +482,7 @@ def main():
             if probe_plan_state < len(angle_sequence):
 
                 if est_mine_list[-1].point_count() > prev_point_count or probe_limit_exceeded or not valid:
+                    print "\nADVANCING PROBE STATES\n"
                     probe_plan_state += 1 # advance
                     probe_sequence_prev = probe_sequence
                     prev_point_count = est_mine_list[-1].point_count()
@@ -502,6 +504,7 @@ def main():
                 target = null_target
                 probe_plan_state = -1
                 probe_sequence = 0
+                probe_sequence_prev = probe_sequence # ed's change
                 prev_point_count = 0
                 jetson_desired_state.publish(0) # go back to idle state
                 jetson_desired_mine.publish(0) # increment mine count
