@@ -55,13 +55,7 @@ dist = 0
 x_lims = [0, 1000]
 y_lims = [0, 1000]
 cur_state = 0
-gantry_state = 0
 jetson_current_state = 0
-
-
-def update_gantry_state(data):
-    global gantry_state
-    gantry_state = data
 
 
 def update_state(data):
@@ -93,7 +87,7 @@ def incoming_signal(data):
     # print data.point
 
     # if data.point.z > 1200 and cur_state > 1:
-    if data.point.z > 1200 and jetson_current_state == 2:
+    if data.point.z > 1200 and jetson_current_state == 2 and not goal_set:
         # print "\nChange State to 3\n"
         jetson_desired_state.publish(3)  # start pinpointing
         found_something = True
@@ -126,8 +120,10 @@ def update_lims(data):
     cur_state = data.state
     if data.calibration_flag:
         lims_set = True
-    if goal_set and (jetson_current_state == 2 or jetson_current_state == 3):
+    if goal_set and (jetson_current_state == 2 or jetson_current_state == 3) and (cur_state == 2 or cur_state == 3):
         at_goal = data.position_reached
+        # if at_goal:
+        #     print "Got to goal!"
 
 
 # pubs & subs
@@ -139,7 +135,6 @@ sub = rospy.Subscriber('md_strong_signal', PointStamped, incoming_signal)
 
 sub2 = rospy.Subscriber('gantry_current_status', gantry_status, update_lims)
 sub3 = rospy.Subscriber('current_state', Int16, update_state)
-sub4 = rospy.Subscriber("/gantry_current_status", gantry_status, update_gantry_state)
 
 listener = tf.TransformListener()
 
@@ -175,6 +170,7 @@ def set_and_wait_for_goal(my_goal, collect):
         # print "not as goal"
         r.sleep()
     else:
+        # print "set and wait complete"
         goal_set = False
         return deepcopy(data_collected)
 
@@ -221,8 +217,7 @@ def main():
             elif not reached_sweeping_pos:
                 # print "go to sweep pos"
 
-                # sweep_pos = [gantry_sweep_x_pos+gantry_state.x_min, gantry_state.y]
-                sweep_pos = [gantry_sweep_x_pos+gantry_state.x_min, gantry_sweep_y_pos]
+                sweep_pos = [gantry_sweep_x_pos + x_lims[0], gantry_sweep_y_pos]
 
                 print lims_set
                 set_and_wait_for_goal(sweep_pos, collect=False)
