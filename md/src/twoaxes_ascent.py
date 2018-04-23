@@ -55,13 +55,7 @@ dist = 0
 x_lims = [0, 1000]
 y_lims = [0, 1000]
 cur_state = 0
-gantry_state = 0
 jetson_current_state = 0
-
-
-def update_gantry_state(data):
-    global gantry_state
-    gantry_state = data
 
 
 def update_state(data):
@@ -128,6 +122,8 @@ def update_lims(data):
         lims_set = True
     if goal_set and (jetson_current_state == 2 or jetson_current_state == 3):
         at_goal = data.position_reached
+        if at_goal:
+            print "Got to goal!"
 
 
 # pubs & subs
@@ -139,7 +135,6 @@ sub = rospy.Subscriber('md_strong_signal', PointStamped, incoming_signal)
 
 sub2 = rospy.Subscriber('gantry_current_status', gantry_status, update_lims)
 sub3 = rospy.Subscriber('current_state', Int16, update_state)
-sub4 = rospy.Subscriber("/gantry_current_status", gantry_status, update_gantry_state)
 
 listener = tf.TransformListener()
 
@@ -221,8 +216,7 @@ def main():
             elif not reached_sweeping_pos:
                 # print "go to sweep pos"
 
-                # sweep_pos = [gantry_sweep_x_pos+gantry_state.x_min, gantry_state.y]
-                sweep_pos = [gantry_sweep_x_pos+gantry_state.x_min, gantry_sweep_y_pos]
+                sweep_pos = [gantry_sweep_x_pos + x_lims[0], gantry_sweep_y_pos]
 
                 print lims_set
                 set_and_wait_for_goal(sweep_pos, collect=False)
