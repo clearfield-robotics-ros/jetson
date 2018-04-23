@@ -61,3 +61,6 @@ gantry_y_max: 800
 gantry_th_min: -1.0472 # -0.96 # 57079632679
 gantry_th_max: 1.0472 # 0.96 # 1.57079632679
 gantry_ticks_per_mm: 5.61121
+### Probe Planner ###
+classification_num_probes: 3
+classification_error_thresh: 2.

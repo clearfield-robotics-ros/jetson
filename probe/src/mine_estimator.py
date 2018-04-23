@@ -30,6 +30,9 @@ class Mine_Estimator:
 
         self.angle_range = rospy.get_param('third_stage_probe_angle')
 
+        self.classification_num_probes = rospy.get_param('classification_num_probes')
+        self.classification_error_thresh = rospy.get_param('classification_error_thresh')
+
 
     def draw_radius(self,col):
 
@@ -186,6 +189,12 @@ class Mine_Estimator:
     def get_error(self):
         return self.error
 
+    def get_result(self):
+        if self.point_count() >= self.classification_num_probes and \
+            self.error <= self.classification_error_thresh:
+            return True
+        else:
+            return False
 
     def print_results(self):
         print "\nLandmine Survey Results"
@@ -195,6 +204,7 @@ class Mine_Estimator:
         print "Radius: %0.1f" % self.c_r
         print "Error: %0.3f" % self.error
         print "# Points:", self.point_count()
+        print "Landmine?:", self.get_result()
         print "-----------------------\n"
 
 
@@ -225,10 +235,10 @@ class Mine_Estimator:
     # def get_sparsest_point2(self):
         # yo, what's the latest estimated center point?
 
-        # cool, so how do the contact points you already have map to angles around 
+        # cool, so how do the contact points you already have map to angles around
         #   the current circle estimate, using the first approach angle as 0 deg?
 
-        # ok. now we're getting somewhere. what's the point which is 
+        # ok. now we're getting somewhere. what's the point which is
 
     def get_sparsest_point(self):
 
@@ -243,7 +253,7 @@ class Mine_Estimator:
                 self.plot_point(self.contact_points[i,0],self.contact_points[i,1],self.c_z-1,[0,0,0])
                 self.plot_point(self.get_est()[0],self.get_est()[1],self.c_z-1,[0,1,.5])
                 angle.append(a)
-            angle.sort() # 
+            angle.sort() #
             print "Sorted angles: ", angle
 
             if min(angle) > -self.angle_range:
@@ -255,7 +265,7 @@ class Mine_Estimator:
             # print "ANGLES:"
             # for i in range(0,len(angle)):
             #     print int(angle[i]*180/math.pi)
-            
+
             # for i in range(0,len(angle)):
             #     x = self.c_x - math.cos(angle[i])*self.c_r
             #     y = self.c_y - math.sin(angle[i])*self.c_r
@@ -301,7 +311,7 @@ class Mine_Estimator:
             x = self.c_x# - math.cos(probe_angle)*self.c_r
             y = self.c_y# - math.sin(probe_angle)*self.c_r
             z = self.c_z
-            return [x,y,z,probe_angle]      # seems to 
+            return [x,y,z,probe_angle]      # seems to
         else:
             return None
 
