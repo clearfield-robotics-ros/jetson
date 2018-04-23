@@ -495,8 +495,8 @@ def main():
                 raw_input("\nMove Probe Tip for Marking...\n")
 
                 gantry_yaw = angle_sequence[0]
-                desired_probe_tip.x = est_mine_list[-1].c_x
-                desired_probe_tip.y = est_mine_list[-1].c_y
+                desired_probe_tip.x = target.x # est_mine_list[-1].c_x
+                desired_probe_tip.y = target.x # est_mine_list[-1].c_y
                 desired_probe_tip.z = sensorhead_marker_offset_loc[2] #max_probe_depth
                 valid = move_gantry(desired_probe_tip, gantry_yaw, 'mark')
 
