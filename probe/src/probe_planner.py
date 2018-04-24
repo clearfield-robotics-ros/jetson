@@ -202,7 +202,7 @@ def move_gantry(desired_probe_tip, gantry_yaw, state):
             yaw_delay_timer_start = time.time()
             print "yaw_timeout", yaw_timeout
 
-            while not gantry_current_status.position_reached or (time.time()-yaw_delay_timer_start)<yaw_timeout: # block while not finished
+            while not gantry_current_status.position_reached and (time.time()-yaw_delay_timer_start)<yaw_timeout: # block while not finished
                 pass
 
     return valid # return to know whether to skip probe
@@ -287,7 +287,7 @@ def calc_probe_angle_range(desired_probe_tip, state):
     # print tog
 
     allowable_angles = [x[0] for x in tog if x[1]==True] # only extract collision-free points
-    print "allowable_angles", allowable_angles
+    # print "allowable_angles", allowable_angles
     # assumption! contiguous collision free points i.e. if the first is at 20deg, last at 160deg, then all of 20-160deg is free
     if len(allowable_angles) == 0:
         return []
