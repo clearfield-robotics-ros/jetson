@@ -195,14 +195,13 @@ def move_gantry(desired_probe_tip, gantry_yaw, state):
 
             gantry_yaw_history.append(gantry_desired_state.yaw_desired)
             rotation_rate = 1.0 # rad/s (about 90deg/sec)
-            gantry_yaw_delay_factor = 1.0 # use this for tuning
-            # print "gantry_yaw_history", gantry_yaw_history
+            gantry_yaw_delay_factor = 5.0 # use this for tuning
             yaw_delta = gantry_yaw_history[-1] - gantry_yaw_history[-2] # difference of last and second last
             yaw_timeout = abs(yaw_delta * rotation_rate * gantry_yaw_delay_factor) # seconds
             yaw_delay_timer_start = time.time()
             print "yaw_timeout", yaw_timeout
 
-            while not gantry_current_status.position_reached and (time.time()-yaw_delay_timer_start)<yaw_timeout: # block while not finished
+            while not gantry_current_status.position_reached or (time.time()-yaw_delay_timer_start)<yaw_timeout: # block while not finished
                 pass
 
     return valid # return to know whether to skip probe
