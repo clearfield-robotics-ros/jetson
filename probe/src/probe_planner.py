@@ -201,7 +201,7 @@ def move_gantry(desired_probe_tip, gantry_yaw, state):
             yaw_delay_timer_start = time.time()
             print "yaw_timeout", yaw_timeout
 
-            while not gantry_current_status.position_reached or (time.time()-yaw_delay_timer_start)<yaw_timeout: # block while not finished
+            while not gantry_current_status.position_reached and (time.time()-yaw_delay_timer_start)<yaw_timeout: # block while not finished
                 pass
 
     return valid # return to know whether to skip probe
