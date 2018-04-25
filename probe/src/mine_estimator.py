@@ -38,7 +38,6 @@ class Mine_Estimator:
 
         msg = Marker()
         msg.header.frame_id = "gantry"
-        # msg.header.frame_id = "probe_tip" # DEBUG
         msg.id = 1
         msg.header.seq = 1
         msg.header.stamp = rospy.Time.now()
