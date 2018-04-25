@@ -43,14 +43,14 @@ sensorhead_probebase_offset_loc: [-191.72,0,-270.7]
 sensorhead_probebase_offset_rot: [0,0.523599,0]
 probe_length: 285 #mm
 probe_speed: 1.5 #mm/s
-probe_safety_factor: 0.2
+probe_safety_factor: 0.5
 max_probe_distance: 207 #mm
 max_num_probes: 3
 calibrate_probe: False
 sensorhead_marker_offset_loc: [230,0,-383]
 
 ### Probe Planner ###
-proportions: [0.5, 0.05, 0.95, 0.25, 0.75] # proportions between the lower and upper limits
+proportions: [0.5, 0.0, 1.0, 0.1, 0.2, 0.3, 0.4, 0.6, 0.7, 0.8, 0.9] # proportions between the lower and upper limits
 third_stage_probe_angle: 1.57079632679 #1.3962634016
 num_contact_points: 5
 min_fit_error: 2.
@@ -58,8 +58,8 @@ gantry_x_min: 0
 gantry_x_max: 400
 gantry_y_min: 0
 gantry_y_max: 800
-gantry_th_min: -0.96 # 57079632679
-gantry_th_max: 0.96 # 1.57079632679
+gantry_th_min: -0.96 # radians
+gantry_th_max: 0.96 # radians
 gantry_ticks_per_mm: 5.61121
 ### Probe Planner ###
 classification_num_probes: 3
