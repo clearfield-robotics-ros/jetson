@@ -11,6 +11,7 @@
 <node name="scorpion" pkg="scorpion" type="scorpion.py" output="screen"></node>
 <node name="localization_teensy_SIM" pkg="scorpion" type="localization_teensy_SIM.py" output="screen"></node>
 <node name="braking_teensy_SIM" pkg="scorpion" type="braking_teensy_SIM.py" output="screen"></node>
+<node name="odom2world" pkg="scorpion_localization" type="odom2world.py"></node>
 
 <!-- GANTRY -->
 <node name="gantry_planner" pkg="gantry" type="gantry_planner.py"></node>
