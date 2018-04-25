@@ -132,7 +132,7 @@ Visualization Manager:
       Marker Topic: /md_detection
       Name: md_detection
       Namespaces:
-        {}
+        md_detection: true
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -168,25 +168,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 1775.07483
+      Distance: 1539.57227
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 171.711472
-        Y: 442.27005
-        Z: -189.265991
+        X: 166.421631
+        Y: 433.340454
+        Z: -206.179611
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.0500000007
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Pitch: 0.714797139
+      Pitch: 0.819797039
       Target Frame: gantry
       Value: Orbit (rviz)
-      Yaw: 0.679999828
+      Yaw: 0.724999785
     Saved: ~
 Window Geometry:
   Displays:

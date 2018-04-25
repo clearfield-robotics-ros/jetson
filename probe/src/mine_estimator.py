@@ -209,7 +209,7 @@ class Mine_Estimator:
             try:
                 result = []
                 error = []
-                combinations = list(itertools.combinations(self.contact_points, 3)) # TODO tune this
+                combinations = list(itertools.combinations(self.contact_points, 5)) # TODO tune this
                 for i in range(0,len(combinations)):
                     # get from combinations
                     points = np.array(combinations[i])
