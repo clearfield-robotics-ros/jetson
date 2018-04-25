@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no" ?>
 <launch>
 
-<rosparam command="load" file="$(find scorpion)/../transforms.yaml" />
+<rosparam command="load" file="$(find probe)/test_data/post_sve.yaml" />
 
+<rosparam command="load" file="$(find scorpion)/../transforms.yaml" />
 <node pkg="tf" type="static_transform_publisher" name="link1_broadcaster" args="0 0 0 0 0 0 1 world gantry 100" />
+<node name="rviz" pkg="rviz" type="rviz" args="-d $(find gantry)/../launch/rviz/sve_sim.rviz"/>/>
 
 <node name="mine_estimator_testing" pkg="probe" type="mine_estimator_testing.py" output="screen"></node>
-
-<node name="rviz" pkg="rviz" type="rviz" args="-d $(find gantry)/../launch/rviz/sve_sim.rviz"/>/>
 
 </launch>

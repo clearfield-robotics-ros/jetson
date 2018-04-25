@@ -140,7 +140,7 @@ class Probe_Motion_Planner:
         # second, check if there is a straight line between start and end points
         # if there is NO collision, just return the straight line
         if self.line_collision_free(LineString([self.start_point, self.end_point])):
-            print "Straight line joins points"
+            # print "Straight line joins points"
             if do_plot:
                 xs, ys = self.start_point.xy
                 xe, ye = self.end_point.xy
@@ -153,10 +153,11 @@ class Probe_Motion_Planner:
 
         # if you've made it this far, the end point is valid AND there is an obstacle in the
         #   way between the start and end points
+        print "Collision avoidance required for gantry movement!"
 
         goal_reached = False # start by assuming you're not at the goal, DUH!
         valid_visited_points = [self.start_point]
-        print "vvp", valid_visited_points[0].xy
+        # print "vvp", valid_visited_points[0].xy
         if do_plot:
             x, y = self.start_point.xy
             ax.scatter(x, y, c='m')
