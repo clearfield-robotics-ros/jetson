@@ -172,6 +172,7 @@ def set_and_wait_for_goal(my_goal, collect):
         # print "not as goal"
         r.sleep()
     else:
+        # print "set and wait complete"
         goal_set = False
         return deepcopy(data_collected)
 
