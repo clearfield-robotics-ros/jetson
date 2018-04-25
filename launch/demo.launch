@@ -30,6 +30,10 @@
  	<param name="baud" value="9600"/>
 </node>
 
+<!-- LOCALIZATION -->
+<include file="$(find scorpion_localization)/launch/scorpion_localization_RT.launch"/>
+<!-- <node name="odom2world" pkg="scorpion_localization" type="odom2world.py" ></node> -->
+
 <!-- VISUALIZATION -->
 <node name="rviz" pkg="rviz" type="rviz" args="-d $(find gantry)/../launch/rviz/sve_sim.rviz"/>/>
 
