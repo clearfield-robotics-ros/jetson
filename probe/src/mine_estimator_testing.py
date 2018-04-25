@@ -16,6 +16,7 @@ from constraints import Probe_Motion_Planner
 from shapely.geometry import Point as shapely_Point
 import time
 
+
 def main():
 	rospy.init_node('mine_estimator_tester')
 
@@ -27,12 +28,15 @@ def main():
 	est_mine_list = []
 	est_mine_list.append(Mine_Estimator(landmine_diameter, landmine_height))
 
+	rospy.sleep(0.5)
 	r = rospy.Rate(10) # Hz
 	while not rospy.is_shutdown():
 
 		for test in range(0,len(test_data)):
+
 			print "mine #",test+1
-			raw_input('...')
+			est_mine_list[-1].clear_markers()
+			est_mine_list.append(Mine_Estimator(landmine_diameter, landmine_height))
 
 			truth = test_data[test]['class']
 			points = test_data[test]['points']
@@ -47,10 +51,8 @@ def main():
 			else:
 				print "Incorrect :("
 
-			est_mine_list.append(Mine_Estimator(landmine_diameter, landmine_height))
-
+			raw_input('...')
 		return
-
 	r.sleep()
 
 if __name__ == "__main__":

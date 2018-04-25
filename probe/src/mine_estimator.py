@@ -5,6 +5,7 @@ import numpy as np
 from circle_intersection import Geometry
 from visualization_msgs.msg import Marker
 from sklearn.cluster import KMeans
+import itertools
 import math
 import pdb
 
@@ -92,18 +93,11 @@ class Mine_Estimator:
 
 
     def plot_intersections(self, intersection):
-
-        # msg = Marker()
-        # msg.ns = "probe_intersection_viz"
-        # msg.action = msg.DELETEALL
-        # self.contact_viz_pub.publish(msg)
-
         for i in range(0, len(intersection)):
 
             x = intersection[i,0]
             y = intersection[i,1]
             z = 0
-
             msg = Marker()
             msg.header.frame_id = "gantry"
             # msg.header.frame_id = "probe_tip" # DEBUG
@@ -123,6 +117,21 @@ class Mine_Estimator:
             msg.color.g = 1.
             msg.color.b = 0.
             self.contact_viz_pub.publish(msg)
+
+
+    def clear_markers(self):
+        msg = Marker()
+        msg.ns = "probe_intersection_viz"
+        msg.action = msg.DELETEALL
+        self.contact_viz_pub.publish(msg)
+        msg = Marker()
+        msg.ns = "probe_contact_viz"
+        msg.action = msg.DELETEALL
+        self.contact_viz_pub.publish(msg)
+        msg = Marker()
+        msg.ns = "probe_radius_viz"
+        msg.action = msg.DELETEALL
+        self.contact_viz_pub.publish(msg)
 
 
     def hough(self):
@@ -181,6 +190,20 @@ class Mine_Estimator:
         self.error = abs(dist/len(self.contact_points))
 
 
+    def circle_fit(self):
+        combinations = list(itertools.combinations(self.contact_points, 3)) # 3 is min point req. for fit
+
+        # result = []
+        # error = []
+        # for i = 1:len(combinations)
+        #     points = combinations[i]
+        #     result.append(self.hough())
+        #     error.append(compute_error(result[-1]))
+
+        self.hough()
+        self.compute_error()
+
+
     def get_est(self):
         return [self.c_x, self.c_y, self.c_z, self.c_r]
 
@@ -188,12 +211,14 @@ class Mine_Estimator:
     def get_error(self):
         return self.error
 
+
     def get_result(self):
         if self.point_count() >= self.classification_num_probes and \
             self.error <= self.classification_error_thresh:
             return True
         else:
             return False
+
 
     def print_results(self):
         print "\n-----------------------"
@@ -215,10 +240,8 @@ class Mine_Estimator:
         new_contact = np.array([x,y,z])
         self.contact_points = np.vstack((self.contact_points, new_contact))
         self.c_z = np.mean(self.contact_points[:,2])
-        # print "computing hough transform..."
-        self.hough()
-        # print "comptung error..."
-        self.compute_error()
+
+        self.circle_fit()
 
         if self.visualize:
             self.plot_point(x,y,z, [1,0,0])
