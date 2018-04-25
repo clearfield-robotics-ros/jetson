@@ -213,12 +213,12 @@ def generate_probe_plan(goal_trans, goal_rot):
     current_rot_euler = tf.transformations.euler_from_quaternion(current_rot)[2]
     start_config = [current_trans[0], current_trans[1], current_rot_euler]
     end_config = [goal_trans[0], goal_trans[1], goal_rot]
-    print "start config", start_config
-    print "end config", end_config
+    # print "start config", start_config
+    # print "end config", end_config
     probe_motion_planner = Probe_Motion_Planner(start_config, end_config, gantry_limits)
     path, valid = probe_motion_planner.plan_path()
     plan_arrays = [[step.x, step.y] for step in path] # reconfigure into an array of arrays
-    print plan_arrays
+    # print plan_arrays
     return plan_arrays, valid
 
 def get_next_config(index):
@@ -281,13 +281,13 @@ def calc_probe_angle_range(desired_probe_tip, state):
         else:
             mask.append(0)
 
-    print mask
+    # print mask
 
     tog = zip(possible_probe_approach_angles, mask)
     # print tog
 
     allowable_angles = [x[0] for x in tog if x[1]==True] # only extract collision-free points
-    print "allowable_angles", allowable_angles
+    # print "allowable_angles", allowable_angles
     # assumption! contiguous collision free points i.e. if the first is at 20deg, last at 160deg, then all of 20-160deg is free
     if len(allowable_angles) == 0:
         return []
@@ -307,6 +307,9 @@ def set_target(data):
     print "Metal Detector Target:\n", target
     global probe_plan_state
     probe_plan_state = 0
+
+    global probe_start_time
+    probe_start_time = time.time()
 
 
 def update_gantry_state(data):
@@ -409,6 +412,9 @@ def main():
     constraint_planning_test_index = 0
     test_motion = True
 
+    global probe_start_time
+    probe_start_time = 0
+
 
     r = rospy.Rate(100) # Hz
     while not rospy.is_shutdown():
@@ -433,7 +439,6 @@ def main():
             '''
             angle_sequence = generate_probe_angle_sequence(target, proportions, 'probe')
             # angle_sequence = [0, 0.785398, -0.785398] # original sequence
-            print "angle_sequence", angle_sequence
 
             '''
             Perform Planning for Probe
@@ -489,6 +494,8 @@ def main():
                     probe_limit_exceeded = False
 
             if probe_plan_state == len(angle_sequence): # just exit here for now
+
+                print "\ntime to probe: %0.2f seconds\n" % (time.time() - probe_start_time)
 
                 est_mine_list[-1].print_results()
 

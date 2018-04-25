@@ -43,7 +43,7 @@ sensorhead_probebase_offset_loc: [-191.72,0,-270.7]
 sensorhead_probebase_offset_rot: [0,0.523599,0]
 probe_length: 285 #mm
 probe_speed: 1.5 #mm/s
-probe_safety_factor: 0.0
+probe_safety_factor: 0.2
 max_probe_distance: 207 #mm
 max_num_probes: 3
 calibrate_probe: False
@@ -63,4 +63,4 @@ gantry_th_max: 0.96 # 1.57079632679
 gantry_ticks_per_mm: 5.61121
 ### Probe Planner ###
 classification_num_probes: 3
-classification_error_thresh: 2.
+classification_error_thresh: 5.

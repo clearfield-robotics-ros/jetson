@@ -61,8 +61,8 @@ class Probe_Motion_Planner:
         self.start_point = self.config_mm_to_point_m(start)
         self.end_point = self.config_mm_to_point_m(end)
 
-        print "start point in constraints", self.start_point
-        print "end point in constraints", self.end_point
+        # print "start point in constraints", self.start_point
+        # print "end point in constraints", self.end_point
 
     def point_collision_free(self, point):
         """
@@ -221,12 +221,12 @@ class Probe_Motion_Planner:
         orig_path = path
         distances = [orig_path[i].distance(orig_path[i+1]) for i in range(len(orig_path)-1)]
         rows_to_delete = [i+1 for i, x in enumerate(distances) if distances[i]<eps]
-        print rows_to_delete[-1], len(orig_path)-1
+        # print rows_to_delete[-1], len(orig_path)-1
         if rows_to_delete[-1] == (len(orig_path)-1):
             rows_to_delete[-1] = len(orig_path) - 2
         final_path = [x for i,x in enumerate(orig_path) if i not in rows_to_delete]
-        for i in range(len(final_path)):
-            print final_path[i].xy
+        # for i in range(len(final_path)):
+        #     print final_path[i].xy
         return final_path
 
     def shorten_path(self, path, timeout=.5):
