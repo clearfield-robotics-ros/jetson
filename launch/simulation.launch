@@ -29,6 +29,5 @@
 
 <!-- VISUALIZATION -->
 <node name="rviz" pkg="rviz" type="rviz" args="-d $(find gantry)/../launch/rviz/sve_sim.rviz"/>/>
-<!-- <node name="rviz" pkg="rviz" type="rviz" args="-d $(find gantry)/../launch/rviz/sve_sim_jetson.rviz"/>/> -->
 
 </launch>
