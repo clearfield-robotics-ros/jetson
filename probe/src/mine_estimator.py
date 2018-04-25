@@ -134,74 +134,87 @@ class Mine_Estimator:
         self.contact_viz_pub.publish(msg)
 
 
-    def hough(self):
-        if len(self.contact_points) > 1:
-            ### get Circular Intersections and plot
-            intersection = np.array([], dtype=np.int64).reshape(0,2)
-            for i in range(0,self.point_count()):
-                for j in range(0,i):
-                    p = self.g.circle_intersection( np.append(self.contact_points[i,0:2],self.radius),
-                                                    np.append(self.contact_points[j,0:2],self.radius) )
-                    if p is not None:
-                        for j in range(0,len(p)):
-                            intersection = np.vstack(( intersection,np.array([p[j][0],p[j][1]]) ))
+    def hough(self, points):
+        ### get Circular Intersections and plot
+        intersection = np.array([], dtype=np.int64).reshape(0,2)
+        for i in range(0,len(points)):
+            for j in range(0,i):
+                p = self.g.circle_intersection( np.append(points[i,0:2],self.radius),
+                                                np.append(points[j,0:2],self.radius) )
+                if p is not None:
+                    for j in range(0,len(p)):
+                        intersection = np.vstack(( intersection,np.array([p[j][0],p[j][1]]) ))
 
-            if len(intersection) > 0: # if we have intersections!
+        if len(intersection) > 0: # if we have intersections!
 
-                ### Remove points (bounding box)
-                intersection_BB = np.array([], dtype=np.int64).reshape(0,2)
-                for i in range(0,len(intersection)):
-                    if ( intersection[i,0] > min(self.contact_points[:,0]) ): # and
-                    # intersection[i,1] > min(self.contact_points[:,1]) and
-                    # intersection[i,1] < max(self.contact_points[:,1]) ):
-                        intersection_BB = np.vstack((intersection_BB,intersection[i,:]))
-                intersection_BB = np.unique(intersection_BB, axis=0)
+            ### Remove points (bounding box)
+            intersection_BB = np.array([], dtype=np.int64).reshape(0,2)
+            for i in range(0,len(intersection)):
+                if ( intersection[i,0] > min(points[:,0]) ): # and
+                # intersection[i,1] > min(points[:,1]) and
+                # intersection[i,1] < max(points[:,1]) ):
+                    intersection_BB = np.vstack((intersection_BB,intersection[i,:]))
+            intersection_BB = np.unique(intersection_BB, axis=0)
 
-                ### Debugging
-                if False:
-                    self.plot_intersections(intersection_BB)
+            ### Debugging
+            if False:
+                self.plot_intersections(intersection_BB)
 
-                ### Determine center point
-                if len(intersection_BB) > 1:
-                    km = KMeans(n_clusters=2)
-                    km.fit(intersection_BB)
-                    labels = km.labels_
-                    self.c_x = km.cluster_centers_[0,0]
-                    self.c_y = km.cluster_centers_[0,1]
-                elif len(intersection_BB) == 1:
-                    self.c_x = intersection_BB[0,0]
-                    self.c_y = intersection_BB[0,1]
-                else:
-                    self.c_x = np.mean(self.contact_points[:,0])
-                    self.c_y = np.mean(self.contact_points[:,1])
-        else:
-            ### Just use first contact point for centre point
-            self.c_x = self.contact_points[0,0] + self.radius
-            self.c_y = self.contact_points[0,1]
+            ### Determine center point
+            if len(intersection_BB) > 1:
+                km = KMeans(n_clusters=2)
+                km.fit(intersection_BB)
+                labels = km.labels_
+                c_x = km.cluster_centers_[0,0]
+                c_y = km.cluster_centers_[0,1]
+            elif len(intersection_BB) == 1:
+                c_x = intersection_BB[0,0]
+                c_y = intersection_BB[0,1]
+
+            return c_x, c_y
 
 
-    def compute_error(self):
+    def compute_error(self, center):
         dist = 0
         for i in range(0,len(self.contact_points)):
 
-            dist += math.sqrt( (self.contact_points[i,0] - self.c_x)**2 + \
-                               (self.contact_points[i,1] - self.c_y)**2 )
+            dist += math.sqrt( (self.contact_points[i,0] - center[0])**2 + \
+                               (self.contact_points[i,1] - center[1])**2 )
             dist -= self.c_r
-        self.error = abs(dist/len(self.contact_points))
+        error = abs(dist/len(self.contact_points))
+        return error
 
 
     def circle_fit(self):
-        combinations = list(itertools.combinations(self.contact_points, 3)) # 3 is min point req. for fit
+        if len(self.contact_points) == 1:
+            ### Just use first contact point for centre point
+            self.c_x = self.contact_points[0,0] + self.radius
+            self.c_y = self.contact_points[0,1]
+            self.error = self.compute_error([self.c_x,self.c_y])
+        else:
+            try:
+                result = []
+                error = []
+                combinations = list(itertools.combinations(self.contact_points, 3))
+                for i in range(0,len(combinations)):
+                    points = np.array(combinations[i])
+                    c_x, c_y = self.hough(points)
 
-        # result = []
-        # error = []
-        # for i = 1:len(combinations)
-        #     points = combinations[i]
-        #     result.append(self.hough())
-        #     error.append(compute_error(result[-1]))
+                    # TODO deal with none from hough
+                    result.append([c_x, c_y])
+                    err = self.compute_error(result[-1])
+                    error.append(err)
 
-        self.hough()
-        self.compute_error()
+                min_idx = error.index(min(error))
+                self.c_x = result[min_idx][0]
+                self.c_y = result[min_idx][1]
+                self.error = error[min_idx]
+
+            except:
+                self.c_x, self.c_y = self.hough(self.contact_points)
+                self.error = self.compute_error([self.c_x,self.c_y])
+
+
 
 
     def get_est(self):
