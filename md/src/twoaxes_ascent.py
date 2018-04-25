@@ -122,6 +122,8 @@ def update_lims(data):
         lims_set = True
     if goal_set and (jetson_current_state == 2 or jetson_current_state == 3) and (cur_state == 2 or cur_state == 3):
         at_goal = data.position_reached
+    else:
+        at_goal = False
         # if at_goal:
         #     print "Got to goal!"
 

@@ -15,6 +15,7 @@ class Mine_Estimator:
         self.height = height
         self.contact_points = np.array([], dtype=np.int64).reshape(0,3)
         self.g = Geometry()
+        self.init_approach_angle = 0
 
         self.c_x = 0.
         self.c_y = 0.
@@ -29,12 +30,14 @@ class Mine_Estimator:
 
         self.angle_range = rospy.get_param('third_stage_probe_angle')
 
+        self.classification_num_probes = rospy.get_param('classification_num_probes')
+        self.classification_error_thresh = rospy.get_param('classification_error_thresh')
+
 
     def draw_radius(self,col):
 
         msg = Marker()
         msg.header.frame_id = "gantry"
-        # msg.header.frame_id = "probe_tip" # DEBUG
         msg.id = 1
         msg.header.seq = 1
         msg.header.stamp = rospy.Time.now()
@@ -185,16 +188,27 @@ class Mine_Estimator:
     def get_error(self):
         return self.error
 
+    def get_result(self):
+        if self.point_count() >= self.classification_num_probes and \
+            self.error <= self.classification_error_thresh:
+            return True
+        else:
+            return False
 
     def print_results(self):
-        print "\nLandmine Survey Results"
+        print "\n-----------------------"
+        print "Landmine Survey Results"
         print "-----------------------"
         print "Centre X: %0.1f" % self.c_x
         print "Centre Y: %0.1f" % self.c_y
         print "Radius: %0.1f" % self.c_r
         print "Error: %0.3f" % self.error
         print "# Points:", self.point_count()
+        print "Landmine?:", self.get_result()
+        print "-----------------------"
+        print "points:\n", self.contact_points
         print "-----------------------\n"
+
 
 
     def add_point(self,x,y,z):
@@ -221,15 +235,29 @@ class Mine_Estimator:
         return p
 
 
+    # def get_sparsest_point2(self):
+        # yo, what's the latest estimated center point?
+
+        # cool, so how do the contact points you already have map to angles around
+        #   the current circle estimate, using the first approach angle as 0 deg?
+
+        # ok. now we're getting somewhere. what's the point which is
+
     def get_sparsest_point(self):
 
         if len(self.contact_points) >= 2: # need two points to get started
             angle = []
-            for i in range(0,len(self.contact_points)):
+            for i in range(0,len(self.contact_points)): # go through each contact point
+                # print self.contact_points
+                # print self.get_est()
+                # call to get_est() returns the most recent center estimate
                 a = math.atan2( -(self.contact_points[i,1] - self.get_est()[1]),
-                    -(self.contact_points[i,0] - self.get_est()[0]) )
+                                -(self.contact_points[i,0] - self.get_est()[0]) )
+                self.plot_point(self.contact_points[i,0],self.contact_points[i,1],self.c_z-1,[0,0,0])
+                self.plot_point(self.get_est()[0],self.get_est()[1],self.c_z-1,[0,1,.5])
                 angle.append(a)
-            angle.sort()
+            angle.sort() #
+            print "Sorted angles: ", angle
 
             if min(angle) > -self.angle_range:
                 angle.insert(0, -self.angle_range)
@@ -240,18 +268,19 @@ class Mine_Estimator:
             # print "ANGLES:"
             # for i in range(0,len(angle)):
             #     print int(angle[i]*180/math.pi)
-            #
+
             # for i in range(0,len(angle)):
             #     x = self.c_x - math.cos(angle[i])*self.c_r
             #     y = self.c_y - math.sin(angle[i])*self.c_r
             #     z = self.c_z
             #     self.plot_point(x,y,z-1,[1,1,0])
+            print "Sorted angles after insertion: ", angle
 
             dist = []
             for i in range(0,len(angle)-1):
                 dist.append( abs( angle[i+1] - angle[i] ) )
 
-            print dist
+            print "Angle differences: ", dist
 
             M = max(dist)
             I = dist.index(M)
@@ -270,14 +299,22 @@ class Mine_Estimator:
                 probe_angle = angle[I] + dist[I]/2
                 print "MIDDLE", probe_angle*180/math.pi
 
+            # probe_angle = -math.pi/4
+
+            # self.c_x = 450
+            # self.c_y
             x = self.c_x - math.cos(probe_angle)*self.c_r
             y = self.c_y - math.sin(probe_angle)*self.c_r
             z = self.c_z
 
+            # print "Current estimate of center: ", x, y, z
+
             # self.plot_point(x,y,z-2,[1,1,1])
             # print "PROBE ANGLE:", probe_angle
-
-            return [x,y,z,probe_angle]
+            x = self.c_x# - math.cos(probe_angle)*self.c_r
+            y = self.c_y# - math.sin(probe_angle)*self.c_r
+            z = self.c_z
+            return [x,y,z,probe_angle]      # seems to
         else:
             return None
 

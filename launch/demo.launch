@@ -5,7 +5,7 @@
 <rosparam command="load" file="$(find scorpion)/../transforms.yaml" />
 
 <!-- GUI -->
-<include file="$(find minebot_gui)/minebot_gui.launch"/>
+<include file="$(find control_gui)/control_gui.launch"/>
 
 <!-- SCORPION -->
 <node name="scorpion" pkg="scorpion" type="scorpion.py" output="screen"></node>
@@ -26,14 +26,16 @@
 <!-- PROBE -->
 <node name="probe_planner" pkg="probe" type="probe_planner.py" output="screen"></node>
 <node name="probe_tip_tf" pkg="probe" type="probe_tip_tf.py"></node>
-<!-- <node ns="probe_teensy" name="probe_teensy" pkg="rosserial_python" args="/dev/serial/by-id/usb-Teensyduino_USB_Serial_3652290-if00" type="serial_node.py" /> -->
 <node ns="probe_teensy" name="probe_teensy" pkg="rosserial_python" type="serial_node.py">
 	<param name="port" value="/dev/serial/by-id/usb-Teensyduino_USB_Serial_3652290-if00"/>
  	<param name="baud" value="9600"/>
 </node>
 
+<!-- LOCALIZATION -->
+<include file="$(find scorpion_localization)/launch/scorpion_localization_RT.launch"/>
+<!-- <node name="odom2world" pkg="scorpion_localization" type="odom2world.py" ></node> -->
+
 <!-- VISUALIZATION -->
 <node name="rviz" pkg="rviz" type="rviz" args="-d $(find gantry)/../launch/rviz/sve_sim.rviz"/>/>
-<!-- <node name="rviz" pkg="rviz" type="rviz" args="-d $(find gantry)/../launch/rviz/sve_sim_jetson.rviz"/>/> -->
 
 </launch>
