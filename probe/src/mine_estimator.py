@@ -185,6 +185,20 @@ class Mine_Estimator:
         return error
 
 
+    def compute_error_exp(self, center):
+        dist = 0
+        for i in range(0,len(self.contact_points)):
+
+            dist += math.sqrt( (self.contact_points[i,0] - center[0])**2 + \
+                               (self.contact_points[i,1] - center[1])**2 )
+            dist -= self.c_r
+
+            dist = math.exp(abs(dist))-1
+
+        error = abs(dist)/len(self.contact_points)
+        return error
+
+
     def circle_fit(self):
         if len(self.contact_points) == 1:
             ### Just use first contact point for centre point
@@ -195,20 +209,22 @@ class Mine_Estimator:
             try:
                 result = []
                 error = []
-                combinations = list(itertools.combinations(self.contact_points, 3))
+                combinations = list(itertools.combinations(self.contact_points, 3)) # TODO tune this
                 for i in range(0,len(combinations)):
+                    # get from combinations
                     points = np.array(combinations[i])
+                    # compute hough transform
                     c_x, c_y = self.hough(points)
-
-                    # TODO deal with none from hough
                     result.append([c_x, c_y])
+                    # compute error
                     err = self.compute_error(result[-1])
                     error.append(err)
 
                 min_idx = error.index(min(error))
                 self.c_x = result[min_idx][0]
                 self.c_y = result[min_idx][1]
-                self.error = error[min_idx]
+                self.error = self.compute_error([self.c_x,self.c_y])
+                # self.error = error[min_idx]
 
             except:
                 self.c_x, self.c_y = self.hough(self.contact_points)
