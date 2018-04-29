@@ -18,7 +18,13 @@ class Generate_Contact_Point_Yaml():
             for est in self.estimates:
                 f.write('- class: ' + str(est.get_result()) + '\n  points: [')
                 for i, pt in enumerate(est.contact_points):
-                    f.write(str(pt))
+                    for elm in range(3):
+                        if elm == 2:
+                            f.write(str(pt[elm]) + ']')
+                        elif elm == 0:
+                            f.write(str('[' + str(pt[elm]) + ','))
+                        else:
+                            f.write(str(pt[elm]) + ',')
                     if i < len(est.contact_points)-1:
                         f.write(',\n')
                     else:

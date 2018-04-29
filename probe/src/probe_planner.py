@@ -15,6 +15,8 @@ from gantry.msg import to_gantry_msg;
 from constraints import Probe_Motion_Planner
 from shapely.geometry import Point as shapely_Point
 import time
+import datetime
+from generate_contact_pt_yaml import Generate_Contact_Point_Yaml
 
 ### monitor current state ###
 current_state = 0 # if we don't get msgs
@@ -414,6 +416,8 @@ def main():
     global probe_start_time
     probe_start_time = 0
 
+    gen_yaml = Generate_Contact_Point_Yaml(datetime.datetime.now())
+
 
     r = rospy.Rate(100) # Hz
     while not rospy.is_shutdown():
@@ -519,6 +523,7 @@ def main():
                 prev_point_count = 0
                 jetson_desired_state.publish(0) # go back to idle state
                 jetson_desired_mine.publish(0) # increment mine count
+                gen_yaml.write_to_file(est_mine_list)
                 est_mine_list.append(Mine_Estimator(landmine_diameter, landmine_height))
 
         ### END COMMENTED OUT SECTION #
