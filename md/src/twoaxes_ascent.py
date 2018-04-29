@@ -331,6 +331,10 @@ def main():
             filtered_collected = [pos[1] for pos in collected if pos[2] > (1 - within) * max_sig[2]]
             # print filtered_collected
             print np.mean(filtered_collected), np.std(filtered_collected)
+            start_from = [cur_pos[0], np.mean(filtered_collected)]
+
+            set_and_wait_for_goal(start_from, collect=False)
+
             start_from = [cur_pos[0]+pinpointing_x_offset, np.mean(filtered_collected)+pinpointing_y_offset]
 
             # pass the batton to the probe
