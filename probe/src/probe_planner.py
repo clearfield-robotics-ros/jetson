@@ -433,6 +433,7 @@ def main():
 
         ### START COMMENTED OUT SECTION ###
 
+            """
             '''
             Generate Angle Sequence
             '''
@@ -494,32 +495,34 @@ def main():
 
             if probe_plan_state == len(angle_sequence): # just exit here for now
 
-                print "\ntime to probe: %0.2f seconds\n" % (time.time() - probe_start_time)
+            """
+            print "\ntime to probe: %0.2f seconds\n" % (time.time() - probe_start_time)
 
-                est_mine_list[-1].print_results()
+            est_mine_list[-1].print_results()
 
-                raw_input("\nMove Probe Tip for Marking...\n")
+            raw_input("\nMove Probe Tip for Marking...\n")
 
-                gantry_yaw = angle_sequence[0]
-                desired_probe_tip.x = target.x # est_mine_list[-1].c_x
-                desired_probe_tip.y = target.y # est_mine_list[-1].c_y
-                desired_probe_tip.z = sensorhead_marker_offset_loc[2] #max_probe_depth
-                valid = move_gantry(desired_probe_tip, gantry_yaw, 'mark')
+            # gantry_yaw = angle_sequence[0]
+            gantry_yaw = 0
+            desired_probe_tip.x = target.x # est_mine_list[-1].c_x
+            desired_probe_tip.y = target.y # est_mine_list[-1].c_y
+            desired_probe_tip.z = sensorhead_marker_offset_loc[2] #max_probe_depth
+            valid = move_gantry(desired_probe_tip, gantry_yaw, 'mark')
 
-                # construct msg to tell gantry to go to idle
-                gantry_desired_state = to_gantry_msg()
-                gantry_desired_state.state_desired       = 0
-                gantry_desired_state_pub.publish(gantry_desired_state)
+            # construct msg to tell gantry to go to idle
+            gantry_desired_state = to_gantry_msg()
+            gantry_desired_state.state_desired       = 0
+            gantry_desired_state_pub.publish(gantry_desired_state)
 
-                # Reset everything before we go go to the next mine
-                target = null_target
-                probe_plan_state = -1
-                probe_sequence = 0
-                probe_sequence_prev = probe_sequence # ed's change
-                prev_point_count = 0
-                jetson_desired_state.publish(0) # go back to idle state
-                jetson_desired_mine.publish(0) # increment mine count
-                est_mine_list.append(Mine_Estimator(landmine_diameter, landmine_height))
+            # Reset everything before we go go to the next mine
+            target = null_target
+            probe_plan_state = -1
+            probe_sequence = 0
+            probe_sequence_prev = probe_sequence # ed's change
+            prev_point_count = 0
+            jetson_desired_state.publish(0) # go back to idle state
+            jetson_desired_mine.publish(0) # increment mine count
+            est_mine_list.append(Mine_Estimator(landmine_diameter, landmine_height))
 
         ### END COMMENTED OUT SECTION #
 

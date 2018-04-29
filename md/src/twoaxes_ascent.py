@@ -246,8 +246,8 @@ def main():
             print plus_pos, minus_pos
 
             # do movements, collect data, determine peak
-            set_and_wait_for_goal(plus_pos, collect=False)
-            collected = set_and_wait_for_goal(minus_pos, collect=True)
+            set_and_wait_for_goal(minus_pos, collect=False)
+            collected = set_and_wait_for_goal(plus_pos, collect=True)
             max_sig = max(collected, key=lambda x: x[2])
             print max_sig
             filtered_collected = [pos[0] for pos in collected if pos[2] > (1 - within) * max_sig[2]]
@@ -279,9 +279,59 @@ def main():
             filtered_collected = [pos[1] for pos in collected if pos[2] > (1 - within) * max_sig[2]]
             # print filtered_collected
             print np.mean(filtered_collected), np.std(filtered_collected)
-            start_from = [cur_pos[0]+pinpointing_x_offset, np.mean(filtered_collected)+pinpointing_y_offset]
+            start_from = [cur_pos[0], np.mean(filtered_collected)]
 
+            # do x check again!
             set_and_wait_for_goal(start_from, collect=False)
+            print "Start second x check"
+            cur_pos = deepcopy(cur_sig[:2])
+            print cur_pos
+
+            # create positive and negative position goals
+            plus_val = limit_val(cur_pos[0] + 50.0, x_lims)
+            minus_val = limit_val(cur_pos[0] - 50.0, x_lims)
+            # print plus_val, minus_val
+            plus_pos = deepcopy(cur_pos)
+            plus_pos[0] = plus_val
+            minus_pos = deepcopy(cur_pos)
+            minus_pos[0] = minus_val
+            print plus_pos, minus_pos
+
+            # do movements, collect data, determine peak
+            set_and_wait_for_goal(minus_pos, collect=False)
+            collected = set_and_wait_for_goal(plus_pos, collect=True)
+            max_sig = max(collected, key=lambda x: x[2])
+            print max_sig
+            filtered_collected = [pos[0] for pos in collected if pos[2] > (1 - within) * max_sig[2]]
+            # print filtered_collected
+            print np.mean(filtered_collected), np.std(filtered_collected)
+            start_from = [np.mean(filtered_collected), cur_pos[1]]
+
+            # use new goal and move in y now
+            set_and_wait_for_goal(start_from, collect=False)
+            print "Start second y check"
+            cur_pos = deepcopy(cur_sig[:2])
+            print cur_pos
+
+            # create positive and negative position goals
+            plus_val = limit_val(cur_pos[1] + 90.0, y_lims)
+            minus_val = limit_val(cur_pos[1] - 90.0, y_lims)
+            # print plus_val, minus_val
+            plus_pos = deepcopy(cur_pos)
+            plus_pos[1] = plus_val
+            minus_pos = deepcopy(cur_pos)
+            minus_pos[1] = minus_val
+            print plus_pos, minus_pos
+
+            # do movements, collect data, determine peak
+            set_and_wait_for_goal(plus_pos, collect=False)
+            collected = set_and_wait_for_goal(minus_pos, collect=True)
+            max_sig = max(collected, key=lambda x: x[2])
+            print max_sig
+            filtered_collected = [pos[1] for pos in collected if pos[2] > (1 - within) * max_sig[2]]
+            # print filtered_collected
+            print np.mean(filtered_collected), np.std(filtered_collected)
+            start_from = [cur_pos[0]+pinpointing_x_offset, np.mean(filtered_collected)+pinpointing_y_offset]
 
             # pass the batton to the probe
             x_offset = + math.sin(gantry_sweep_angle)*sensorhead_md_offset_loc[1] - math.cos(gantry_sweep_angle)*sensorhead_md_offset_loc[0]
