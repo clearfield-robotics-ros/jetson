@@ -178,59 +178,65 @@ class Mine_Estimator:
         dist = 0
         for i in range(0,len(self.contact_points)):
 
-            dist += math.sqrt( (self.contact_points[i,0] - center[0])**2 + \
-                               (self.contact_points[i,1] - center[1])**2 )
+            dist += abs(math.sqrt( (self.contact_points[i,0] - center[0])**2 + \
+                                (self.contact_points[i,1] - center[1])**2 ))
             dist -= self.c_r
         error = abs(dist/len(self.contact_points))
         return error
 
 
-    def compute_error_exp(self, center):
-        dist = 0
-        for i in range(0,len(self.contact_points)):
-
-            dist += math.sqrt( (self.contact_points[i,0] - center[0])**2 + \
-                               (self.contact_points[i,1] - center[1])**2 )
-            dist -= self.c_r
-
-            dist = math.exp(abs(dist))-1
-
-        error = abs(dist)/len(self.contact_points)
-        return error
-
-
     def circle_fit(self):
+
+        if self.visualize:
+            for i in range(0,len(self.contact_points)):
+                self.plot_point(self.contact_points[i][0],self.contact_points[i][1],self.contact_points[i][2], [1,0,0])
+
         if len(self.contact_points) == 1:
             ### Just use first contact point for centre point
             self.c_x = self.contact_points[0,0] + self.radius
             self.c_y = self.contact_points[0,1]
             self.error = self.compute_error([self.c_x,self.c_y])
         else:
-            try:
-                result = []
-                error = []
-                combinations = list(itertools.combinations(self.contact_points, 5)) # TODO tune this
-                for i in range(0,len(combinations)):
-                    # get from combinations
-                    points = np.array(combinations[i])
-                    # compute hough transform
-                    c_x, c_y = self.hough(points)
-                    result.append([c_x, c_y])
-                    # compute error
-                    err = self.compute_error(result[-1])
-                    error.append(err)
+            result = []
+            error = []
 
-                min_idx = error.index(min(error))
-                self.c_x = result[min_idx][0]
-                self.c_y = result[min_idx][1]
-                self.error = self.compute_error([self.c_x,self.c_y])
-                # self.error = error[min_idx]
+            combinations = list(itertools.combinations(self.contact_points, 5)) # TODO tune this
+            for i in range(0,len(combinations)):
 
-            except:
-                self.c_x, self.c_y = self.hough(self.contact_points)
-                self.error = self.compute_error([self.c_x,self.c_y])
+                # TODO change this into random sampling
 
+                ### get from combinations
+                points = np.array(combinations[i])
+                ### compute hough transform
+                c_x, c_y = self.hough(points)
+                result.append([c_x, c_y])
+                # self.c_x = c_x
+                # self.c_y = c_y
+                # self.draw_radius([1,0,0])
 
+                dist = []
+                for i in range(0,len(self.contact_points)):
+
+                    dist.append(math.sqrt( (self.contact_points[i,0] - c_x)**2 + \
+                                       (self.contact_points[i,1] - c_y)**2 ) \
+                                      - self.c_r)
+                # print "dist:",dist
+            
+                ### compute error
+                err = self.compute_error(result[-1])
+                error.append(err)
+                # print "err:",err
+
+                # raw_input("combination #?...")
+
+            min_idx = error.index(min(error))
+            self.c_x = result[min_idx][0]
+            self.c_y = result[min_idx][1]
+            self.error = self.compute_error([self.c_x,self.c_y])
+            # self.error = error[min_idx]
+
+        print "finished!"
+        self.draw_radius([1,0,0])
 
 
     def get_est(self):
@@ -264,18 +270,10 @@ class Mine_Estimator:
         print "-----------------------\n"
 
 
-
     def add_point(self,x,y,z):
         new_contact = np.array([x,y,z])
         self.contact_points = np.vstack((self.contact_points, new_contact))
         self.c_z = np.mean(self.contact_points[:,2])
-
-        self.circle_fit()
-
-        if self.visualize:
-            self.plot_point(x,y,z, [1,0,0])
-            self.draw_radius([1,0,0])
-            # self.plot_point(self.c_x, self.c_y, 0, [0,0,1])
 
 
     def most_recent_point(self):

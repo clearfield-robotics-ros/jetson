@@ -53,23 +53,7 @@ Visualization Manager:
       Frame Timeout: 15
       Frames:
         All Enabled: true
-        base_link:
-          Value: true
         gantry:
-          Value: true
-        md:
-          Value: true
-        mine_marker:
-          Value: true
-        probe_base:
-          Value: true
-        probe_car:
-          Value: true
-        probe_tip:
-          Value: true
-        scorpion:
-          Value: true
-        sensor_head:
           Value: true
         world:
           Value: true
@@ -80,19 +64,8 @@ Visualization Manager:
       Show Names: true
       Tree:
         world:
-          base_link:
+          gantry:
             {}
-          scorpion:
-            gantry:
-              sensor_head:
-                md:
-                  {}
-                mine_marker:
-                  {}
-                probe_base:
-                  probe_car:
-                    probe_tip:
-                      {}
       Update Interval: 0
       Value: true
     - Class: rviz/Marker
@@ -108,7 +81,7 @@ Visualization Manager:
       Marker Topic: /scorpion
       Name: Scorpion_mesh
       Namespaces:
-        scorpion: true
+        {}
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -116,7 +89,7 @@ Visualization Manager:
       Marker Topic: /mine_marker
       Name: Mine
       Namespaces:
-        mine: true
+        {}
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -124,7 +97,8 @@ Visualization Manager:
       Marker Topic: /probe_contact_viz
       Name: probe_contact
       Namespaces:
-        {}
+        probe_contact_viz: true
+        probe_radius_viz: true
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -132,7 +106,7 @@ Visualization Manager:
       Marker Topic: /md_detection
       Name: md_detection
       Namespaces:
-        md_detection: true
+        {}
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -140,7 +114,7 @@ Visualization Manager:
       Marker Topic: /gantry_bounds_viz
       Name: gantry_bounds
       Namespaces:
-        gantry_bounds_viz: true
+        {}
       Queue Size: 100
       Value: true
   Enabled: true
@@ -168,25 +142,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 1539.57227
+      Distance: 866.540955
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 166.421631
-        Y: 433.340454
-        Z: -206.179611
+        X: 318.531067
+        Y: 365.221069
+        Z: -222.53653
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.0500000007
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Pitch: 0.819797039
+      Pitch: 1.43479681
       Target Frame: gantry
       Value: Orbit (rviz)
-      Yaw: 0.724999785
+      Yaw: 0.349999875
     Saved: ~
 Window Geometry:
   Displays:

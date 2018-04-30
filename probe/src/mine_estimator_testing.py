@@ -43,8 +43,8 @@ def main():
 
 			for j in range(0,len(points)):
 				est_mine_list[-1].add_point(points[j][0],points[j][1],points[j][2])
-				# raw_input('...')
 
+			est_mine_list[-1].circle_fit()
 			est_mine_list[-1].print_results()
 
 			if est_mine_list[-1].get_result() == truth:
