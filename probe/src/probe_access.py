@@ -43,8 +43,6 @@ from scipy.interpolate import griddata
 
 ### Probe Planner ###
 # third_stage_probe_angle: 1.3962634016
-# num_contact_points: 5
-# min_fit_error: 2.
 probe_angle = math.pi/6
 gantry_x_range = 400 # mm   FOR NOW ONLY ASSUME WE'RE IN THE PROJECTED BOUNDS OF GANTRY
 gantry_y_range = 800 # mm
@@ -89,7 +87,7 @@ def main():
     fig, ax = plt.subplots()
     cax = ax.imshow(summ, interpolation = 'nearest')
     ax.set_title('Range of probe access angles ')
-    cbar = fig.colorbar(cax, orientation='horizontal') # ticks=[-1, 0, 1], 
+    cbar = fig.colorbar(cax, orientation='horizontal') # ticks=[-1, 0, 1],
     cbar.set_label('Degrees')
     ax.set_xlabel('Gantry Y coordinate (cm)')
     ax.set_ylabel('Gantry X coordinate (cm)')
@@ -106,13 +104,13 @@ def calc_initial_approach_angle(possible):
     # print prod, sum
     angle = prod/sum
     # raw_input()
-    return angle 
+    return angle
 
 def calc_accessible_angle_range(possible):
     return np.sum(possible).astype(float)*(360/nth)
 
 def within_gantry_limits(loc, yaw):
-    pose_possible = False # start by assuming it's out of bounds 
+    pose_possible = False # start by assuming it's out of bounds
     candidate_trans = probe_to_gantry_transform(loc, yaw) # get transform for specified loc & yaw
     if candidate_trans[0] >= 0 and candidate_trans[0] <= gantry_x_range: # if within both x bounds
         if candidate_trans[1] >= 0 and candidate_trans[1] <= gantry_y_range: # and y bounds
