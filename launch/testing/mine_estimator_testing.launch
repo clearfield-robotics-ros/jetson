@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no" ?>
 <launch>
 
-<rosparam command="load" file="$(find probe)/test_data/post_sve.yaml" />
+<rosparam command="load" file="$(find probe)/test_data/04_30.yaml" />
 
 <rosparam command="load" file="$(find scorpion)/../transforms.yaml" />
 <node pkg="tf" type="static_transform_publisher" name="link1_broadcaster" args="0 0 0 0 0 0 1 world gantry 100" />

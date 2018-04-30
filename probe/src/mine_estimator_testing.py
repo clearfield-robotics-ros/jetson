@@ -28,6 +28,12 @@ def main():
 	est_mine_list = []
 	est_mine_list.append(Mine_Estimator(landmine_diameter, landmine_height))
 
+
+	num_mines = 0
+	num_mines_correct = 0
+	num_non_mines = 0
+	num_non_mines_correct = 0
+
 	rospy.sleep(0.5)
 	r = rospy.Rate(10) # Hz
 	while not rospy.is_shutdown():
@@ -45,17 +51,37 @@ def main():
 			for j in range(0,len(points)):
 				est_mine_list[-1].add_point(points[j][0],points[j][1],points[j][2])
 
-			est_mine_list[-1].set_probe_attempsts(attempted)
+			est_mine_list[-1].set_probe_attempts(attempted)
 			est_mine_list[-1].circle_fit()
 			est_mine_list[-1].print_results(True)
 
-			if est_mine_list[-1].get_result() == truth:
-				print "Correct!"
+			if truth == True:
+				num_mines += 1
+				if est_mine_list[-1].get_result() == truth:
+					print "Correct!"
+					num_mines_correct += 1
+				else:
+					print "Incorrect :("
 			else:
-				print "Incorrect :("
+				num_non_mines += 1
+				if est_mine_list[-1].get_result() == truth:
+					print "Correct!"
+					num_non_mines_correct += 1
+				else:
+					print "Incorrect :("
 
-			raw_input('...')
+			raw_input('...') # pause to visualize
+
+		print "\n-----------------------"
+		print "Overall Results"
+		print "-----------------------"
+		print "\nTotal Landmines Surveyed:", num_mines
+		print "Correctly Clasified: %0.1f%%" % (float(num_mines_correct)/float(num_mines)*100)
+		print "\nTotal Non-Landmines Surveyed:", num_non_mines
+		print "Correctly Clasified: %0.1f%%" % (float(num_non_mines_correct)/float(num_non_mines)*100)
+		print "\n-----------------------"
 		return
+
 	r.sleep()
 
 if __name__ == "__main__":
