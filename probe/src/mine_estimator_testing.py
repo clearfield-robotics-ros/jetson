@@ -45,9 +45,9 @@ def main():
 			for j in range(0,len(points)):
 				est_mine_list[-1].add_point(points[j][0],points[j][1],points[j][2])
 
-			est_mine_list[-1].set_probe_attempts(attempted)
+			est_mine_list[-1].set_probe_attempsts(attempted)
 			est_mine_list[-1].circle_fit()
-			est_mine_list[-1].print_results()
+			est_mine_list[-1].print_results(True)
 
 			if est_mine_list[-1].get_result() == truth:
 				print "Correct!"

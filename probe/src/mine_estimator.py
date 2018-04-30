@@ -188,9 +188,9 @@ class Mine_Estimator:
 
 
     def circle_fit(self):
-        if self.visualize:
-            for i in range(0,len(self.contact_points)):
-                self.plot_point(self.contact_points[i][0],self.contact_points[i][1],self.contact_points[i][2], [1,0,0])
+        # if self.visualize:
+        #     for i in range(0,len(self.contact_points)):
+        #         self.plot_point(self.contact_points[i][0],self.contact_points[i][1],self.contact_points[i][2], [1,0,0])
 
         if len(self.contact_points) == 1:
             ### Just use first contact point for centre point
@@ -261,6 +261,7 @@ class Mine_Estimator:
         new_contact = np.array([x,y,z])
         self.contact_points = np.vstack((self.contact_points, new_contact))
         self.c_z = np.mean(self.contact_points[:,2])
+        self.plot_point(x,y,z, [1,0,0])
 
 
     def get_est(self):
@@ -295,25 +296,25 @@ class Mine_Estimator:
         return len(self.contact_points)
 
 
-    def print_results(self):
+    def print_results(self,valid_contact_points):
         print "\n-----------------------"
         print "Landmine Survey Results"
         print "-----------------------"
-        print "Centre X: %0.1f" % self.c_x
-        print "Centre Y: %0.1f" % self.c_y
-        print "Radius: %0.1f" % self.c_r
-        print "-----------------------"
-        print "Error: %0.3f" % self.error
-
-        print "# Attempts:", self.num_attempted_probes
-        print "# Contact:", len(self.contact_points)
-        print "# Inliers:", self.num_inliers
-
-        print "Inliers / Attempts: %0.2f%%" % (float(self.num_inliers)/float(self.num_attempted_probes)*100)
-
-        print "Landmine?:", self.get_result()
-        print "-----------------------"
-        print "points:\n", self.contact_points
+        if valid_contact_points:
+            print "Centre X: %0.1f" % self.c_x
+            print "Centre Y: %0.1f" % self.c_y
+            print "Radius: %0.1f" % self.c_r
+            print "-----------------------"
+            print "Error: %0.3f" % self.error
+            print "# Attempts:", self.num_attempted_probes
+            print "# Contact:", len(self.contact_points)
+            print "# Inliers:", self.num_inliers
+            print "Inliers / Attempts: %0.2f%%" % (float(self.num_inliers)/float(self.num_attempted_probes)*100)
+            print "Landmine?:", self.get_result()
+            print "-----------------------"
+            print "points:\n", self.contact_points
+        else:
+            print "Landmine?: False! We had no contact points"
         print "-----------------------\n"
 
 
