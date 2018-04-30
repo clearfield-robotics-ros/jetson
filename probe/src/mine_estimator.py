@@ -24,12 +24,12 @@ class Mine_Estimator:
         self.c_r = self.radius
         self.error = 0
         self.num_inliers = 0
+        self.num_attempted_probes = 0
 
         self.visualize = True
         self.contact_viz_id = 0
         self.contact_viz_pub = rospy.Publisher('probe_contact_viz', Marker, queue_size=10)
 
-        self.classification_num_probes = rospy.get_param('classification_num_probes')
         self.classification_error_thresh = rospy.get_param('classification_error_thresh')
         self.RANSAC_num_points = rospy.get_param('RANSAC_num_points')
         self.RANSAC_max_iterations = rospy.get_param('RANSAC_max_iterations')
@@ -199,53 +199,59 @@ class Mine_Estimator:
             self.error = self.compute_error([self.c_x,self.c_y], self.contact_points)
             self.num_inliers = 1
         else:
-            ### Find combination of inliers that give lowest error circle fit
-            result = []
-            error = []
-            dists = []
-            num_inliers = []
-            combinations = list(itertools.combinations(self.contact_points, self.RANSAC_num_points))
-            shuffle(combinations)
-            for i in range(0, min(len(combinations), self.RANSAC_max_iterations) ): # limit to 50 iterations
-                points = np.array(combinations[i])
+            try:
+                ### Find combination of inliers that give lowest error circle fit
+                result = []
+                error = []
+                dists = []
+                num_inliers = []
+                combinations = list(itertools.combinations(self.contact_points, self.RANSAC_num_points))
+                shuffle(combinations)
+                for i in range(0, min(len(combinations), self.RANSAC_max_iterations) ): # limit to 50 iterations
+                    points = np.array(combinations[i])
 
-                ### compute hough transform
-                c_x, c_y = self.hough(points)
-                result.append([c_x, c_y])
+                    ### compute hough transform
+                    c_x, c_y = self.hough(points)
+                    result.append([c_x, c_y])
 
-                ### get the inliers
-                dist = []
-                inlier = []
-                for i in range(0,len(self.contact_points)):
-                    dist.append(self.point_dist(self.contact_points[i,0:2], result[-1]))
-                    if dist[-1] < self.RANSAC_inlier_thresh:
-                        inlier.append([self.contact_points[i,0],self.contact_points[i,1],self.contact_points[i,2]])
-                num_inliers.append(len(inlier))
-                dists.append(dist)
+                    ### get the inliers
+                    dist = []
+                    inlier = []
+                    for i in range(0,len(self.contact_points)):
+                        dist.append(self.point_dist(self.contact_points[i,0:2], result[-1]))
+                        if dist[-1] < self.RANSAC_inlier_thresh:
+                            inlier.append([self.contact_points[i,0],self.contact_points[i,1],self.contact_points[i,2]])
+                    num_inliers.append(len(inlier))
+                    dists.append(dist)
 
-                ### compute error
-                error.append(self.compute_error(result[-1], np.array(inlier)))
+                    ### compute error
+                    error.append(self.compute_error(result[-1], np.array(inlier)))
 
-            # Set default idx to max inliers
-            idx = num_inliers.index(max(num_inliers))
+                # Set default idx to max inliers
+                max_inliers = max(num_inliers)
+                idx = num_inliers.index(max_inliers)
 
-            # let's see if there's any other entries with same max inliers but lower error
-            max_inliers = max(num_inliers)
-            min_error = 1e6
-            for i in range(0,len(error)):
-                if num_inliers[i] == max_inliers:
-                    if error[i] < min_error:
-                        min_error = error[i]
-                        idx = i
+                # let's see if there's any other entries with same max inliers but lower error
+                min_error = 1e6
+                for i in range(0,len(error)):
+                    if num_inliers[i] == max_inliers:
+                        if error[i] < min_error:
+                            min_error = error[i]
+                            idx = i
 
-            # print "num_inliers",num_inliers
-            # print "dists",dists[idx]
-            # pdb.set_trace()
+                # print "num_inliers",num_inliers
+                # print "dists",dists[idx]
+                # pdb.set_trace()
 
-            self.c_x = result[idx][0]
-            self.c_y = result[idx][1]
-            self.error = self.compute_error([self.c_x,self.c_y], self.contact_points)
-            self.num_inliers = max_inliers
+                self.c_x = result[idx][0]
+                self.c_y = result[idx][1]
+                self.error = self.compute_error([self.c_x,self.c_y], self.contact_points)
+                self.num_inliers = max_inliers
+
+            except:
+                self.c_x, self.c_y = self.hough(self.contact_points)
+                self.error = self.compute_error([self.c_x,self.c_y], self.contact_points)
+                self.num_inliers = len(self.contact_points)
 
         if self.visualize:
             self.draw_radius([1,0,0])
@@ -266,8 +272,7 @@ class Mine_Estimator:
 
 
     def get_result(self):
-        if self.point_count() >= self.classification_num_probes and \
-            self.error <= self.classification_error_thresh:
+        if float(self.num_inliers)/float(self.num_attempted_probes) > self.classification_error_thresh:
             return True
         else:
             return False
@@ -282,8 +287,8 @@ class Mine_Estimator:
         return p
 
 
-    def point_count(self):
-        return len(self.contact_points)
+    def set_probe_attempts(self, attempted):
+        self.num_attempted_probes = attempted
 
 
     def print_results(self):
@@ -295,7 +300,13 @@ class Mine_Estimator:
         print "Radius: %0.1f" % self.c_r
         print "-----------------------"
         print "Error: %0.3f" % self.error
-        print "# Points:", self.point_count()
+
+        print "# Attempts:", self.num_attempted_probes
+        print "# Contact:", len(self.contact_points)
+        print "# Inliers:", self.num_inliers
+
+        print "Inliers / Attempts: %0.2f%%" % (float(self.num_inliers)/float(self.num_attempted_probes)*100)
+
         print "Landmine?:", self.get_result()
         print "-----------------------"
         print "points:\n", self.contact_points

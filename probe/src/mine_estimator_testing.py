@@ -39,11 +39,13 @@ def main():
 			est_mine_list.append(Mine_Estimator(landmine_diameter, landmine_height))
 
 			truth = test_data[test]['class']
+			attempted = test_data[test]['attempted']
 			points = test_data[test]['points']
 
 			for j in range(0,len(points)):
 				est_mine_list[-1].add_point(points[j][0],points[j][1],points[j][2])
 
+			est_mine_list[-1].set_probe_attempts(attempted)
 			est_mine_list[-1].circle_fit()
 			est_mine_list[-1].print_results()
 

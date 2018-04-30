@@ -61,5 +61,4 @@ gantry_ticks_per_mm: 5.61121
 RANSAC_num_points: 5
 RANSAC_max_iterations: 50
 RANSAC_inlier_thresh: 10.
-classification_num_probes: 3
-classification_error_thresh: 5.
+classification_error_thresh: 0.5 # 50%
