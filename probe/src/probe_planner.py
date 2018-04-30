@@ -373,8 +373,6 @@ def main():
     global sensorhead_marker_offset_loc
     sensorhead_marker_offset_loc    = rospy.get_param('sensorhead_marker_offset_loc')
     gantry_width                    = rospy.get_param('gantry_width')
-    num_contact_points              = rospy.get_param('num_contact_points')
-    min_fit_error                   = rospy.get_param('min_fit_error')
     max_num_probes                  = rospy.get_param('max_num_probes')
     proportions                     = rospy.get_param('proportions')
 

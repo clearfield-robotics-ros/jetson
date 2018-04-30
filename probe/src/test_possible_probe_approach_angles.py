@@ -51,8 +51,6 @@ probe_angle = math.pi/6
 
 ### Probe Planner ###
 third_stage_probe_angle = 1.57079632679 #1.3962634016
-num_contact_points = 5
-min_fit_error = 2.
 gantry_x_min = 0
 gantry_x_max = 400
 gantry_y_min = 0
