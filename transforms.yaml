@@ -33,7 +33,7 @@ gantry_sweep_angle: -1.09956 # -63 degrees
 gantry_sweep_x_pos: 1
 gantry_sweep_y_pos: 100
 pinpointing_x_offset: 0
-pinpointing_y_offset: 0
+pinpointing_y_offset: 20
 
 ### Probe ###
 sensorhead_probebase_offset_loc: [-191.72,0,-270.7]
