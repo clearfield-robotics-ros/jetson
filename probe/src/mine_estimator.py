@@ -6,6 +6,7 @@ from circle_intersection import Geometry
 from visualization_msgs.msg import Marker
 from sklearn.cluster import KMeans
 import itertools
+from random import shuffle
 import math
 import pdb
 
@@ -16,23 +17,23 @@ class Mine_Estimator:
         self.height = height
         self.contact_points = np.array([], dtype=np.int64).reshape(0,3)
         self.g = Geometry()
-        self.init_approach_angle = 0
 
         self.c_x = 0.
         self.c_y = 0.
         self.c_z = 0.
         self.c_r = self.radius
         self.error = 0
+        self.num_inliers = 0
 
+        self.visualize = True
         self.contact_viz_id = 0
         self.contact_viz_pub = rospy.Publisher('probe_contact_viz', Marker, queue_size=10)
 
-        self.visualize = True
-
-        self.angle_range = rospy.get_param('third_stage_probe_angle')
-
         self.classification_num_probes = rospy.get_param('classification_num_probes')
         self.classification_error_thresh = rospy.get_param('classification_error_thresh')
+        self.RANSAC_num_points = rospy.get_param('RANSAC_num_points')
+        self.RANSAC_max_iterations = rospy.get_param('RANSAC_max_iterations')
+        self.RANSAC_inlier_thresh = rospy.get_param('RANSAC_inlier_thresh')
 
 
     def draw_radius(self,col):
@@ -174,19 +175,19 @@ class Mine_Estimator:
             return c_x, c_y
 
 
-    def compute_error(self, center):
-        dist = 0
-        for i in range(0,len(self.contact_points)):
+    def point_dist(self, p1, p2):
+        return abs( math.sqrt( (p1[0]-p2[0])**2+(p1[1]-p2[1])**2 ) - self.c_r )
 
-            dist += abs(math.sqrt( (self.contact_points[i,0] - center[0])**2 + \
-                                (self.contact_points[i,1] - center[1])**2 ))
-            dist -= self.c_r
-        error = abs(dist/len(self.contact_points))
-        return error
+
+    def compute_error(self, center, points):
+        if len(points) > 0:
+            error = 0
+            for i in range(0,len(points)):
+                error += self.point_dist(points[i,0:2], center)
+            return error / len(points) # normalize by number of points
 
 
     def circle_fit(self):
-
         if self.visualize:
             for i in range(0,len(self.contact_points)):
                 self.plot_point(self.contact_points[i][0],self.contact_points[i][1],self.contact_points[i][2], [1,0,0])
@@ -195,48 +196,65 @@ class Mine_Estimator:
             ### Just use first contact point for centre point
             self.c_x = self.contact_points[0,0] + self.radius
             self.c_y = self.contact_points[0,1]
-            self.error = self.compute_error([self.c_x,self.c_y])
+            self.error = self.compute_error([self.c_x,self.c_y], self.contact_points)
+            self.num_inliers = 1
         else:
+            ### Find combination of inliers that give lowest error circle fit
             result = []
             error = []
-
-            combinations = list(itertools.combinations(self.contact_points, 5)) # TODO tune this
-            for i in range(0,len(combinations)):
-
-                # TODO change this into random sampling
-
-                ### get from combinations
+            dists = []
+            num_inliers = []
+            combinations = list(itertools.combinations(self.contact_points, self.RANSAC_num_points))
+            shuffle(combinations)
+            for i in range(0, min(len(combinations), self.RANSAC_max_iterations) ): # limit to 50 iterations
                 points = np.array(combinations[i])
+
                 ### compute hough transform
                 c_x, c_y = self.hough(points)
                 result.append([c_x, c_y])
-                # self.c_x = c_x
-                # self.c_y = c_y
-                # self.draw_radius([1,0,0])
 
+                ### get the inliers
                 dist = []
+                inlier = []
                 for i in range(0,len(self.contact_points)):
+                    dist.append(self.point_dist(self.contact_points[i,0:2], result[-1]))
+                    if dist[-1] < self.RANSAC_inlier_thresh:
+                        inlier.append([self.contact_points[i,0],self.contact_points[i,1],self.contact_points[i,2]])
+                num_inliers.append(len(inlier))
+                dists.append(dist)
 
-                    dist.append(math.sqrt( (self.contact_points[i,0] - c_x)**2 + \
-                                       (self.contact_points[i,1] - c_y)**2 ) \
-                                      - self.c_r)
-                # print "dist:",dist
-            
                 ### compute error
-                err = self.compute_error(result[-1])
-                error.append(err)
-                # print "err:",err
+                error.append(self.compute_error(result[-1], np.array(inlier)))
 
-                # raw_input("combination #?...")
+            # Set default idx to max inliers
+            idx = num_inliers.index(max(num_inliers))
 
-            min_idx = error.index(min(error))
-            self.c_x = result[min_idx][0]
-            self.c_y = result[min_idx][1]
-            self.error = self.compute_error([self.c_x,self.c_y])
-            # self.error = error[min_idx]
+            # let's see if there's any other entries with same max inliers but lower error
+            max_inliers = max(num_inliers)
+            min_error = 1e6
+            for i in range(0,len(error)):
+                if num_inliers[i] == max_inliers:
+                    if error[i] < min_error:
+                        min_error = error[i]
+                        idx = i
 
-        print "finished!"
-        self.draw_radius([1,0,0])
+            # print "num_inliers",num_inliers
+            # print "dists",dists[idx]
+            # pdb.set_trace()
+
+            self.c_x = result[idx][0]
+            self.c_y = result[idx][1]
+            self.error = self.compute_error([self.c_x,self.c_y], self.contact_points)
+            self.num_inliers = max_inliers
+
+        if self.visualize:
+            self.draw_radius([1,0,0])
+
+
+    def add_point(self,x,y,z):
+        new_contact = np.array([x,y,z])
+        self.contact_points = np.vstack((self.contact_points, new_contact))
+        self.c_z = np.mean(self.contact_points[:,2])
 
 
     def get_est(self):
@@ -255,27 +273,6 @@ class Mine_Estimator:
             return False
 
 
-    def print_results(self):
-        print "\n-----------------------"
-        print "Landmine Survey Results"
-        print "-----------------------"
-        print "Centre X: %0.1f" % self.c_x
-        print "Centre Y: %0.1f" % self.c_y
-        print "Radius: %0.1f" % self.c_r
-        print "Error: %0.3f" % self.error
-        print "# Points:", self.point_count()
-        print "Landmine?:", self.get_result()
-        print "-----------------------"
-        print "points:\n", self.contact_points
-        print "-----------------------\n"
-
-
-    def add_point(self,x,y,z):
-        new_contact = np.array([x,y,z])
-        self.contact_points = np.vstack((self.contact_points, new_contact))
-        self.c_z = np.mean(self.contact_points[:,2])
-
-
     def most_recent_point(self):
         p = Point()
         if len(self.contact_points) > 0:
@@ -285,93 +282,25 @@ class Mine_Estimator:
         return p
 
 
-    # def get_sparsest_point2(self):
-        # yo, what's the latest estimated center point?
-
-        # cool, so how do the contact points you already have map to angles around
-        #   the current circle estimate, using the first approach angle as 0 deg?
-
-        # ok. now we're getting somewhere. what's the point which is
-
-    def get_sparsest_point(self):
-
-        if len(self.contact_points) >= 2: # need two points to get started
-            angle = []
-            for i in range(0,len(self.contact_points)): # go through each contact point
-                # print self.contact_points
-                # print self.get_est()
-                # call to get_est() returns the most recent center estimate
-                a = math.atan2( -(self.contact_points[i,1] - self.get_est()[1]),
-                                -(self.contact_points[i,0] - self.get_est()[0]) )
-                self.plot_point(self.contact_points[i,0],self.contact_points[i,1],self.c_z-1,[0,0,0])
-                self.plot_point(self.get_est()[0],self.get_est()[1],self.c_z-1,[0,1,.5])
-                angle.append(a)
-            angle.sort() #
-            print "Sorted angles: ", angle
-
-            if min(angle) > -self.angle_range:
-                angle.insert(0, -self.angle_range)
-
-            if max(angle) < self.angle_range:
-                angle.append(self.angle_range)
-
-            # print "ANGLES:"
-            # for i in range(0,len(angle)):
-            #     print int(angle[i]*180/math.pi)
-
-            # for i in range(0,len(angle)):
-            #     x = self.c_x - math.cos(angle[i])*self.c_r
-            #     y = self.c_y - math.sin(angle[i])*self.c_r
-            #     z = self.c_z
-            #     self.plot_point(x,y,z-1,[1,1,0])
-            print "Sorted angles after insertion: ", angle
-
-            dist = []
-            for i in range(0,len(angle)-1):
-                dist.append( abs( angle[i+1] - angle[i] ) )
-
-            print "Angle differences: ", dist
-
-            M = max(dist)
-            I = dist.index(M)
-
-            print "Index:", I
-
-            if I == 0 and angle[I] == -self.angle_range:
-                probe_angle = -self.angle_range
-                print "LOWER", probe_angle*180/math.pi
-
-            elif I == len(angle)-2 and angle[I+1] == self.angle_range:
-                probe_angle = self.angle_range
-                print "UPPER", probe_angle*180/math.pi
-
-            else:
-                probe_angle = angle[I] + dist[I]/2
-                print "MIDDLE", probe_angle*180/math.pi
-
-            # probe_angle = -math.pi/4
-
-            # self.c_x = 450
-            # self.c_y
-            x = self.c_x - math.cos(probe_angle)*self.c_r
-            y = self.c_y - math.sin(probe_angle)*self.c_r
-            z = self.c_z
-
-            # print "Current estimate of center: ", x, y, z
-
-            # self.plot_point(x,y,z-2,[1,1,1])
-            # print "PROBE ANGLE:", probe_angle
-            x = self.c_x# - math.cos(probe_angle)*self.c_r
-            y = self.c_y# - math.sin(probe_angle)*self.c_r
-            z = self.c_z
-            return [x,y,z,probe_angle]      # seems to
-        else:
-            return None
-
-
     def point_count(self):
         return len(self.contact_points)
 
 
+    def print_results(self):
+        print "\n-----------------------"
+        print "Landmine Survey Results"
+        print "-----------------------"
+        print "Centre X: %0.1f" % self.c_x
+        print "Centre Y: %0.1f" % self.c_y
+        print "Radius: %0.1f" % self.c_r
+        print "-----------------------"
+        print "Error: %0.3f" % self.error
+        print "# Points:", self.point_count()
+        print "Landmine?:", self.get_result()
+        print "-----------------------"
+        print "points:\n", self.contact_points
+        print "-----------------------\n"
+
+
     def reset_est(self):
-         self.contact_points = np.array([], dtype=np.int64).reshape(0,3)
+        self.contact_points = np.array([], dtype=np.int64).reshape(0,3)
