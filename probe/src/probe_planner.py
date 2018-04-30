@@ -531,10 +531,10 @@ def main():
                 probe_sequence = 0
                 probe_sequence_prev = probe_sequence # ed's change
                 prev_point_count = 0
+                gen_yaml.write_to_file(est_mine_list, num_attempted_probes)
                 num_attempted_probes = 0
                 jetson_desired_state.publish(0) # go back to idle state
                 jetson_desired_mine.publish(0) # increment mine count
-                gen_yaml.write_to_file(est_mine_list)
                 est_mine_list.append(Mine_Estimator(landmine_diameter, landmine_height))
 
 

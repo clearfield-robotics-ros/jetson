@@ -11,12 +11,13 @@ class Generate_Contact_Point_Yaml():
             + "_" + str(timestamp.hour) + "_" + str(timestamp.minute) + ".yaml"
         print "Saving to: ", self.filename
 
-    def write_to_file(self, estimates):
+    def write_to_file(self, estimates, num_attempted_probes):
         self.estimates = estimates
         with open(self.filename,"w+") as f:
             f.write('test_data:\n')
             for est in self.estimates:
-                f.write('- class: ' + str(est.get_result()) + '\n  points: [')
+                f.write('- class: ' + str(est.get_result()) + '\n  attempted: ' + str(num_attempted_probes))
+                f.write('\n  points: [')
                 for i, pt in enumerate(est.contact_points):
                     for elm in range(3):
                         if elm == 2:
