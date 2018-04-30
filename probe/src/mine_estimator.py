@@ -291,6 +291,10 @@ class Mine_Estimator:
         self.num_attempted_probes = attempted
 
 
+    def point_count(self):
+        return len(self.contact_points)
+
+
     def print_results(self):
         print "\n-----------------------"
         print "Landmine Survey Results"

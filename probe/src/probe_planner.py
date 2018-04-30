@@ -332,6 +332,7 @@ def update_probe_state(data):
         (trans,rot) = listener.lookupTransform('/gantry', '/probe_tip', rospy.Time(0))
         global est
         est_mine_list[-1].add_point(trans[0], trans[1], trans[2])
+        est_mine_list[-1].circle_fit()
         contact_block_flag = True
 
     elif data.probe_complete:
@@ -380,6 +381,7 @@ def main():
     probe_limit_exceeded            = False
     prev_point_count                = 0
     probe_sequence_prev             = 0
+    num_attempted_probes            = 0
 
     # Jetson Messages
     jetson_desired_state = rospy.Publisher('/desired_state', Int16, queue_size=10)
@@ -491,6 +493,12 @@ def main():
 
                 if est_mine_list[-1].point_count() > prev_point_count or probe_limit_exceeded or not valid:
                     print "\nADVANCING PROBE STATES\n"
+
+                    if not probe_sequence_prev == probe_sequence: # ie we've actually attempted this angle
+                        num_attempted_probes += 1
+
+                    print "num_attempted_probes:", num_attempted_probes
+
                     probe_plan_state += 1 # advance
                     probe_sequence_prev = probe_sequence
                     prev_point_count = est_mine_list[-1].point_count()
@@ -500,6 +508,8 @@ def main():
 
                 print "\ntime to probe: %0.2f seconds\n" % (time.time() - probe_start_time)
 
+                est_mine_list[-1].circle_fit()
+                est_mine_list[-1].set_probe_attempts(num_attempted_probes)
                 est_mine_list[-1].print_results()
 
                 raw_input("\nMove Probe Tip for Marking...\n")
@@ -521,10 +531,12 @@ def main():
                 probe_sequence = 0
                 probe_sequence_prev = probe_sequence # ed's change
                 prev_point_count = 0
+                num_attempted_probes = 0
                 jetson_desired_state.publish(0) # go back to idle state
                 jetson_desired_mine.publish(0) # increment mine count
                 gen_yaml.write_to_file(est_mine_list)
                 est_mine_list.append(Mine_Estimator(landmine_diameter, landmine_height))
+
 
         ### END COMMENTED OUT SECTION #
 
