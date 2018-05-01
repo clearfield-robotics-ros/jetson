@@ -32,7 +32,7 @@
 </node>
 
 <!-- LOCALIZATION -->
-<!-- <include file="$(find scorpion_localization)/launch/scorpion_localization_RT.launch"/> -->
+<include file="$(find scorpion_localization)/launch/scorpion_localization_RT.launch"/>
 <!-- <node name="odom2world" pkg="scorpion_localization" type="odom2world.py" ></node> -->
 
 <!-- VISUALIZATION -->

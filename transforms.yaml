@@ -49,7 +49,7 @@ probe_speed: 1.5 #mm/s
 max_probe_distance: 207 #mm
 calibrate_probe: False
 ### Planner ###
-max_num_probes: 2
+max_num_probes: 1
 forward_step_factor: 0.8
 probe_safety_factor: 0.6
 proportions: [0.5, 0.0, 1.0, 0.1, 0.2, 0.3, 0.4, 0.6, 0.7, 0.8, 0.9] # proportions between the lower and upper limits
