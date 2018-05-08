@@ -508,9 +508,9 @@ def main():
 
                 if probe_plan_state == len(angle_sequence): # just exit here for now
 
-                    if est_mine_list[-1].point_count() > 0:
+                    print "\ntime to probe: %0.2f seconds\n" % (time.time() - probe_start_time)
 
-                        print "\ntime to probe: %0.2f seconds\n" % (time.time() - probe_start_time)
+                    if est_mine_list[-1].point_count() > 0:
 
                         est_mine_list[-1].circle_fit()
                         est_mine_list[-1].set_probe_attempts(num_attempted_probes)

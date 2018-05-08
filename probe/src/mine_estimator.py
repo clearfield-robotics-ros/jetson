@@ -25,6 +25,7 @@ class Mine_Estimator:
         self.error = 0
         self.num_inliers = 0
         self.num_attempted_probes = 0
+        self.landmine_metric = 0
 
         self.visualize = True
         self.contact_viz_id = 0
@@ -273,7 +274,8 @@ class Mine_Estimator:
 
 
     def get_result(self):
-        if float(self.num_inliers)/float(self.num_attempted_probes) > self.classification_error_thresh:
+        self.landmine_metric = float(self.num_inliers)/float(self.num_attempted_probes)
+        if self.landmine_metric > self.classification_error_thresh:
             return True
         else:
             return False
